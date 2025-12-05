@@ -1,20 +1,18 @@
 package com.incial.workhub.model;
 
-import com.incial.workhub.enums.LEAD_SOURCE;
-import com.incial.workhub.enums.STATUS;
-import com.incial.workhub.enums.TAG;
-import com.incial.workhub.enums.WORK;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CRM {
 
     @Id
@@ -24,6 +22,7 @@ public class CRM {
     private String company;
     private String phone;
     private String email;
+
     private String contactName;
     private String assignedTo;
 
@@ -34,10 +33,15 @@ public class CRM {
 
     private String notes;
 
-    private TAG tag;
-    private WORK work;
-    private STATUS status;
-    private LEAD_SOURCE leadSource; 
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> tags;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> work;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> status;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> leadSources;
 }
-
