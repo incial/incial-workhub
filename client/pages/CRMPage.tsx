@@ -64,7 +64,7 @@ export const CRMPage: React.FC = () => {
       setIsModalOpen(true);
   };
 
-  const handleEdit = (entry: CRMEntry) => {
+  const handleViewDetails = (entry: CRMEntry) => {
       setEditingEntry(entry);
       setIsModalOpen(true);
   };
@@ -139,7 +139,7 @@ export const CRMPage: React.FC = () => {
                 <CRMTable 
                     data={filteredData} 
                     isLoading={isLoading} 
-                    onEdit={handleEdit}
+                    onView={handleViewDetails}
                     onDelete={handleDelete}
                 />
             </div>

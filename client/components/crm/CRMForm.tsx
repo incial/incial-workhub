@@ -33,6 +33,18 @@ const TAG_OPTIONS = [
   { label: 'Partner', color: 'bg-pink-100 text-pink-700 border-pink-200' },
 ];
 
+const WORK_OPTIONS = [
+  { label: 'branding', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  { label: 'poster', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  { label: 'video', color: 'bg-pink-100 text-pink-700 border-pink-200' },
+  { label: 'design', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  { label: 'ui ux', color: 'bg-sky-100 text-sky-700 border-sky-200' },
+  { label: 'shopify', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  { label: 'website', color: 'bg-red-100 text-red-700 border-red-200' },
+  { label: 'marketing', color: 'bg-gray-700 text-white border-gray-600' },
+  { label: 'Logo design', color: 'bg-gray-200 text-gray-800 border-gray-300' },
+];
+
 export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState<Partial<CRMEntry>>({});
   const [mode, setMode] = useState<'view' | 'edit'>('edit');
@@ -72,16 +84,21 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
     onClose();
   };
 
-  const handleArrayInput = (field: 'work', value: string) => {
-      setFormData(prev => ({...prev, [field]: value.split(',').map(s => s.trim())}));
-  };
-
   const toggleTag = (tag: string) => {
       const currentTags = formData.tags || [];
       if (currentTags.includes(tag)) {
           setFormData(prev => ({ ...prev, tags: currentTags.filter(t => t !== tag) }));
       } else {
           setFormData(prev => ({ ...prev, tags: [...currentTags, tag] }));
+      }
+  };
+
+  const toggleWork = (work: string) => {
+      const currentWork = formData.work || [];
+      if (currentWork.includes(work)) {
+          setFormData(prev => ({ ...prev, work: currentWork.filter(w => w !== work) }));
+      } else {
+          setFormData(prev => ({ ...prev, work: [...currentWork, work] }));
       }
   };
 
@@ -276,15 +293,36 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 </FormField>
 
                 <FormField label="Work Types" valueDisplay={
-                    <div className="flex flex-wrap gap-1">
-                        {formData.work?.length ? formData.work.map(w => (
-                            <span key={w} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded border border-blue-100">{w}</span>
-                        )) : <span className="text-gray-400 italic">None</span>}
+                    <div className="flex flex-wrap gap-2">
+                        {formData.work?.length ? formData.work.map(w => {
+                             const workOption = WORK_OPTIONS.find(opt => opt.label === w);
+                             return (
+                                <span key={w} className={`px-2.5 py-0.5 text-xs rounded border font-medium ${workOption ? workOption.color : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                                    {w}
+                                </span>
+                             );
+                        }) : <span className="text-gray-400 italic">None</span>}
                     </div>
                 }>
-                    <input type="text" placeholder="Branding, Web..." className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                        value={formData.work?.join(', ') || ''} onChange={e => handleArrayInput('work', e.target.value)} />
-                    <p className="text-xs text-gray-400 mt-1">Comma separated</p>
+                    <div className="flex flex-wrap gap-2">
+                        {WORK_OPTIONS.map(option => {
+                            const isSelected = formData.work?.includes(option.label);
+                            return (
+                                <button
+                                    key={option.label}
+                                    type="button"
+                                    onClick={() => toggleWork(option.label)}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                                        isSelected
+                                            ? option.color + ' ring-2 ring-offset-1 ring-brand-300'
+                                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                                    }`}
+                                >
+                                    {option.label}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </FormField>
              </div>
           </div>
