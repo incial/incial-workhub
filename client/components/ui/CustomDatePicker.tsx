@@ -62,11 +62,13 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
 
   const handlePrevMonth = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
   };
 
   const handleNextMonth = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
   };
 
@@ -82,6 +84,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
 
   const clearDate = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     onChange('');
   };
 
@@ -104,6 +107,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
       days.push(
         <button
           key={i}
+          type="button"
           onClick={() => handleDateClick(i)}
           className={`h-8 w-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
             isSelected 
@@ -147,6 +151,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         </div>
         {value && (
             <button 
+                type="button"
                 onClick={clearDate}
                 className="p-0.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             >
@@ -159,13 +164,13 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         <div className="absolute right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 p-4 w-[280px] animate-in fade-in zoom-in-95 duration-100 origin-top-right">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-                <button onClick={handlePrevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+                <button type="button" onClick={handlePrevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
                     <ChevronLeft className="h-4 w-4" />
                 </button>
                 <span className="text-sm font-bold text-gray-800">
                     {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
                 </span>
-                <button onClick={handleNextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+                <button type="button" onClick={handleNextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
                     <ChevronRight className="h-4 w-4" />
                 </button>
             </div>

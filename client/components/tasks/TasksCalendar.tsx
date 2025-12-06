@@ -45,6 +45,7 @@ export const TasksCalendar: React.FC<TasksCalendarProps> = ({ tasks, onEdit }) =
                         {dayTasks.slice(0, 3).map(task => (
                             <button 
                                 key={task.id} 
+                                type="button"
                                 onClick={() => onEdit(task)}
                                 className={`w-full text-left px-1.5 py-1 rounded text-[10px] font-medium truncate border ${getTaskStatusStyles(task.status)} bg-opacity-50 hover:opacity-80 transition-opacity`}
                             >
@@ -52,7 +53,7 @@ export const TasksCalendar: React.FC<TasksCalendarProps> = ({ tasks, onEdit }) =
                             </button>
                         ))}
                         {dayTasks.length > 3 && (
-                            <button className="text-[10px] text-gray-400 font-medium hover:text-brand-600 pl-1">
+                            <button type="button" className="text-[10px] text-gray-400 font-medium hover:text-brand-600 pl-1">
                                 +{dayTasks.length - 3} more
                             </button>
                         )}
@@ -71,8 +72,8 @@ export const TasksCalendar: React.FC<TasksCalendarProps> = ({ tasks, onEdit }) =
                     {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </h2>
                 <div className="flex gap-1">
-                    <button onClick={handlePrevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600"><ChevronLeft className="h-5 w-5" /></button>
-                    <button onClick={handleNextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600"><ChevronRight className="h-5 w-5" /></button>
+                    <button type="button" onClick={handlePrevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600"><ChevronLeft className="h-5 w-5" /></button>
+                    <button type="button" onClick={handleNextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600"><ChevronRight className="h-5 w-5" /></button>
                 </div>
             </div>
             
