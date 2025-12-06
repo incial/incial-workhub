@@ -1,3 +1,4 @@
+
 import { CRMEntry } from '../types';
 
 export const MOCK_CRM_DATA: CRMEntry[] = [
@@ -11,7 +12,7 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     lastContact: "2023-10-25",
     nextFollowUp: new Date().toISOString().split('T')[0], // Today
     dealValue: 35000.00,
-    notes: "Proposal revised, waiting for signoff.",
+    notes: "Proposal revised, waiting for signoff. Logo refreshment needed.",
     status: "on progress",
     tags: ["Follow-up", "VIP"],
     work: ["branding", "marketing"],
@@ -43,7 +44,7 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     lastContact: "2023-10-28",
     nextFollowUp: "2025-11-01", // Future
     dealValue: 15000.00,
-    notes: "Contract signed.",
+    notes: "Contract signed. Sustainability audit included.",
     status: "onboarded",
     tags: ["Eco"],
     work: ["consulting"],

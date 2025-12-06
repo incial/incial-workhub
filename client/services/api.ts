@@ -3,7 +3,7 @@ import { CRMEntry } from '../types';
 import { MOCK_CRM_DATA } from './mockData';
 
 // In a real app, this comes from env
-const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8080/api'; 
+const API_URL = 'https://api.workhub.com/api/v1'; 
 
 const api = axios.create({
   baseURL: API_URL,
@@ -24,7 +24,24 @@ export const crmApi = {
     // REAL CALL: return api.get("/crm/all");
     await delay(600);
     const stored = localStorage.getItem('mock_crm_data');
-    if (stored) return { crmList: JSON.parse(stored) };
+    if (stored) {
+        try {
+            const parsed = JSON.parse(stored);
+            // Sanitize legacy data: Ensure 'work' is string[], not object[]
+            const sanitized = parsed.map((entry: any) => ({
+                ...entry,
+                work: Array.isArray(entry.work) 
+                    ? entry.work.map((w: any) => (typeof w === 'object' && w !== null && 'name' in w) ? w.name : w) 
+                    : []
+            }));
+            // Update storage with sanitized data
+            localStorage.setItem('mock_crm_data', JSON.stringify(sanitized));
+            return { crmList: sanitized };
+        } catch (e) {
+            console.warn("Failed to parse local CRM data", e);
+            return { crmList: MOCK_CRM_DATA };
+        }
+    }
     return { crmList: MOCK_CRM_DATA };
   },
 

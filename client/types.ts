@@ -1,3 +1,4 @@
+
 export type CRMStatus = 'onboarded' | 'drop' | 'on progress' | 'Quote Sent' | 'lead';
 
 export interface User {

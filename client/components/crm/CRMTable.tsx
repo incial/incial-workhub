@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CRMEntry } from '../../types';
 import { getStatusStyles, formatDate, getFollowUpColor } from '../../utils';
@@ -81,9 +82,13 @@ export const CRMTable: React.FC<CRMTableProps> = ({ data, isLoading, onView, onD
                     {row.tags.slice(0, 2).map(tag => (
                         <span key={tag} className="px-1.5 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded border border-purple-100">{tag}</span>
                     ))}
-                    {row.work.slice(0, 2).map(w => (
-                        <span key={w} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded border border-blue-100">{w}</span>
-                    ))}
+                    {row.work.slice(0, 2).map((w: any) => {
+                        // Handle legacy object if present
+                        const label = typeof w === 'object' ? w.name : w;
+                        return (
+                            <span key={label} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded border border-blue-100">{label}</span>
+                        );
+                    })}
                     {(row.tags.length + row.work.length) > 4 && (
                         <span className="text-[10px] text-gray-400">+{row.tags.length + row.work.length - 4}</span>
                     )}
