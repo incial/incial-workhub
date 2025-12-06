@@ -1,3 +1,4 @@
+
 export type CRMStatus = 'onboarded' | 'drop' | 'on progress' | 'Quote Sent' | 'lead';
 
 export interface User {
@@ -38,4 +39,24 @@ export interface FilterState {
   search: string;
   dateRangeStart: string;
   dateRangeEnd: string;
+}
+
+// --- COMPANIES MODULE TYPES ---
+
+export type CompanyStatus = 'running' | 'not_started' | 'discontinued' | 'completed';
+
+export interface Company {
+  id: number;
+  referenceId: string;
+  name: string;
+  work: string[];
+  status: CompanyStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CompanyFilterState {
+  search: string;
+  status: string;
+  workType: string;
 }

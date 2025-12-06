@@ -1,28 +1,25 @@
 
 import React from 'react';
 import { Search, X } from 'lucide-react';
-import { FilterState } from '../../types';
+import { CompanyFilterState } from '../../types';
 import { CustomSelect } from '../ui/CustomSelect';
-import { CustomDatePicker } from '../ui/CustomDatePicker';
 
-interface CRMFiltersProps {
-  filters: FilterState;
-  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+interface CompaniesFiltersProps {
+  filters: CompanyFilterState;
+  setFilters: React.Dispatch<React.SetStateAction<CompanyFilterState>>;
   onRefresh: () => void;
 }
 
-export const CRMFilters: React.FC<CRMFiltersProps> = ({ filters, setFilters, onRefresh }) => {
-  const handleChange = (key: keyof FilterState, value: string) => {
+export const CompaniesFilters: React.FC<CompaniesFiltersProps> = ({ filters, setFilters, onRefresh }) => {
+  const handleChange = (key: keyof CompanyFilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
       setFilters({
           status: '',
-          assignedTo: '',
-          search: '',
-          dateRangeStart: '',
-          dateRangeEnd: ''
+          workType: '',
+          search: ''
       });
   };
 
@@ -30,31 +27,37 @@ export const CRMFilters: React.FC<CRMFiltersProps> = ({ filters, setFilters, onR
 
   const statusOptions = [
     { label: "All Statuses", value: "" },
-    { label: "Lead", value: "lead" },
-    { label: "On Progress", value: "on progress" },
-    { label: "Quote Sent", value: "Quote Sent" },
-    { label: "Onboarded", value: "onboarded" },
-    { label: "Drop", value: "drop" },
+    { label: "Running", value: "running" },
+    { label: "Not Started", value: "not_started" },
+    { label: "Completed", value: "completed" },
+    { label: "Discontinued", value: "discontinued" },
   ];
 
-  const assigneeOptions = [
-    { label: "All Assignees", value: "" },
-    { label: "Vallapata", value: "Vallapata" },
-    { label: "John Doe", value: "John Doe" },
+  const workOptions = [
+    { label: "All Work Types", value: "" },
+    { label: "Marketing", value: "Marketing" },
+    { label: "Website", value: "Website" },
+    { label: "Poster", value: "Poster" },
+    { label: "Video", value: "Video" },
+    { label: "VFX", value: "VFX" },
+    { label: "LinkedIn", value: "LinkedIn" },
+    { label: "Ads", value: "Ads" },
+    { label: "Branding", value: "Branding" },
+    { label: "UI/UX", value: "UI/UX" },
   ];
 
   return (
     <div className="bg-white p-5 border-b border-gray-100 flex flex-col xl:flex-row gap-5 items-start xl:items-center justify-between rounded-t-2xl z-20 relative">
       
       {/* Left: Inputs */}
-      <div className="flex flex-wrap items-end gap-3 w-full xl:w-auto">
+      <div className="flex flex-wrap items-end gap-3 w-full">
         <div className="w-full sm:w-72">
           <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Search</label>
           <div className="relative group">
             <Search className="absolute left-3.5 top-3 h-4 w-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
             <input
               type="text"
-              placeholder="Search contacts, companies..."
+              placeholder="Search by client name..."
               value={filters.search}
               onChange={(e) => handleChange('search', e.target.value)}
               className="pl-10 pr-4 py-2.5 bg-gray-50 border-gray-200 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 w-full transition-all shadow-sm"
@@ -62,7 +65,7 @@ export const CRMFilters: React.FC<CRMFiltersProps> = ({ filters, setFilters, onR
           </div>
         </div>
 
-        <div className="w-40">
+        <div className="w-48">
            <CustomSelect 
                 label="Status"
                 value={filters.status}
@@ -72,13 +75,13 @@ export const CRMFilters: React.FC<CRMFiltersProps> = ({ filters, setFilters, onR
            />
         </div>
 
-        <div className="w-40">
+        <div className="w-48">
             <CustomSelect 
-                label="Assigned To"
-                value={filters.assignedTo}
-                onChange={(val) => handleChange('assignedTo', val)}
-                options={assigneeOptions}
-                placeholder="All Assignees"
+                label="Work Type"
+                value={filters.workType}
+                onChange={(val) => handleChange('workType', val)}
+                options={workOptions}
+                placeholder="All Types"
             />
         </div>
         
@@ -91,19 +94,6 @@ export const CRMFilters: React.FC<CRMFiltersProps> = ({ filters, setFilters, onR
                 Clear
             </button>
         )}
-      </div>
-
-      {/* Right: Date Filter */}
-      <div className="flex items-end gap-3 w-full xl:w-auto justify-end">
-        <div className="w-full sm:w-auto">
-             <CustomDatePicker 
-                label="Follow Up After"
-                value={filters.dateRangeStart}
-                onChange={(val) => handleChange('dateRangeStart', val)}
-                placeholder="Select date..."
-                className="sm:w-64"
-             />
-        </div>
       </div>
     </div>
   );

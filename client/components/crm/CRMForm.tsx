@@ -1,6 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
-import { X, Save, Edit2, Plus } from 'lucide-react';
+import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, DollarSign, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { CRMEntry } from '../../types';
+import { getStatusStyles, formatDate, getFollowUpColor, formatMoney } from '../../utils';
+import { CustomDatePicker } from '../ui/CustomDatePicker';
 
 interface CRMFormProps {
   isOpen: boolean;
@@ -43,6 +46,9 @@ const WORK_OPTIONS = [
   { label: 'website', color: 'bg-red-100 text-red-700 border-red-200' },
   { label: 'marketing', color: 'bg-gray-700 text-white border-gray-600' },
   { label: 'Logo design', color: 'bg-gray-200 text-gray-800 border-gray-300' },
+  { label: 'software', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  { label: 'consulting', color: 'bg-teal-100 text-teal-700 border-teal-200' },
+  { label: 'development', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' }
 ];
 
 export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
@@ -93,12 +99,17 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
       }
   };
 
-  const toggleWork = (work: string) => {
+  const toggleWork = (workLabel: string) => {
       const currentWork = formData.work || [];
-      if (currentWork.includes(work)) {
-          setFormData(prev => ({ ...prev, work: currentWork.filter(w => w !== work) }));
+      // Clean up legacy objects if present during edit toggling
+      const cleanWork = currentWork.map((w: any) => typeof w === 'object' ? w.name : w);
+      
+      const exists = cleanWork.includes(workLabel);
+      
+      if (exists) {
+          setFormData(prev => ({ ...prev, work: cleanWork.filter(w => w !== workLabel) }));
       } else {
-          setFormData(prev => ({ ...prev, work: [...currentWork, work] }));
+          setFormData(prev => ({ ...prev, work: [...cleanWork, workLabel] }));
       }
   };
 
@@ -108,77 +119,192 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
 
   const handleCancel = () => {
     if (initialData && mode === 'edit') {
-        // If we were editing an existing item, revert to view
         setFormData(initialData);
         setMode('view');
     } else {
-        // If creating new or viewing, just close
         onClose();
     }
   };
 
   const isView = mode === 'view';
 
-  // Helper for conditional rendering
-  const FormField = ({ label, children, valueDisplay }: { label: string, children?: React.ReactNode, valueDisplay?: React.ReactNode }) => (
-    <div className="w-full">
-        <label className={`block mb-1.5 ${isView ? 'text-xs font-semibold text-gray-500 uppercase tracking-wider' : 'text-sm font-medium text-gray-700'}`}>
-            {label}
-        </label>
-        {isView ? (
-            <div className="text-gray-900 text-sm py-1 min-h-[24px] break-words">
-                {valueDisplay}
+  // --- PREMIUM VIEW RENDERER ---
+  const renderView = () => (
+    <div className="space-y-6">
+        {/* Header Hero */}
+        <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">{formData.company}</h2>
+                    <div className="flex items-center gap-2 mt-1 text-gray-600">
+                        <User className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium">{formData.contactName}</span>
+                    </div>
+                </div>
+                <div className={`px-4 py-1.5 rounded-full text-sm font-semibold border shadow-sm ${getStatusStyles(formData.status || '')}`}>
+                    {formData.status}
+                </div>
             </div>
-        ) : children}
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
+                <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Deal Value</p>
+                    <p className="text-xl font-bold text-gray-900">{formatMoney(formData.dealValue || 0)}</p>
+                </div>
+                <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Assigned To</p>
+                    <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-brand-100 flex items-center justify-center text-xs font-bold text-brand-700">
+                            {formData.assignedTo?.[0]}
+                        </div>
+                        <span className="font-medium text-gray-900">{formData.assignedTo}</span>
+                    </div>
+                </div>
+                <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Next Follow Up</p>
+                    <div className={`flex items-center gap-1.5 font-semibold ${getFollowUpColor(formData.nextFollowUp || '')}`}>
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(formData.nextFollowUp || '')}
+                    </div>
+                </div>
+                <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Last Contact</p>
+                    <p className="text-gray-700 font-medium">{formatDate(formData.lastContact || '')}</p>
+                </div>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Col: Contact Info */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <User className="h-4 w-4 text-brand-500" /> Contact Details
+                </h3>
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500">Phone</p>
+                            <a href={`tel:${formData.phone}`} className="text-sm font-medium text-brand-600 hover:underline">
+                                {formData.phone || 'N/A'}
+                            </a>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center">
+                            <Mail className="h-4 w-4 text-gray-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500">Email</p>
+                            <a href={`mailto:${formData.email}`} className="text-sm font-medium text-brand-600 hover:underline">
+                                {formData.email || 'N/A'}
+                            </a>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center">
+                            <Briefcase className="h-4 w-4 text-gray-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500">Lead Source</p>
+                            <p className="text-sm font-medium text-gray-900">
+                                {formData.leadSources?.[0] || 'Unknown'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Col: Scope & Tags */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-brand-500" /> Tags & Work
+                </h3>
+                
+                <div className="mb-4">
+                    <p className="text-xs font-semibold text-gray-400 mb-2">Scope of Work</p>
+                    <div className="space-y-2">
+                        {formData.work && formData.work.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {formData.work.map((w: any) => {
+                                    // Handle both string and legacy object formats
+                                    const label = typeof w === 'object' && w !== null ? w.name : w;
+                                    const opt = WORK_OPTIONS.find(o => o.label === label);
+                                    return (
+                                        <div key={label} className={`px-2.5 py-1 text-sm rounded border font-medium capitalize ${opt ? opt.color : 'bg-gray-100 text-gray-700'}`}>
+                                            {label}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : <span className="text-sm text-gray-400 italic">No work items selected</span>}
+                    </div>
+                </div>
+
+                <div>
+                    <p className="text-xs font-semibold text-gray-400 mb-2">Tags</p>
+                    <div className="flex flex-wrap gap-2">
+                        {formData.tags && formData.tags.length > 0 ? (
+                            formData.tags.map(t => {
+                                const opt = TAG_OPTIONS.find(o => o.label === t);
+                                return (
+                                    <span key={t} className={`px-2 py-0.5 text-xs rounded border font-medium ${opt ? opt.color : 'bg-gray-100'}`}>
+                                        {t}
+                                    </span>
+                                )
+                            })
+                        ) : <span className="text-sm text-gray-400 italic">No tags</span>}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Common Notes Area */}
+        <div className="bg-amber-50 rounded-xl border border-amber-100 p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-amber-800 uppercase tracking-wide mb-2 flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Notes
+            </h3>
+            <div className="prose prose-sm text-gray-800 max-w-none whitespace-pre-wrap">
+                {formData.notes || <span className="italic text-gray-400">No notes available.</span>}
+            </div>
+        </div>
     </div>
   );
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-bold text-gray-900">
-            {initialData ? (isView ? 'Deal Details' : 'Edit Deal') : 'New CRM Entry'}
-          </h2>
-          <div className="flex items-center gap-2">
-            {isView && (
-                <button onClick={toggleEdit} className="p-2 text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors">
-                    <Edit2 className="h-4 w-4" /> Edit
-                </button>
-            )}
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
-                <X className="h-6 w-6" />
-            </button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
+  // --- EDIT FORM RENDERER ---
+  const renderEditForm = () => (
+    <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Contact Info */}
             <div className="space-y-6">
                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Contact Information</h3>
                
-               <FormField label="Company" valueDisplay={formData.company}>
+               <div className="w-full">
+                 <label className="block mb-1.5 text-sm font-medium text-gray-700">Company</label>
                  <input required type="text" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
                    value={formData.company || ''} onChange={e => setFormData({...formData, company: e.target.value})} />
-               </FormField>
+               </div>
 
-               <FormField label="Contact Person" valueDisplay={formData.contactName}>
+               <div className="w-full">
+                 <label className="block mb-1.5 text-sm font-medium text-gray-700">Contact Person</label>
                  <input required type="text" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
                    value={formData.contactName || ''} onChange={e => setFormData({...formData, contactName: e.target.value})} />
-               </FormField>
+               </div>
 
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <FormField label="Email" valueDisplay={formData.email ? <a href={`mailto:${formData.email}`} className="text-brand-600 hover:underline">{formData.email}</a> : '-'}>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Email</label>
                         <input type="email" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
                         value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} />
-                    </FormField>
+                    </div>
                     
-                    <FormField label="Phone" valueDisplay={formData.phone ? <a href={`tel:${formData.phone}`} className="text-brand-600 hover:underline">{formData.phone}</a> : '-'}>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Phone</label>
                         <input type="text" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
                         value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                    </FormField>
+                    </div>
                </div>
             </div>
 
@@ -187,34 +313,29 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Deal Details</h3>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <FormField label="Deal Value (₹)" valueDisplay={formData.dealValue?.toLocaleString('en-IN')}>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Deal Value (₹)</label>
                         <input type="number" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
                         value={formData.dealValue} onChange={e => setFormData({...formData, dealValue: Number(e.target.value)})} />
-                    </FormField>
+                    </div>
 
-                    <FormField label="Status" valueDisplay={
-                        <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-700`}>{formData.status}</span>
-                    }>
-                            <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white"
-                                value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as any})}
-                            >
-                                <option value="lead">Lead</option>
-                                <option value="on progress">On Progress</option>
-                                <option value="Quote Sent">Quote Sent</option>
-                                <option value="onboarded">Onboarded</option>
-                                <option value="drop">Drop</option>
-                            </select>
-                    </FormField>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Status</label>
+                        <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white"
+                            value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as any})}
+                        >
+                            <option value="lead">Lead</option>
+                            <option value="on progress">On Progress</option>
+                            <option value="Quote Sent">Quote Sent</option>
+                            <option value="onboarded">Onboarded</option>
+                            <option value="drop">Drop</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <FormField label="Lead Source" valueDisplay={
-                         formData.leadSources && formData.leadSources[0] ? (
-                             <span className="inline-block px-2.5 py-1 rounded text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
-                                 {formData.leadSources[0]}
-                             </span>
-                         ) : <span className="text-gray-400">-</span>
-                    }>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Lead Source</label>
                         <select 
                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white"
                             value={formData.leadSources?.[0] || ''} 
@@ -225,52 +346,53 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                                 <option key={source} value={source}>{source}</option>
                             ))}
                         </select>
-                    </FormField>
+                    </div>
 
-                    <FormField label="Assigned To" valueDisplay={formData.assignedTo}>
-                            <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white"
-                                value={formData.assignedTo} onChange={e => setFormData({...formData, assignedTo: e.target.value})}
-                            >
-                                <option value="Vallapata">Vallapata</option>
-                                <option value="John Doe">John Doe</option>
-                            </select>
-                    </FormField>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Assigned To</label>
+                        <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white"
+                            value={formData.assignedTo} onChange={e => setFormData({...formData, assignedTo: e.target.value})}
+                        >
+                            <option value="Vallapata">Vallapata</option>
+                            <option value="John Doe">John Doe</option>
+                        </select>
+                    </div>
                </div>
                
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <FormField label="Last Contact" valueDisplay={formData.lastContact || '-'}>
-                        <input type="date" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                            value={formData.lastContact || ''} onChange={e => setFormData({...formData, lastContact: e.target.value})} />
-                    </FormField>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Last Contact</label>
+                        <CustomDatePicker 
+                            value={formData.lastContact || ''} 
+                            onChange={val => setFormData({...formData, lastContact: val})}
+                            placeholder="Select Date"
+                        />
+                    </div>
 
-                    <FormField label="Next Follow Up" valueDisplay={formData.nextFollowUp}>
-                            <input type="date" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                                value={formData.nextFollowUp || ''} onChange={e => setFormData({...formData, nextFollowUp: e.target.value})} />
-                    </FormField>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Next Follow Up</label>
+                        <CustomDatePicker 
+                            value={formData.nextFollowUp || ''} 
+                            onChange={val => setFormData({...formData, nextFollowUp: val})}
+                            placeholder="Select Date"
+                        />
+                    </div>
                </div>
             </div>
-          </div>
-          
-          <div className="space-y-6 border-t border-gray-100 pt-6">
-             <FormField label="Notes" valueDisplay={<p className="whitespace-pre-wrap text-gray-600">{formData.notes || 'No notes available.'}</p>}>
-                 <textarea className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none h-24"
+        </div>
+        
+        <div className="space-y-6 border-t border-gray-100 pt-6">
+             <div className="w-full">
+                 <label className="block mb-1.5 text-sm font-medium text-gray-700">Common Notes</label>
+                 <textarea className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 focus:outline-none h-32 text-gray-700 leading-relaxed shadow-sm"
+                    placeholder="Enter general notes about the deal here..."
                     value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})}
                  ></textarea>
-             </FormField>
+             </div>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label="Tags" valueDisplay={
-                    <div className="flex flex-wrap gap-2">
-                        {formData.tags?.length ? formData.tags.map(tag => {
-                             const tagOption = TAG_OPTIONS.find(opt => opt.label === tag);
-                             return (
-                                <span key={tag} className={`px-2.5 py-0.5 text-xs rounded border font-medium ${tagOption ? tagOption.color : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                                    {tag}
-                                </span>
-                             );
-                        }) : <span className="text-gray-400 italic">None</span>}
-                    </div>
-                }>
+                <div className="w-full">
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700">Tags</label>
                     <div className="flex flex-wrap gap-2">
                         {TAG_OPTIONS.map(option => {
                             const isSelected = formData.tags?.includes(option.label);
@@ -290,60 +412,77 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                             );
                         })}
                     </div>
-                </FormField>
+                </div>
 
-                <FormField label="Work Types" valueDisplay={
-                    <div className="flex flex-wrap gap-2">
-                        {formData.work?.length ? formData.work.map(w => {
-                             const workOption = WORK_OPTIONS.find(opt => opt.label === w);
-                             return (
-                                <span key={w} className={`px-2.5 py-0.5 text-xs rounded border font-medium ${workOption ? workOption.color : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
-                                    {w}
-                                </span>
-                             );
-                        }) : <span className="text-gray-400 italic">None</span>}
+                <div className="w-full">
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700">Work Types</label>
+                    <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                            {WORK_OPTIONS.map(option => {
+                                // Defensive check against legacy objects
+                                const currentWork = (formData.work || []).map((w: any) => typeof w === 'object' ? w.name : w);
+                                const isSelected = currentWork.includes(option.label);
+                                return (
+                                    <button
+                                        key={option.label}
+                                        type="button"
+                                        onClick={() => toggleWork(option.label)}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                                            isSelected
+                                                ? option.color + ' ring-2 ring-offset-1 ring-brand-300'
+                                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                }>
-                    <div className="flex flex-wrap gap-2">
-                        {WORK_OPTIONS.map(option => {
-                            const isSelected = formData.work?.includes(option.label);
-                            return (
-                                <button
-                                    key={option.label}
-                                    type="button"
-                                    onClick={() => toggleWork(option.label)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                                        isSelected
-                                            ? option.color + ' ring-2 ring-offset-1 ring-brand-300'
-                                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                                    }`}
-                                >
-                                    {option.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </FormField>
+                </div>
              </div>
-          </div>
+        </div>
+    </div>
+  );
 
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-             {isView ? (
-                 <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
-                     Close
-                 </button>
-             ) : (
-                 <>
-                    <button type="button" onClick={handleCancel} className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" className="px-4 py-2 text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors font-medium flex items-center gap-2">
-                        <Save className="h-4 w-4" /> Save Record
-                    </button>
-                 </>
-             )}
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white z-10">
+          <h2 className="text-xl font-bold text-gray-800">
+            {initialData ? (isView ? 'Deal Overview' : 'Edit Deal') : 'Create New Deal'}
+          </h2>
+          <div className="flex items-center gap-2">
+            {isView && (
+                <button onClick={toggleEdit} className="px-4 py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors">
+                    <Edit2 className="h-4 w-4" /> Edit Details
+                </button>
+            )}
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
+                <X className="h-5 w-5" />
+            </button>
           </div>
-        </form>
+        </div>
+
+        {/* Modal Content */}
+        <div className="overflow-y-auto p-6 flex-1 bg-white">
+            <form onSubmit={handleSubmit}>
+                {isView ? renderView() : renderEditForm()}
+                
+                {/* Footer Actions (Only for Edit Mode or to Close) */}
+                {!isView && (
+                    <div className="flex justify-end gap-3 pt-8 mt-4 border-t border-gray-100">
+                        <button type="button" onClick={handleCancel} className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
+                            Cancel
+                        </button>
+                        <button type="submit" className="px-5 py-2.5 text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors font-medium flex items-center gap-2 shadow-lg shadow-brand-500/30">
+                            <Save className="h-4 w-4" /> Save Changes
+                        </button>
+                    </div>
+                )}
+            </form>
+        </div>
       </div>
     </div>
   );

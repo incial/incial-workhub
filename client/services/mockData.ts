@@ -1,4 +1,5 @@
-import { CRMEntry } from '../types';
+
+import { CRMEntry, Company } from '../types';
 
 export const MOCK_CRM_DATA: CRMEntry[] = [
   {
@@ -11,7 +12,7 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     lastContact: "2023-10-25",
     nextFollowUp: new Date().toISOString().split('T')[0], // Today
     dealValue: 35000.00,
-    notes: "Proposal revised, waiting for signoff.",
+    notes: "Proposal revised, waiting for signoff. Logo refreshment needed.",
     status: "on progress",
     tags: ["Follow-up", "VIP"],
     work: ["branding", "marketing"],
@@ -43,7 +44,7 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     lastContact: "2023-10-28",
     nextFollowUp: "2025-11-01", // Future
     dealValue: 15000.00,
-    notes: "Contract signed.",
+    notes: "Contract signed. Sustainability audit included.",
     status: "onboarded",
     tags: ["Eco"],
     work: ["consulting"],
@@ -80,5 +81,53 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     tags: ["Hot"],
     work: ["software"],
     leadSources: ["Website"]
+  }
+];
+
+export const MOCK_COMPANIES_DATA: Company[] = [
+  {
+    id: 1,
+    referenceId: "REF-2024-001",
+    name: "Acme Innovations",
+    work: ["Marketing", "Branding"],
+    status: "running",
+    createdAt: "2023-01-15T10:00:00Z",
+    updatedAt: "2023-10-01T14:00:00Z"
+  },
+  {
+    id: 2,
+    referenceId: "REF-2024-002",
+    name: "CyberDyne Systems",
+    work: ["UI/UX", "Website"],
+    status: "not_started",
+    createdAt: "2023-02-20T09:30:00Z",
+    updatedAt: "2023-02-20T09:30:00Z"
+  },
+  {
+    id: 3,
+    referenceId: "REF-2024-003",
+    name: "Globex Corporation",
+    work: ["Video", "VFX"],
+    status: "completed",
+    createdAt: "2022-11-05T16:20:00Z",
+    updatedAt: "2023-09-15T11:45:00Z"
+  },
+  {
+    id: 4,
+    referenceId: "REF-2024-004",
+    name: "Soylent Corp",
+    work: ["Ads", "Poster"],
+    status: "discontinued",
+    createdAt: "2023-05-12T08:00:00Z",
+    updatedAt: "2023-06-01T10:00:00Z"
+  },
+  {
+    id: 5,
+    referenceId: "REF-2024-005",
+    name: "Massive Dynamic",
+    work: ["LinkedIn", "Marketing"],
+    status: "running",
+    createdAt: "2023-08-10T13:15:00Z",
+    updatedAt: "2023-10-25T09:00:00Z"
   }
 ];

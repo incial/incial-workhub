@@ -3,9 +3,10 @@ import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
 import { CRMFilters } from '../components/crm/CRMFilters';
 import { CRMTable } from '../components/crm/CRMTable';
+import { CRMStats } from '../components/crm/CRMStats';
 import { CRMForm } from '../components/crm/CRMForm';
 import { FilterState, CRMEntry } from '../types';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { crmApi } from '../services/api';
 
 export const CRMPage: React.FC = () => {
@@ -113,29 +114,38 @@ export const CRMPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar />
         
-        <main className="flex-1 flex flex-col p-6 overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
+        <main className="flex-1 flex flex-col p-8 overflow-y-auto custom-scrollbar">
+          
+          <div className="flex justify-between items-end mb-8">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">CRM & Leads</h1>
-                <p className="text-sm text-gray-500 mt-1">Manage your pipeline, track follow-ups, and close deals.</p>
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">CRM Dashboard</h1>
+                <p className="text-gray-500 mt-2 font-medium">Welcome back, track your team's progress and active deals.</p>
             </div>
-            <button 
-                onClick={handleCreate}
-                className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium shadow-sm transition-all transform hover:scale-105"
-            >
-                <Plus className="h-5 w-5" />
-                Add Deal
-            </button>
+            <div className="flex gap-3">
+                <button className="bg-white hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-sm border border-gray-200 transition-all">
+                    <Download className="h-4.5 w-4.5" />
+                    Export
+                </button>
+                <button 
+                    onClick={handleCreate}
+                    className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-brand-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                    <Plus className="h-5 w-5" />
+                    New Deal
+                </button>
+            </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-1 overflow-hidden">
+          <CRMStats entries={entries} />
+
+          <div className="bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100/50 flex flex-col flex-1 overflow-hidden">
             <CRMFilters filters={filters} setFilters={setFilters} onRefresh={fetchData} />
-            <div className="flex-1 overflow-auto bg-gray-50/50">
+            <div className="flex-1 overflow-auto bg-white">
                 <CRMTable 
                     data={filteredData} 
                     isLoading={isLoading} 
@@ -143,9 +153,9 @@ export const CRMPage: React.FC = () => {
                     onDelete={handleDelete}
                 />
             </div>
-            <div className="p-3 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 flex justify-between">
+            <div className="p-4 border-t border-gray-50 bg-white text-xs font-medium text-gray-400 flex justify-between rounded-b-3xl">
                 <span>Showing {filteredData.length} records</span>
-                <span>Sorted by Default</span>
+                <span>WorkHub CRM v1.2</span>
             </div>
           </div>
         </main>

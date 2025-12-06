@@ -1,54 +1,64 @@
+
 import React from 'react';
-import { LayoutDashboard, Users, Briefcase, Settings, PieChart, Layers } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Settings, PieChart, Layers, ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const NavItem = ({ icon: Icon, label, to, active }: { icon: any, label: string, to: string, active: boolean }) => (
   <Link
     to={to}
-    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1 ${
+    className={`group flex items-center justify-between px-4 py-3 mx-3 rounded-xl text-sm font-medium transition-all duration-200 ${
       active 
-        ? 'bg-brand-50 text-brand-700' 
-        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-500/30' 
+        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-100'
     }`}
   >
-    <Icon className={`h-4 w-4 ${active ? 'text-brand-600' : 'text-gray-500'}`} />
-    {label}
+    <div className="flex items-center gap-3">
+        <Icon className={`h-[18px] w-[18px] transition-colors ${active ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+        <span>{label}</span>
+    </div>
+    {active && <ChevronRight className="h-4 w-4 text-white/70" />}
   </Link>
 );
 
 export const Sidebar: React.FC = () => {
-    const location = useLocation(); // In a real router setup
-    // Using simple logic for demo since we might simulate router
+    const location = useLocation();
     const currentPath = location ? location.pathname : '/crm';
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 z-10 hidden md:flex">
-      <div className="h-16 flex items-center px-6 border-b border-gray-200">
-        <div className="flex items-center gap-2 text-brand-700 font-bold text-xl">
-            <div className="h-8 w-8 bg-brand-600 rounded-lg flex items-center justify-center text-white">
+    <aside className="w-72 bg-[#0F172A] border-r border-slate-800 flex flex-col h-screen sticky top-0 z-30 hidden md:flex shadow-2xl">
+      <div className="h-20 flex items-center px-8 border-b border-slate-800/50">
+        <div className="flex items-center gap-3 text-white font-bold text-xl tracking-tight">
+            <div className="h-9 w-9 bg-gradient-to-br from-brand-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
                 W
             </div>
             WorkHub
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-6 px-4">
-        <div className="mb-6">
-            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Main</p>
-            <NavItem icon={LayoutDashboard} label="Dashboard" to="/" active={currentPath === '/'} />
-            <NavItem icon={Users} label="CRM & Leads" to="/crm" active={currentPath === '/crm'} />
-            <NavItem icon={Briefcase} label="Companies" to="/companies" active={currentPath === '/companies'} />
+      <div className="flex-1 overflow-y-auto py-8">
+        <div className="mb-8">
+            <p className="px-7 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Overview</p>
+            <div className="space-y-1">
+                <NavItem icon={LayoutDashboard} label="Dashboard" to="/" active={currentPath === '/'} />
+                <NavItem icon={Users} label="CRM & Leads" to="/crm" active={currentPath === '/crm'} />
+                <NavItem icon={Briefcase} label="Companies" to="/companies" active={currentPath === '/companies'} />
+            </div>
         </div>
 
-        <div className="mb-6">
-            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Analytics</p>
-            <NavItem icon={PieChart} label="Reports" to="/reports" active={false} />
-            <NavItem icon={Layers} label="Pipelines" to="/pipelines" active={false} />
+        <div className="mb-8">
+            <p className="px-7 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Analytics</p>
+             <div className="space-y-1">
+                <NavItem icon={PieChart} label="Reports" to="/reports" active={false} />
+                <NavItem icon={Layers} label="Pipelines" to="/pipelines" active={false} />
+            </div>
         </div>
       </div>
 
-      <div className="p-4 border-t border-gray-200">
-        <NavItem icon={Settings} label="Settings" to="/settings" active={false} />
+      <div className="p-4 border-t border-slate-800/50 bg-[#0F172A]">
+        <Link to="/settings" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-slate-100 transition-all">
+            <Settings className="h-5 w-5" />
+            <span className="font-medium text-sm">Settings</span>
+        </Link>
       </div>
     </aside>
   );
