@@ -60,3 +60,26 @@ export interface CompanyFilterState {
   status: string;
   workType: string;
 }
+
+// --- TASKS MODULE TYPES ---
+
+export type TaskStatus = 'Not Started' | 'In Progress' | 'Completed';
+export type TaskPriority = 'Low' | 'Medium' | 'High';
+
+export interface Task {
+  id: number;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignedTo: string; // User name or 'Unassigned'
+  dueDate: string; // YYYY-MM-DD
+  createdAt: string;
+}
+
+export interface TaskFilterState {
+  search: string;
+  status: string;
+  priority: string;
+  assignedTo: string;
+}

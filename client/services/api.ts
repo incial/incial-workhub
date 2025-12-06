@@ -1,7 +1,7 @@
 
 import axios from 'axios';
-import { CRMEntry, Company } from '../types';
-import { MOCK_CRM_DATA, MOCK_COMPANIES_DATA } from './mockData';
+import { CRMEntry, Company, Task } from '../types';
+import { MOCK_CRM_DATA, MOCK_COMPANIES_DATA, MOCK_TASKS_DATA } from './mockData';
 
 // In a real app, this comes from env
 const API_URL = 'https://api.workhub.com/api/v1'; 
@@ -92,6 +92,34 @@ export const companiesApi = {
     delete: async (id: number): Promise<void> => {
       await delay(300);
     }
+};
+
+export const tasksApi = {
+  getAll: async (): Promise<Task[]> => {
+    await delay(600);
+    const stored = localStorage.getItem('mock_tasks_data');
+    if (stored) return JSON.parse(stored);
+    return MOCK_TASKS_DATA;
+  },
+
+  create: async (data: Omit<Task, 'id' | 'createdAt'>): Promise<Task> => {
+    await delay(300);
+    const newEntry: Task = { 
+      ...data, 
+      id: Date.now(),
+      createdAt: new Date().toISOString()
+    };
+    return newEntry;
+  },
+
+  update: async (id: number, data: Partial<Task>): Promise<Task> => {
+     await delay(200);
+     return { id, ...data } as Task;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await delay(200);
+  }
 };
 
 export const authApi = {

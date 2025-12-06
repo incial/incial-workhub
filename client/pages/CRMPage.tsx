@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
@@ -119,21 +120,21 @@ export const CRMPage: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar />
         
-        <main className="flex-1 flex flex-col p-8 overflow-y-auto custom-scrollbar">
+        <main className="flex-1 flex flex-col p-8 overflow-y-auto custom-scrollbar h-[calc(100vh-80px)]">
           
-          <div className="flex justify-between items-end mb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
                 <h1 className="text-3xl font-bold text-gray-900 tracking-tight">CRM Dashboard</h1>
-                <p className="text-gray-500 mt-2 font-medium">Welcome back, track your team's progress and active deals.</p>
+                <p className="text-gray-500 mt-1 font-medium">Welcome back, track your team's progress and active deals.</p>
             </div>
             <div className="flex gap-3">
-                <button className="bg-white hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-sm border border-gray-200 transition-all">
+                <button className="bg-white hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-sm border border-gray-200 transition-all active:scale-95">
                     <Download className="h-4.5 w-4.5" />
                     Export
                 </button>
                 <button 
                     onClick={handleCreate}
-                    className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-brand-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                    className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-brand-500/30 transition-all active:scale-95"
                 >
                     <Plus className="h-5 w-5" />
                     New Deal
@@ -153,7 +154,7 @@ export const CRMPage: React.FC = () => {
                     onDelete={handleDelete}
                 />
             </div>
-            <div className="p-4 border-t border-gray-50 bg-white text-xs font-medium text-gray-400 flex justify-between rounded-b-3xl">
+            <div className="p-4 border-t border-gray-50 bg-white text-xs font-medium text-gray-400 flex justify-between">
                 <span>Showing {filteredData.length} records</span>
                 <span>WorkHub CRM v1.2</span>
             </div>

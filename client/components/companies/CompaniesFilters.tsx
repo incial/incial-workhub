@@ -47,7 +47,7 @@ export const CompaniesFilters: React.FC<CompaniesFiltersProps> = ({ filters, set
   ];
 
   return (
-    <div className="bg-white p-5 border-b border-gray-100 flex flex-col xl:flex-row gap-5 items-start xl:items-center justify-between rounded-t-2xl z-20 relative">
+    <div className="p-4 border-b border-gray-100 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between bg-white z-20">
       
       {/* Left: Inputs */}
       <div className="flex flex-wrap items-end gap-3 w-full">

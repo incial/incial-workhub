@@ -1,5 +1,5 @@
 
-import { CRMEntry, Company } from '../types';
+import { CRMEntry, Company, Task } from '../types';
 
 export const MOCK_CRM_DATA: CRMEntry[] = [
   {
@@ -129,5 +129,58 @@ export const MOCK_COMPANIES_DATA: Company[] = [
     status: "running",
     createdAt: "2023-08-10T13:15:00Z",
     updatedAt: "2023-10-25T09:00:00Z"
+  }
+];
+
+export const MOCK_TASKS_DATA: Task[] = [
+  {
+    id: 1,
+    title: "Draft Proposal for Acme",
+    description: "Create a preliminary branding deck for Acme Innovations based on the last meeting.",
+    status: "In Progress",
+    priority: "High",
+    assignedTo: "Vallapata",
+    dueDate: new Date().toISOString().split('T')[0], // Today
+    createdAt: "2023-10-20T10:00:00Z"
+  },
+  {
+    id: 2,
+    title: "Follow up with TechFlow",
+    description: "Send an email regarding the missing technical specifications.",
+    status: "Not Started",
+    priority: "Medium",
+    assignedTo: "John Doe",
+    dueDate: "2023-11-05",
+    createdAt: "2023-10-21T11:00:00Z"
+  },
+  {
+    id: 3,
+    title: "Update Website Portfolio",
+    description: "Add the latest VFX project from Globex to the homepage slider.",
+    status: "Completed",
+    priority: "Low",
+    assignedTo: "Vallapata",
+    dueDate: "2023-10-15",
+    createdAt: "2023-10-01T09:00:00Z"
+  },
+  {
+    id: 4,
+    title: "Prepare Invoice for SMR",
+    description: "Finalize the invoice for the logo design work.",
+    status: "Not Started",
+    priority: "High",
+    assignedTo: "Demo User",
+    dueDate: "2023-11-01",
+    createdAt: "2023-10-25T14:00:00Z"
+  },
+  {
+    id: 5,
+    title: "Team Sync Meeting",
+    description: "Weekly sync to discuss pipeline progress.",
+    status: "In Progress",
+    priority: "Medium",
+    assignedTo: "Demo User",
+    dueDate: new Date().toISOString().split('T')[0],
+    createdAt: "2023-10-26T08:30:00Z"
   }
 ];

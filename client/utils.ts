@@ -65,3 +65,23 @@ export const getWorkTypeStyles = (work: string) => {
   };
   return map[work] || 'bg-gray-100 text-gray-700 border-gray-200';
 };
+
+// --- TASKS MODULE UTILS ---
+
+export const getTaskStatusStyles = (status: string) => {
+  switch (status) {
+    case 'Completed': return 'bg-green-100 text-green-700 border-green-200';
+    case 'In Progress': return 'bg-blue-100 text-blue-700 border-blue-200';
+    case 'Not Started': return 'bg-gray-100 text-gray-700 border-gray-200';
+    default: return 'bg-gray-50 text-gray-600 border-gray-200';
+  }
+};
+
+export const getTaskPriorityStyles = (priority: string) => {
+  switch (priority) {
+    case 'High': return 'bg-red-50 text-red-700 border-red-100';
+    case 'Medium': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
+    case 'Low': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+    default: return 'bg-gray-50 text-gray-600';
+  }
+};
