@@ -1,6 +1,8 @@
 package com.incial.workhub.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.incial.workhub.model.CRM;
+import com.incial.workhub.model.User;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -10,6 +12,13 @@ import java.util.List;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Response {
+
+    //error handling
+    private int statusCode;
+    private String message;
+
+    private String role;
+    private String token;
 
     //CRM
     private String company;
@@ -30,4 +39,11 @@ public class Response {
     private List<String> work;
     private List<String> status;
     private List<String> leadSources;
+
+    private User user;
+    private CRM crm;
+
+    private List<User> users;
+    private List<CRM> crmList;
+
 }

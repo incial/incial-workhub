@@ -33,14 +33,13 @@ public class CRM {
 
     private String notes;
 
+    private String status;
+
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> tags;
 
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> work;
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> status;
 
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> leadSources;
