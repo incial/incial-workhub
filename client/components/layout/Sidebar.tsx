@@ -2,6 +2,7 @@
 import React from 'react';
 import { LayoutDashboard, Users, Briefcase, Settings, PieChart, Layers, ChevronRight, CheckSquare } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const NavItem = ({ icon: Icon, label, to, active }: { icon: any, label: string, to: string, active: boolean }) => (
   <Link
@@ -22,7 +23,9 @@ const NavItem = ({ icon: Icon, label, to, active }: { icon: any, label: string, 
 
 export const Sidebar: React.FC = () => {
     const location = useLocation();
+    const { user } = useAuth();
     const currentPath = location ? location.pathname : '/crm';
+    const isAdmin = user?.role === 'ROLE_ADMIN';
 
   return (
     <aside className="w-72 bg-[#0F172A] border-r border-slate-800 flex flex-col h-screen sticky top-0 z-30 hidden md:flex shadow-2xl">
@@ -46,13 +49,16 @@ export const Sidebar: React.FC = () => {
             </div>
         </div>
 
-        <div className="mb-8">
-            <p className="px-7 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Analytics</p>
-             <div className="space-y-1">
-                <NavItem icon={PieChart} label="Reports" to="/reports" active={false} />
-                <NavItem icon={Layers} label="Pipelines" to="/pipelines" active={false} />
+        {/* Analytics Section - Only for Admins */}
+        {isAdmin && (
+            <div className="mb-8 animate-in fade-in slide-in-from-left-2 duration-300">
+                <p className="px-7 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Analytics</p>
+                <div className="space-y-1">
+                    <NavItem icon={PieChart} label="Reports" to="/reports" active={currentPath === '/reports'} />
+                    <NavItem icon={Layers} label="Pipelines" to="/pipelines" active={currentPath === '/pipelines'} />
+                </div>
             </div>
-        </div>
+        )}
       </div>
 
       <div className="p-4 border-t border-slate-800/50 bg-[#0F172A]">

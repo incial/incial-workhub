@@ -6,6 +6,7 @@ import { CRMPage } from './pages/CRMPage';
 import { CompaniesPage } from './pages/CompaniesPage';
 import { TasksPage } from './pages/TasksPage';
 import { LoginPage } from './pages/LoginPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 
 // Protected Route Wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
@@ -14,6 +15,19 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
     return <Navigate to="/login" replace />;
   }
   return children;
+};
+
+// Admin Only Route Wrapper
+const AdminRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+    const { isAuthenticated, user } = useAuth();
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace />;
+    }
+    if (user?.role !== 'ROLE_ADMIN') {
+        // Redirect employees to CRM if they try to access admin pages
+        return <Navigate to="/crm" replace />;
+    }
+    return children;
 };
 
 // Public Route Wrapper (redirects to dashboard if logged in)
@@ -48,6 +62,19 @@ const AppRoutes = () => {
                     <TasksPage />
                 </ProtectedRoute>
             } />
+            
+            {/* Admin Only Routes */}
+            <Route path="/reports" element={
+                <AdminRoute>
+                    <AnalyticsPage title="Reports" />
+                </AdminRoute>
+            } />
+            <Route path="/pipelines" element={
+                <AdminRoute>
+                    <AnalyticsPage title="Pipeline Analytics" />
+                </AdminRoute>
+            } />
+
             {/* Redirect root to CRM for this demo */}
             <Route path="/" element={<Navigate to="/crm" replace />} />
             <Route path="*" element={<Navigate to="/crm" replace />} />

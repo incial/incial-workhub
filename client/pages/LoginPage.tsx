@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { authApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, CheckCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, CheckCircle, Shield, User } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('demo@workhub.com');
@@ -24,6 +24,16 @@ export const LoginPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fillCredentials = (role: 'admin' | 'employee') => {
+      if (role === 'admin') {
+          setEmail('demo@workhub.com');
+          setPassword('demo');
+      } else {
+          setEmail('employee@workhub.com');
+          setPassword('employee');
+      }
   };
 
   return (
@@ -145,17 +155,30 @@ export const LoginPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-blue-50/50 rounded-xl p-5 border border-blue-100 space-y-2">
-                 <div className="flex justify-between items-center text-sm">
-                     <span className="text-gray-600">Email:</span>
-                     <div className="flex items-center gap-2">
-                         <span className="font-mono text-gray-900 font-semibold bg-white px-2 py-0.5 rounded border border-blue-100">demo@workhub.com</span>
-                     </div>
-                 </div>
-                 <div className="flex justify-between items-center text-sm">
-                     <span className="text-gray-600">Password:</span>
-                     <span className="font-mono text-gray-900 font-semibold bg-white px-2 py-0.5 rounded border border-blue-100">demo</span>
-                 </div>
+            <div className="grid grid-cols-2 gap-4">
+                <button 
+                    onClick={() => fillCredentials('admin')}
+                    className="p-3 border border-gray-200 rounded-xl text-left hover:border-blue-500 hover:bg-blue-50/50 transition-all group"
+                >
+                    <div className="flex items-center gap-2 mb-1">
+                        <Shield className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-bold text-gray-900">Admin</span>
+                    </div>
+                    <div className="text-xs text-gray-500 font-mono">demo@workhub.com</div>
+                    <div className="text-xs text-gray-400 mt-1 group-hover:text-blue-600">Click to fill</div>
+                </button>
+
+                <button 
+                    onClick={() => fillCredentials('employee')}
+                    className="p-3 border border-gray-200 rounded-xl text-left hover:border-indigo-500 hover:bg-indigo-50/50 transition-all group"
+                >
+                    <div className="flex items-center gap-2 mb-1">
+                        <User className="h-4 w-4 text-indigo-600" />
+                        <span className="text-sm font-bold text-gray-900">Employee</span>
+                    </div>
+                    <div className="text-xs text-gray-500 font-mono">employee@workhub.com</div>
+                    <div className="text-xs text-gray-400 mt-1 group-hover:text-indigo-600">Click to fill</div>
+                </button>
             </div>
          </div>
       </div>

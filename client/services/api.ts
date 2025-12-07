@@ -126,15 +126,29 @@ export const authApi = {
   login: async (email: string, password: string) => {
     // REAL CALL: return api.post("/auth/login", { email, password });
     await delay(800);
+    
+    // ADMIN LOGIN
     if (email === 'demo@workhub.com' && password === 'demo') {
       return {
         statusCode: 200,
-        token: "mock-jwt-token-xyz-123",
+        token: "mock-jwt-token-admin",
         role: "ROLE_ADMIN",
-        user: { id: 1, name: "Demo User", email, role: "ROLE_ADMIN" },
+        user: { id: 1, name: "Admin User", email, role: "ROLE_ADMIN" },
         message: "Login successful"
       };
     }
-    throw new Error("Invalid credentials (try demo@workhub.com / demo)");
+
+    // EMPLOYEE LOGIN
+    if (email === 'employee@workhub.com' && password === 'employee') {
+      return {
+        statusCode: 200,
+        token: "mock-jwt-token-employee",
+        role: "ROLE_EMPLOYEE",
+        user: { id: 2, name: "Employee User", email, role: "ROLE_EMPLOYEE" },
+        message: "Login successful"
+      };
+    }
+
+    throw new Error("Invalid credentials");
   }
 };
