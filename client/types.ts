@@ -51,6 +51,7 @@ export interface Company {
   id: number;
   referenceId: string;
   name: string;
+  contactPerson?: string; // Added field
   work: string[];
   status: CompanyStatus;
   createdAt: string;

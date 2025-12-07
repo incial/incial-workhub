@@ -51,7 +51,12 @@ export const CRMPage: React.FC = () => {
         item.company.toLowerCase().includes(filters.search.toLowerCase()) ||
         item.contactName.toLowerCase().includes(filters.search.toLowerCase());
       
-      const matchesStatus = filters.status === '' || item.status === filters.status;
+      // Default View (filters.status === ''): Show only Active Pipeline (exclude closed/won/lost)
+      // Specific View: Show matches
+      const matchesStatus = filters.status !== '' 
+        ? item.status === filters.status 
+        : !['onboarded', 'drop', 'completed'].includes(item.status);
+
       const matchesAssigned = filters.assignedTo === '' || item.assignedTo === filters.assignedTo;
       
       const matchesDate = filters.dateRangeStart === '' || (

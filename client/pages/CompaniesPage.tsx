@@ -4,6 +4,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
 import { CompaniesTable } from '../components/companies/CompaniesTable';
 import { CompaniesFilters } from '../components/companies/CompaniesFilters';
+import { CompanyDetailsModal } from '../components/companies/CompanyDetailsModal';
 import { Company, CompanyFilterState, CRMEntry } from '../types';
 import { Briefcase, Building, Archive, ArrowRight, CheckCircle } from 'lucide-react';
 import { crmApi } from '../services/api';
@@ -13,6 +14,8 @@ export const CompaniesPage: React.FC = () => {
   const [crmEntries, setCrmEntries] = useState<CRMEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'active' | 'dropped' | 'past'>('active');
+  const [viewingCompany, setViewingCompany] = useState<Company | undefined>(undefined);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [filters, setFilters] = useState<CompanyFilterState>({
     search: '',
@@ -44,10 +47,13 @@ export const CompaniesPage: React.FC = () => {
           // Generate Reference ID: REF-{Year}-{ID}
           referenceId: `REF-${new Date().getFullYear()}-${entry.id.toString().padStart(3, '0')}`,
           name: entry.company,
+          contactPerson: entry.contactName, // Map contact name
           work: entry.work.map((w: any) => typeof w === 'object' ? w.name : w),
           status: entry.status,
           createdAt: entry.lastContact,
           updatedAt: entry.lastUpdatedAt || new Date().toISOString(),
+          lastUpdatedBy: entry.lastUpdatedBy,
+          lastUpdatedAt: entry.lastUpdatedAt
           // Use properties from CRM that map to Company interface
       } as Company));
   }, [crmEntries]);
@@ -69,6 +75,7 @@ export const CompaniesPage: React.FC = () => {
     let result = sourceList.filter(item => {
       const matchesSearch = filters.search === '' || 
         item.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (item.contactPerson && item.contactPerson.toLowerCase().includes(filters.search.toLowerCase())) ||
         item.referenceId.toLowerCase().includes(filters.search.toLowerCase());
       
       const matchesStatus = filters.status === '' || item.status === filters.status;
@@ -81,13 +88,13 @@ export const CompaniesPage: React.FC = () => {
     return result.sort((a, b) => b.id - a.id);
   }, [categorizedData, activeTab, filters]);
 
-  // Handle Edit - Redirect to CRM since that is the source of truth
   const handleEdit = (company: Company) => {
-      // We could open a modal here, but for this architecture, we might want to direct them to CRM
-      // For now, I'll just log it or we could reuse the CRM modal if imported. 
-      // Given the request, "CRM dashboard contains every company in full details", 
-      // let's keep the Companies view read-only or simple status updates if requested later.
       console.log("Edit requested for", company.name); 
+  };
+
+  const handleView = (company: Company) => {
+      setViewingCompany(company);
+      setIsModalOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -196,6 +203,7 @@ export const CompaniesPage: React.FC = () => {
                     data={displayData} 
                     isLoading={isLoading} 
                     onEdit={handleEdit}
+                    onView={handleView}
                     onDelete={handleDelete}
                 />
             </div>
@@ -208,6 +216,12 @@ export const CompaniesPage: React.FC = () => {
             </div>
           </div>
         </main>
+
+        <CompanyDetailsModal 
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            company={viewingCompany}
+        />
       </div>
     </div>
   );

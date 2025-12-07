@@ -2,16 +2,17 @@
 import React from 'react';
 import { Company } from '../../types';
 import { getCompanyStatusStyles, getWorkTypeStyles } from '../../utils';
-import { Eye, Trash2, Edit2, MoreHorizontal } from 'lucide-react';
+import { Trash2, MoreHorizontal, Hash, User, Eye } from 'lucide-react';
 
 interface CompaniesTableProps {
   data: Company[];
   isLoading: boolean;
   onEdit: (company: Company) => void;
+  onView: (company: Company) => void;
   onDelete: (id: number) => void;
 }
 
-export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading, onEdit, onDelete }) => {
+export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading, onEdit, onView, onDelete }) => {
   if (isLoading) {
     return (
       <div className="p-20 text-center">
@@ -28,7 +29,7 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
             <MoreHorizontal className="h-8 w-8 text-gray-300" />
         </div>
         <h3 className="text-gray-900 font-bold text-lg">No companies found</h3>
-        <p className="text-gray-500 mt-1">Try adjusting your filters or create a new company.</p>
+        <p className="text-gray-500 mt-1">This section is populated from your CRM data.</p>
       </div>
     );
   }
@@ -40,7 +41,8 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
           <tr className="bg-gray-50/50 border-b border-gray-100">
             <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider w-16 text-center">SL No</th>
             <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Reference ID</th>
-            <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Client Name</th>
+            <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Company Name</th>
+            <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Contact Person</th>
             <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Work Info</th>
             <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
             <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
@@ -57,26 +59,43 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
 
               {/* Reference ID */}
               <td className="px-6 py-4">
-                 <span className="text-xs font-mono font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                 <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100 flex w-fit items-center gap-2">
+                    <Hash className="h-3 w-3 opacity-50" />
                     {row.referenceId}
                  </span>
               </td>
 
-              {/* Client Name */}
+              {/* Company Name */}
               <td className="px-6 py-4">
-                <span className="font-bold text-gray-900 text-sm group-hover:text-brand-600 transition-colors">
+                <button 
+                    onClick={() => onView(row)}
+                    className="font-bold text-gray-900 text-sm hover:text-brand-600 hover:underline transition-colors text-left"
+                >
                     {row.name}
-                </span>
+                </button>
+              </td>
+
+              {/* Contact Person */}
+              <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center">
+                        <User className="h-3 w-3 text-gray-500" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">{row.contactPerson || 'N/A'}</span>
+                  </div>
               </td>
 
               {/* Work Info (Chips) */}
               <td className="px-6 py-4">
                  <div className="flex flex-wrap gap-1.5 max-w-[280px]">
-                    {row.work.map(w => (
-                         <span key={w} className={`px-2 py-1 text-[10px] font-semibold rounded-md border ${getWorkTypeStyles(w)}`}>
-                            {w}
-                         </span>
-                    ))}
+                    {row.work.map((w: any) => {
+                         const label = typeof w === 'object' ? w.name : w;
+                         return (
+                            <span key={label} className={`px-2 py-1 text-[10px] font-semibold rounded-md border ${getWorkTypeStyles(label)}`}>
+                                {label}
+                            </span>
+                         );
+                    })}
                     {row.work.length === 0 && <span className="text-gray-300 text-xs">-</span>}
                  </div>
               </td>
@@ -85,7 +104,7 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
               <td className="px-6 py-4">
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold ring-1 inset ring-opacity-10 capitalize ${getCompanyStatusStyles(row.status)}`}>
                    <span className="w-1.5 h-1.5 rounded-full bg-current mr-2 opacity-60"></span>
-                   {row.status.replace('_', ' ')}
+                   {row.status}
                 </span>
               </td>
 
@@ -93,16 +112,16 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
               <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2">
                     <button 
-                        onClick={() => onEdit(row)} 
+                        onClick={() => onView(row)} 
                         className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                        title="Edit"
+                        title="View Details"
                     >
-                        <Edit2 className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                     </button>
                     <button 
                         onClick={() => onDelete(row.id)} 
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                        title="Delete"
+                        title="Remove from List"
                     >
                         <Trash2 className="h-4 w-4" />
                     </button>

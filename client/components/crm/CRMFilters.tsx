@@ -29,7 +29,7 @@ export const CRMFilters: React.FC<CRMFiltersProps> = ({ filters, setFilters, onR
   const hasFilters = Object.values(filters).some(Boolean);
 
   const statusOptions = [
-    { label: "All Statuses", value: "" },
+    { label: "Active Pipeline", value: "" },
     { label: "Lead", value: "lead" },
     { label: "On Progress", value: "on progress" },
     { label: "Quote Sent", value: "Quote Sent" },
@@ -69,7 +69,7 @@ export const CRMFilters: React.FC<CRMFiltersProps> = ({ filters, setFilters, onR
                 value={filters.status}
                 onChange={(val) => handleChange('status', val)}
                 options={statusOptions}
-                placeholder="All Statuses"
+                placeholder="Active Pipeline"
            />
         </div>
 
