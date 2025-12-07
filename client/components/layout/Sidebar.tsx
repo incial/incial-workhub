@@ -31,10 +31,8 @@ export const Sidebar: React.FC = () => {
     <aside className="w-72 bg-[#0F172A] border-r border-slate-800 flex flex-col h-screen sticky top-0 z-30 hidden md:flex shadow-2xl">
       <div className="h-20 flex items-center px-8 border-b border-slate-800/50">
         <div className="flex items-center gap-3 text-white font-bold text-xl tracking-tight">
-            <div className="h-9 w-9 bg-gradient-to-br from-brand-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
-                W
-            </div>
-            WorkHub
+            <img src="/logo.png" alt="Incial" className="h-9 w-9 rounded-xl bg-white shadow-lg object-contain p-1" />
+            Incial
         </div>
       </div>
 

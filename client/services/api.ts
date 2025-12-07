@@ -4,7 +4,7 @@ import { CRMEntry, Company, Task } from '../types';
 import { MOCK_CRM_DATA, MOCK_COMPANIES_DATA, MOCK_TASKS_DATA } from './mockData';
 
 // In a real app, this comes from env
-const API_URL = 'https://api.workhub.com/api/v1'; 
+const API_URL = 'https://api.incial.com/api/v1'; 
 
 const api = axios.create({
   baseURL: API_URL,
@@ -128,7 +128,7 @@ export const authApi = {
     await delay(800);
     
     // ADMIN LOGIN
-    if (email === 'demo@workhub.com' && password === 'demo') {
+    if (email === 'demo@incial.com' && password === 'demo') {
       return {
         statusCode: 200,
         token: "mock-jwt-token-admin",
@@ -139,7 +139,7 @@ export const authApi = {
     }
 
     // EMPLOYEE LOGIN
-    if (email === 'employee@workhub.com' && password === 'employee') {
+    if (email === 'employee@incial.com' && password === 'employee') {
       return {
         statusCode: 200,
         token: "mock-jwt-token-employee",

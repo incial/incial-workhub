@@ -7,7 +7,7 @@ import { CRMTable } from '../components/crm/CRMTable';
 import { CRMStats } from '../components/crm/CRMStats';
 import { CRMForm } from '../components/crm/CRMForm';
 import { FilterState, CRMEntry } from '../types';
-import { Plus, Download } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { crmApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -138,10 +138,6 @@ export const CRMPage: React.FC = () => {
                 <p className="text-gray-500 mt-1 font-medium">Welcome back, track your team's progress and active deals.</p>
             </div>
             <div className="flex gap-3">
-                <button className="bg-white hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-sm border border-gray-200 transition-all active:scale-95">
-                    <Download className="h-4.5 w-4.5" />
-                    Export
-                </button>
                 <button 
                     onClick={handleCreate}
                     className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-brand-500/30 transition-all active:scale-95"
@@ -166,7 +162,7 @@ export const CRMPage: React.FC = () => {
             </div>
             <div className="p-4 border-t border-gray-50 bg-white text-xs font-medium text-gray-400 flex justify-between">
                 <span>Showing {filteredData.length} records</span>
-                <span>WorkHub CRM v1.2</span>
+                <span>Incial CRM v1.0</span>
             </div>
           </div>
         </main>

@@ -6,10 +6,12 @@ import { CompaniesTable } from '../components/companies/CompaniesTable';
 import { CompaniesFilters } from '../components/companies/CompaniesFilters';
 import { CompaniesForm } from '../components/companies/CompaniesForm';
 import { Company, CompanyFilterState } from '../types';
-import { Plus, Download, Briefcase } from 'lucide-react';
+import { Plus, Briefcase } from 'lucide-react';
 import { companiesApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export const CompaniesPage: React.FC = () => {
+  const { user } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,12 +88,19 @@ export const CompaniesPage: React.FC = () => {
   };
 
   const handleFormSubmit = async (data: Partial<Company>) => {
+      // Add Audit Data
+      const auditData = {
+          lastUpdatedBy: user?.name || 'Unknown',
+          lastUpdatedAt: new Date().toISOString()
+      };
+      const finalData = { ...data, ...auditData };
+
       if (editingCompany) {
           // Update
-          const updated = { ...editingCompany, ...data } as Company;
+          const updated = { ...editingCompany, ...finalData } as Company;
           setCompanies(prev => prev.map(e => e.id === updated.id ? updated : e));
           
-          await companiesApi.update(updated.id, data);
+          await companiesApi.update(updated.id, finalData);
           
           // Sync Storage
           const current = JSON.parse(localStorage.getItem('mock_companies_data') || '[]');
@@ -100,7 +109,7 @@ export const CompaniesPage: React.FC = () => {
 
       } else {
           // Create
-          const newEntry = await companiesApi.create(data as Company); 
+          const newEntry = await companiesApi.create(finalData as Company); 
           setCompanies(prev => [newEntry, ...prev]);
           
           // Sync Storage
@@ -128,10 +137,6 @@ export const CompaniesPage: React.FC = () => {
                 </div>
             </div>
             <div className="flex gap-3">
-                <button className="bg-white hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-sm border border-gray-200 transition-all active:scale-95">
-                    <Download className="h-4.5 w-4.5" />
-                    Export
-                </button>
                 <button 
                     onClick={handleCreate}
                     className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-brand-500/30 transition-all active:scale-95"
@@ -154,7 +159,7 @@ export const CompaniesPage: React.FC = () => {
             </div>
             <div className="p-4 border-t border-gray-50 bg-white text-xs font-medium text-gray-400 flex justify-between">
                 <span>Showing {filteredData.length} companies</span>
-                <span>WorkHub CRM v1.2</span>
+                <span>Incial CRM v1.0</span>
             </div>
           </div>
         </main>
