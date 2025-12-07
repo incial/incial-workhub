@@ -159,7 +159,7 @@ export const CompaniesPage: React.FC = () => {
             </div>
             <div className="p-4 border-t border-gray-50 bg-white text-xs font-medium text-gray-400 flex justify-between">
                 <span>Showing {filteredData.length} companies</span>
-                <span>WorkHub CRM v1.2</span>
+                <span>Incial CRM v1.0</span>
             </div>
           </div>
         </main>
