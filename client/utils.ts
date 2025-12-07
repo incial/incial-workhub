@@ -42,10 +42,19 @@ export const getStatusStyles = (status: string) => {
 
 export const getCompanyStatusStyles = (status: string) => {
   switch (status?.toLowerCase()) {
+    // Company Specific
     case 'running': return 'bg-green-100 text-green-700 ring-green-600/20';
     case 'not_started': return 'bg-blue-100 text-blue-700 ring-blue-600/20';
     case 'discontinued': return 'bg-red-100 text-red-700 ring-red-600/20';
     case 'completed': return 'bg-purple-100 text-purple-700 ring-purple-600/20';
+    
+    // CRM Inherited
+    case 'onboarded': return 'bg-emerald-100 text-emerald-700 ring-emerald-600/20';
+    case 'drop': return 'bg-rose-100 text-rose-700 ring-rose-600/20';
+    case 'on progress': return 'bg-amber-100 text-amber-700 ring-amber-600/20';
+    case 'quote sent': return 'bg-sky-100 text-sky-700 ring-sky-600/20';
+    case 'lead': return 'bg-slate-100 text-slate-700 ring-slate-600/20';
+
     default: return 'bg-gray-100 text-gray-600 ring-gray-500/10';
   }
 };

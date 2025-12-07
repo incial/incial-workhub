@@ -45,7 +45,7 @@ export interface FilterState {
 
 // --- COMPANIES MODULE TYPES ---
 
-export type CompanyStatus = 'running' | 'not_started' | 'discontinued' | 'completed';
+export type CompanyStatus = 'running' | 'not_started' | 'discontinued' | 'completed' | CRMStatus;
 
 export interface Company {
   id: number;
@@ -55,6 +55,9 @@ export interface Company {
   status: CompanyStatus;
   createdAt: string;
   updatedAt: string;
+  lastUpdatedBy?: string;
+  lastUpdatedAt?: string;
+  isCrmDerived?: boolean; // New field to identify if it came from CRM
 }
 
 export interface CompanyFilterState {
@@ -77,6 +80,8 @@ export interface Task {
   assignedTo: string; // User name or 'Unassigned'
   dueDate: string; // YYYY-MM-DD
   createdAt: string;
+  lastUpdatedBy?: string;
+  lastUpdatedAt?: string;
 }
 
 export interface TaskFilterState {
