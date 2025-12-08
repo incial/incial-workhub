@@ -43,6 +43,9 @@ export const CRMFilters: React.FC<CRMFiltersProps> = ({ filters, setFilters, onR
     { label: "All Assignees", value: "" },
     { label: "Vallapata", value: "Vallapata" },
     { label: "John Doe", value: "John Doe" },
+    { label: "Demo User", value: "Demo User" },
+    { label: "Admin User", value: "Admin User" },
+    { label: "Employee User", value: "Employee User" },
   ];
 
   return (

@@ -511,6 +511,9 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                         >
                             <option value="Vallapata">Vallapata</option>
                             <option value="John Doe">John Doe</option>
+                            <option value="Demo User">Demo User</option>
+                            <option value="Admin User">Admin User</option>
+                            <option value="Employee User">Employee User</option>
                         </select>
                     </div>
                </div>

@@ -105,24 +105,24 @@ export const authApi = {
     // REAL CALL: return api.post("/auth/login", { email, password });
     await delay(800);
     
-    // ADMIN LOGIN
+    // ADMIN LOGIN -> Mapped to 'Vallapata' to match mock data
     if (email === 'demo@incial.com' && password === 'demo') {
       return {
         statusCode: 200,
         token: "mock-jwt-token-admin",
         role: "ROLE_ADMIN",
-        user: { id: 1, name: "Admin User", email, role: "ROLE_ADMIN" },
+        user: { id: 1, name: "Vallapata", email, role: "ROLE_ADMIN" },
         message: "Login successful"
       };
     }
 
-    // EMPLOYEE LOGIN
+    // EMPLOYEE LOGIN -> Mapped to 'John Doe' to match mock data
     if (email === 'employee@incial.com' && password === 'employee') {
       return {
         statusCode: 200,
         token: "mock-jwt-token-employee",
         role: "ROLE_EMPLOYEE",
-        user: { id: 2, name: "Employee User", email, role: "ROLE_EMPLOYEE" },
+        user: { id: 2, name: "John Doe", email, role: "ROLE_EMPLOYEE" },
         message: "Login successful"
       };
     }

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, User, AlignLeft, Flag, CheckCircle } from 'lucide-react';
+import { X, Save, Calendar, User, AlignLeft, Flag, CheckCircle, History } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus } from '../../types';
 import { CustomDatePicker } from '../ui/CustomDatePicker';
 
@@ -13,7 +13,7 @@ interface TaskFormProps {
 
 const PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High'];
 const STATUSES: TaskStatus[] = ['Not Started', 'In Progress', 'Completed'];
-const ASSIGNEES = ['Vallapata', 'John Doe', 'Demo User', 'Unassigned'];
+const ASSIGNEES = ['Vallapata', 'John Doe', 'Demo User', 'Admin User', 'Employee User', 'Unassigned'];
 
 export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState<Partial<Task>>({});
@@ -146,7 +146,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
                  />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
+            {/* Update History Footer */}
+            {formData.lastUpdatedBy && (
+                <div className="flex items-center justify-end pt-4 mt-2 border-t border-gray-50">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <History className="h-3.5 w-3.5" />
+                        <span>
+                            Last updated by <span className="font-semibold text-gray-600">{formData.lastUpdatedBy}</span> on {new Date(formData.lastUpdatedAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-50">
                 <button type="button" onClick={onClose} className="px-5 py-2.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors">
                     Cancel
                 </button>
