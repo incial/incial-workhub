@@ -1,4 +1,5 @@
 
+
 export type CRMStatus = 'onboarded' | 'drop' | 'on progress' | 'Quote Sent' | 'lead' | 'completed';
 
 export interface User {
@@ -91,4 +92,27 @@ export interface TaskFilterState {
   status: string;
   priority: string;
   assignedTo: string;
+}
+
+// --- MEETING MODULE TYPES ---
+export type MeetingStatus = 'Scheduled' | 'Completed' | 'Cancelled' | 'Postponed';
+
+export interface Meeting {
+  id: number;
+  title: string;
+  dateTime: string; // ISO string with time
+  status: MeetingStatus;
+  meetingLink?: string;
+  notes?: string;
+  companyId?: number; // Optional link to a client
+  assignedTo?: string;
+  createdAt: string;
+  lastUpdatedBy?: string;
+  lastUpdatedAt?: string;
+}
+
+export interface MeetingFilterState {
+  search: string;
+  status: string;
+  dateRangeStart: string;
 }

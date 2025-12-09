@@ -1,0 +1,120 @@
+
+import React, { useState } from 'react';
+import { Meeting, MeetingStatus } from '../../types';
+import { formatDateTime, getMeetingStatusStyles } from '../../utils';
+import { Edit2, Trash2, Video, Calendar, MoreHorizontal, Link as LinkIcon, ExternalLink } from 'lucide-react';
+
+interface MeetingTableProps {
+  data: Meeting[];
+  onEdit: (meeting: Meeting) => void;
+  onDelete: (id: number) => void;
+}
+
+export const MeetingTable: React.FC<MeetingTableProps> = ({ data, onEdit, onDelete }) => {
+  const [expandedNoteId, setExpandedNoteId] = useState<number | null>(null);
+
+  if (data.length === 0) {
+    return (
+      <div className="p-20 text-center bg-white">
+        <div className="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Calendar className="h-8 w-8 text-gray-300" />
+        </div>
+        <h3 className="text-gray-900 font-bold text-lg">No meetings found</h3>
+        <p className="text-gray-500 mt-1">Schedule a new meeting to get started.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto custom-scrollbar bg-white min-h-[400px] pb-24">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
+            <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider w-1/4">Meeting Title</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date & Time</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Link</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider w-1/3">Notes</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+                {data.map(meeting => (
+                    <tr key={meeting.id} className="group hover:bg-gray-50/50 transition-colors">
+                        
+                        {/* Title */}
+                        <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 flex-shrink-0">
+                                    <Calendar className="h-4 w-4" />
+                                </div>
+                                <button onClick={() => onEdit(meeting)} className="font-bold text-sm text-gray-900 hover:text-brand-600 hover:underline text-left">
+                                    {meeting.title}
+                                </button>
+                            </div>
+                        </td>
+
+                        {/* Date Time */}
+                        <td className="px-6 py-4">
+                            <div className={`text-sm font-medium ${new Date(meeting.dateTime) < new Date() && meeting.status !== 'Completed' && meeting.status !== 'Cancelled' ? 'text-red-600' : 'text-gray-700'}`}>
+                                {formatDateTime(meeting.dateTime)}
+                            </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${getMeetingStatusStyles(meeting.status)}`}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-current mr-2 opacity-60"></span>
+                                {meeting.status}
+                            </span>
+                        </td>
+
+                        {/* Link */}
+                        <td className="px-6 py-4">
+                            {meeting.meetingLink ? (
+                                <a 
+                                    href={meeting.meetingLink} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-md hover:bg-blue-100 transition-colors max-w-[150px] truncate"
+                                    title={meeting.meetingLink}
+                                >
+                                    <Video className="h-3 w-3 flex-shrink-0" />
+                                    Link
+                                    <ExternalLink className="h-2.5 w-2.5 flex-shrink-0 ml-auto" />
+                                </a>
+                            ) : (
+                                <span className="text-gray-300 text-xs">-</span>
+                            )}
+                        </td>
+
+                        {/* Notes */}
+                        <td className="px-6 py-4">
+                            <div 
+                                className="relative text-xs text-gray-600 max-w-xs cursor-pointer group/note"
+                                onClick={() => setExpandedNoteId(expandedNoteId === meeting.id ? null : meeting.id)}
+                            >
+                                <p className={`${expandedNoteId === meeting.id ? '' : 'truncate'}`}>
+                                    {meeting.notes || <span className="text-gray-300 italic">No notes</span>}
+                                </p>
+                            </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-4 text-right">
+                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => onEdit(meeting)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+                                    <Edit2 className="h-4 w-4" />
+                                </button>
+                                <button onClick={() => onDelete(meeting.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                             </div>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+  );
+};

@@ -1,5 +1,7 @@
 
-import { CRMEntry, Task } from '../types';
+
+
+import { CRMEntry, Task, Meeting } from '../types';
 
 export const MOCK_CRM_DATA: CRMEntry[] = [
   {
@@ -343,4 +345,72 @@ export const MOCK_TASKS_DATA: Task[] = [
     createdAt: "2023-11-02T08:00:00Z",
     isVisibleOnMainBoard: true // Pinned to Main Board example
   }
+];
+
+export const MOCK_MEETINGS_DATA: Meeting[] = [
+    {
+        id: 1,
+        title: "Maasconsult Strategy",
+        dateTime: "2025-12-08T13:30:00",
+        status: "Completed",
+        meetingLink: "https://meet.google.com/abc-defg-hij",
+        notes: "Discussed Q4 roadmap and budget allocation. Client is happy with preliminary designs.",
+        companyId: 1,
+        createdAt: "2025-12-01T10:00:00"
+    },
+    {
+        id: 2,
+        title: "DreamIndia Kickoff",
+        dateTime: "2025-12-04T12:00:00",
+        status: "Completed",
+        meetingLink: "In-person @ HQ",
+        notes: "Review meeting for the new branding campaign. Action items sent via email.",
+        companyId: 2,
+        createdAt: "2025-11-30T09:00:00"
+    },
+    {
+        id: 3,
+        title: "Resonance Rehab Sync",
+        dateTime: "2025-11-26T22:00:00",
+        status: "Completed",
+        meetingLink: "https://zoom.us/j/987654321",
+        notes: "Late night sync with US team. Discussed API integration challenges.",
+        createdAt: "2025-11-20T14:00:00"
+    },
+    {
+        id: 4,
+        title: "Tamy Brand Review",
+        dateTime: "2025-11-21T10:00:00",
+        status: "Completed",
+        meetingLink: "https://meet.google.com/xyz-uvw-rst",
+        notes: "Finalized color palette and typography. Pending logo approval.",
+        createdAt: "2025-11-15T11:00:00"
+    },
+    {
+        id: 5,
+        title: "Weekly Internal Sync",
+        dateTime: new Date().toISOString(), // Today
+        status: "Scheduled",
+        meetingLink: "https://meet.google.com/internal-sync",
+        notes: "Weekly team standup to discuss active sprints.",
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: 6,
+        title: "Client Onboarding: Alpha",
+        dateTime: "2025-12-15T14:00:00",
+        status: "Postponed",
+        meetingLink: "https://meet.google.com/alpha-onboard",
+        notes: "Client requested to reschedule due to travel.",
+        companyId: 5,
+        createdAt: "2025-12-05T10:00:00"
+    },
+    {
+        id: 7,
+        title: "Cancelled: Tech Demo",
+        dateTime: "2025-12-10T09:00:00",
+        status: "Cancelled",
+        notes: "Demo cancelled as the feature is not ready yet.",
+        createdAt: "2025-12-01T15:00:00"
+    }
 ];

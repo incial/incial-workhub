@@ -1,7 +1,9 @@
 
+
+
 import axios from 'axios';
-import { CRMEntry, Task } from '../types';
-import { MOCK_CRM_DATA, MOCK_TASKS_DATA } from './mockData';
+import { CRMEntry, Task, Meeting } from '../types';
+import { MOCK_CRM_DATA, MOCK_TASKS_DATA, MOCK_MEETINGS_DATA } from './mockData';
 
 // In a real app, this comes from env
 const API_URL = 'https://api.incial.com/api/v1'; 
@@ -93,6 +95,34 @@ export const tasksApi = {
   update: async (id: number, data: Partial<Task>): Promise<Task> => {
      await delay(200);
      return { id, ...data } as Task;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await delay(200);
+  }
+};
+
+export const meetingsApi = {
+  getAll: async (): Promise<Meeting[]> => {
+    await delay(600);
+    const stored = localStorage.getItem('mock_meetings_data');
+    if (stored) return JSON.parse(stored);
+    return MOCK_MEETINGS_DATA;
+  },
+
+  create: async (data: Omit<Meeting, 'id' | 'createdAt'>): Promise<Meeting> => {
+    await delay(300);
+    const newEntry: Meeting = {
+      ...data,
+      id: Date.now(),
+      createdAt: new Date().toISOString()
+    };
+    return newEntry;
+  },
+
+  update: async (id: number, data: Partial<Meeting>): Promise<Meeting> => {
+    await delay(200);
+    return { id, ...data } as Meeting;
   },
 
   delete: async (id: number): Promise<void> => {

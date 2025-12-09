@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -10,7 +9,7 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ClientTrackerPage } from './pages/ClientTrackerPage';
 import { ClientDetailsPage } from './pages/ClientDetailsPage';
 import { AdminPerformancePage } from './pages/AdminPerformancePage';
-
+import { MeetingTrackerPage } from './pages/MeetingTrackerPage';
 // Protected Route Wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -19,8 +18,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
   }
   return children;
 };
-
-localStorage.clear();
 
 // Admin Only Route Wrapper
 const AdminRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
@@ -77,6 +74,11 @@ const AppRoutes = () => {
             <Route path="/tasks" element={
                 <ProtectedRoute>
                     <TasksPage />
+                </ProtectedRoute>
+            } />
+            <Route path="/meetings" element={
+                <ProtectedRoute>
+                    <MeetingTrackerPage />
                 </ProtectedRoute>
             } />
 
