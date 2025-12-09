@@ -23,12 +23,36 @@ export const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({ isOpen
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50">
-            <div>
-                 <h2 className="text-xl font-bold text-gray-900">{company.company}</h2>
-                 <div className="flex items-center gap-2 mt-1">
-                     <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 flex items-center gap-1">
-                        <Hash className="h-3 w-3" /> {refId}
-                     </span>
+            <div className="flex items-center gap-4">
+                 {/* Logo Logic */}
+                 <div className="h-12 w-12 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-sm overflow-hidden relative">
+                    {company.companyImageUrl ? (
+                        <>
+                            <img 
+                                src={company.companyImageUrl} 
+                                alt={company.company} 
+                                className="h-full w-full object-cover" 
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                }}
+                            />
+                            <div className="hidden h-full w-full flex items-center justify-center text-lg font-bold text-gray-400">
+                                {company.company.charAt(0)}
+                            </div>
+                        </>
+                    ) : (
+                        <span className="text-lg font-bold text-gray-400">{company.company.charAt(0)}</span>
+                    )}
+                 </div>
+
+                 <div>
+                     <h2 className="text-xl font-bold text-gray-900 leading-tight">{company.company}</h2>
+                     <div className="flex items-center gap-2 mt-1">
+                         <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 flex items-center gap-1">
+                            <Hash className="h-3 w-3" /> {refId}
+                         </span>
+                     </div>
                  </div>
             </div>
             <div className="flex items-center gap-2">

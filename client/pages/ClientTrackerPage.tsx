@@ -141,8 +141,27 @@ export const ClientTrackerPage: React.FC = () => {
                         {/* Card Header */}
                         <div className="p-6 pb-4">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="h-14 w-14 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center border border-gray-100 group-hover:scale-105 transition-transform shadow-sm text-xl font-bold text-gray-400 group-hover:text-brand-600 group-hover:from-brand-50 group-hover:to-white">
-                                    {client.company.charAt(0)}
+                                <div className="h-14 w-14 rounded-2xl flex items-center justify-center border border-gray-100 group-hover:scale-105 transition-transform shadow-sm overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 relative">
+                                    {client.companyImageUrl ? (
+                                        <>
+                                            <img 
+                                                src={client.companyImageUrl} 
+                                                alt={client.company} 
+                                                className="h-full w-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                }}
+                                            />
+                                            <div className="hidden h-full w-full flex items-center justify-center text-xl font-bold text-gray-400 group-hover:text-brand-600">
+                                                {client.company.charAt(0)}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="text-xl font-bold text-gray-400 group-hover:text-brand-600">
+                                            {client.company.charAt(0)}
+                                        </div>
+                                    )}
                                 </div>
                                 <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-lg border ${
                                     client.status === 'onboarded' ? 'bg-green-50 text-green-700 border-green-100' : 

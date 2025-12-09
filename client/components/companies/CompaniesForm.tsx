@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User } from 'lucide-react';
+import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User, Image } from 'lucide-react';
 import { CRMEntry, CRMStatus, SocialLinks } from '../../types';
 import { getWorkTypeStyles } from '../../utils';
 
@@ -128,6 +128,16 @@ export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, o
                             placeholder="Primary Contact Name"
                         />
                     </div>
+                </div>
+
+                {/* Company Logo */}
+                <div className="w-full">
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <Image className="h-3.5 w-3.5 text-gray-500" /> Company Logo URL
+                    </label>
+                    <input type="url" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
+                    placeholder="https://..."
+                    value={formData.companyImageUrl || ''} onChange={e => setFormData({...formData, companyImageUrl: e.target.value})} />
                 </div>
 
                 {/* Status */}

@@ -71,50 +71,74 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
 
               {/* Company Name & Links */}
               <td className="px-6 py-4">
-                <div className="flex flex-col gap-1.5">
-                    <button 
-                        onClick={() => onView(row)}
-                        className="font-bold text-gray-900 text-sm hover:text-brand-600 hover:underline transition-colors text-left"
-                    >
-                        {row.company}
-                    </button>
-                    {/* Quick Links Row */}
-                    <div className="flex items-center gap-2">
-                        {row.driveLink && (
-                             <a href={row.driveLink} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors" title="Google Drive">
-                                <HardDrive className="h-3.5 w-3.5" />
-                             </a>
+                <div className="flex items-start gap-3">
+                    {/* Logo Thumbnail */}
+                    <div className="h-10 w-10 rounded-lg bg-gray-100 border border-gray-200 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                        {row.companyImageUrl ? (
+                            <>
+                                <img 
+                                    src={row.companyImageUrl} 
+                                    alt={row.company} 
+                                    className="h-full w-full object-cover" 
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                />
+                                <div className="hidden h-full w-full flex items-center justify-center text-xs font-bold text-gray-400">
+                                    {row.company.charAt(0)}
+                                </div>
+                            </>
+                        ) : (
+                            <span className="text-xs font-bold text-gray-400">{row.company.charAt(0)}</span>
                         )}
-                        {row.socials?.website && (
-                             <a href={row.socials.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-600 transition-colors" title="Website">
-                                <Globe className="h-3.5 w-3.5" />
-                             </a>
-                        )}
-                        {row.socials?.linkedin && (
-                             <a href={row.socials.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-700 transition-colors" title="LinkedIn">
-                                <Linkedin className="h-3.5 w-3.5" />
-                             </a>
-                        )}
-                         {row.socials?.instagram && (
-                             <a href={row.socials.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600 transition-colors" title="Instagram">
-                                <Instagram className="h-3.5 w-3.5" />
-                             </a>
-                        )}
-                         {row.socials?.facebook && (
-                             <a href={row.socials.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors" title="Facebook">
-                                <Facebook className="h-3.5 w-3.5" />
-                             </a>
-                        )}
-                        {row.socials?.twitter && (
-                             <a href={row.socials.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-sky-500 transition-colors" title="Twitter">
-                                <Twitter className="h-3.5 w-3.5" />
-                             </a>
-                        )}
-                         {row.socials?.other && (
-                             <a href={row.socials.other} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Other">
-                                <LinkIcon className="h-3.5 w-3.5" />
-                             </a>
-                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <button 
+                            onClick={() => onView(row)}
+                            className="font-bold text-gray-900 text-sm hover:text-brand-600 hover:underline transition-colors text-left"
+                        >
+                            {row.company}
+                        </button>
+                        {/* Quick Links Row */}
+                        <div className="flex items-center gap-2">
+                            {row.driveLink && (
+                                <a href={row.driveLink} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors" title="Google Drive">
+                                    <HardDrive className="h-3.5 w-3.5" />
+                                </a>
+                            )}
+                            {row.socials?.website && (
+                                <a href={row.socials.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-600 transition-colors" title="Website">
+                                    <Globe className="h-3.5 w-3.5" />
+                                </a>
+                            )}
+                            {row.socials?.linkedin && (
+                                <a href={row.socials.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-700 transition-colors" title="LinkedIn">
+                                    <Linkedin className="h-3.5 w-3.5" />
+                                </a>
+                            )}
+                            {row.socials?.instagram && (
+                                <a href={row.socials.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600 transition-colors" title="Instagram">
+                                    <Instagram className="h-3.5 w-3.5" />
+                                </a>
+                            )}
+                            {row.socials?.facebook && (
+                                <a href={row.socials.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors" title="Facebook">
+                                    <Facebook className="h-3.5 w-3.5" />
+                                </a>
+                            )}
+                            {row.socials?.twitter && (
+                                <a href={row.socials.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-sky-500 transition-colors" title="Twitter">
+                                    <Twitter className="h-3.5 w-3.5" />
+                                </a>
+                            )}
+                            {row.socials?.other && (
+                                <a href={row.socials.other} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Other">
+                                    <LinkIcon className="h-3.5 w-3.5" />
+                                </a>
+                            )}
+                        </div>
                     </div>
                 </div>
               </td>

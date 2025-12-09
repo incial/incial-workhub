@@ -32,7 +32,8 @@ export interface CRMEntry {
   email: string;
   contactName: string;
   assignedTo: string;
-  address?: string; // Added Address field
+  address?: string; 
+  companyImageUrl?: string; // Added for Company Logo
   lastContact: string; // ISO Date string YYYY-MM-DD
   nextFollowUp: string; // ISO Date string YYYY-MM-DD
   dealValue: number;
@@ -45,7 +46,7 @@ export interface CRMEntry {
   socials?: SocialLinks;
   lastUpdatedBy?: string;
   lastUpdatedAt?: string;
-  referenceId?: string; // Added for Company view compatibility
+  referenceId?: string; 
 }
 
 export interface FilterState {

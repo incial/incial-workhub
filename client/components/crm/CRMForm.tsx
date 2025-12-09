@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, DollarSign, CheckCircle, Clock, AlertCircle, History, ExternalLink, HardDrive, Linkedin, Instagram, Facebook, Twitter, Globe, Link as LinkIcon, Maximize2, Minimize2, MapPin } from 'lucide-react';
+import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, DollarSign, CheckCircle, Clock, AlertCircle, History, ExternalLink, HardDrive, Linkedin, Instagram, Facebook, Twitter, Globe, Link as LinkIcon, Maximize2, Minimize2, MapPin, Image } from 'lucide-react';
 import { CRMEntry, SocialLinks } from '../../types';
 import { getStatusStyles, formatDate, getFollowUpColor, formatMoney } from '../../utils';
 import { CustomDatePicker } from '../ui/CustomDatePicker';
@@ -76,6 +76,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 leadSources: [],
                 driveLink: '',
                 address: '',
+                companyImageUrl: '',
                 referenceId: '',
                 socials: {},
                 lastContact: new Date().toISOString().split('T')[0],
@@ -512,6 +513,15 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                     <input type="text" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-gray-50 text-gray-600 font-mono text-sm" 
                     placeholder="Auto-generated or Enter ID"
                     value={formData.referenceId || ''} onChange={e => setFormData({...formData, referenceId: e.target.value})} />
+                </div>
+
+                <div className="w-full">
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <Image className="h-3.5 w-3.5 text-gray-500" /> Company Logo URL
+                    </label>
+                    <input type="url" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
+                    placeholder="https://..."
+                    value={formData.companyImageUrl || ''} onChange={e => setFormData({...formData, companyImageUrl: e.target.value})} />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

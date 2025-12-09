@@ -10,6 +10,7 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     contactName: "Anil Michael",
     assignedTo: "Vallapata",
     address: "Kinfra Industrial Park, Thumba, Trivandrum, Kerala",
+    companyImageUrl: "https://ui-avatars.com/api/?name=SMR+Rubbers&background=0D8ABC&color=fff&size=128", // Sample
     lastContact: "2023-10-25",
     nextFollowUp: new Date().toISOString().split('T')[0], // Today
     dealValue: 35000.00,
@@ -37,6 +38,7 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     contactName: "Sarah Connor",
     assignedTo: "John Doe",
     address: "123 Innovation Dr, Silicon Valley, CA 94025",
+    companyImageUrl: "https://ui-avatars.com/api/?name=TechFlow&background=6366f1&color=fff&size=128",
     lastContact: "2023-10-20",
     nextFollowUp: "2023-10-24", // Past
     dealValue: 120000.00,
