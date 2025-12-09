@@ -1,14 +1,45 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, LogOut, ChevronDown, User, Settings, CreditCard, Menu, Check } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Search, Bell, LogOut, ChevronDown, User, Settings, CreditCard, Menu, Check, LayoutDashboard, Users, CalendarDays, CheckSquare, Calendar, Briefcase, ListTodo, PieChart, BarChart2, Home } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+
+const MobileNavItem = ({ to, icon: Icon, label, active }: { to: string, icon: any, label: string, active: boolean }) => (
+  <Link
+    to={to}
+    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+      active 
+        ? 'bg-brand-50 text-brand-700' 
+        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+    }`}
+  >
+    <Icon className={`h-5 w-5 ${active ? 'text-brand-600' : 'text-gray-400'}`} />
+    {label}
+  </Link>
+);
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const currentPath = location.pathname;
+  
+  const role = user?.role;
+  const isSuperAdmin = role === 'ROLE_SUPER_ADMIN';
+  const isAdmin = role === 'ROLE_ADMIN' || isSuperAdmin;
+  const isEmployee = role === 'ROLE_EMPLOYEE' || isAdmin;
+  const isClient = role === 'ROLE_CLIENT';
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [currentPath]);
 
   // Click outside handler
   useEffect(() => {
@@ -27,8 +58,11 @@ export const Navbar: React.FC = () => {
   return (
     <header className="h-20 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 lg:px-8 sticky top-0 z-30 transition-all">
       
-      {/* Mobile Menu Trigger (Visual only) */}
-      <button className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+      {/* Mobile Menu Trigger */}
+      <button 
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 active:bg-gray-200 transition-colors"
+      >
         <Menu className="h-6 w-6" />
       </button>
 
@@ -129,6 +163,9 @@ export const Navbar: React.FC = () => {
                         <div className="px-3 py-2 bg-gray-50 rounded-xl">
                              <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
                              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                             <p className="text-[10px] text-brand-600 font-bold mt-1 uppercase tracking-wide border border-brand-100 bg-brand-50 inline-block px-1.5 py-0.5 rounded">
+                                 {role?.replace('ROLE_', '')}
+                             </p>
                         </div>
                     </div>
                     <div className="p-1.5 space-y-0.5">
@@ -166,6 +203,45 @@ export const Navbar: React.FC = () => {
             )}
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-2xl py-3 px-4 flex flex-col gap-1 md:hidden max-h-[calc(100vh-5rem)] overflow-y-auto z-40 animate-in slide-in-from-top-2">
+            <div className="mb-2 px-2">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Menu</p>
+            </div>
+            
+            {isClient && <MobileNavItem to="/portal" icon={Home} label="My Project" active={currentPath === '/portal'} />}
+
+            {!isClient && <MobileNavItem to="/dashboard" icon={LayoutDashboard} label="My Dashboard" active={currentPath === '/dashboard'} />}
+            
+            {isAdmin && <MobileNavItem to="/crm" icon={Users} label="CRM & Leads" active={currentPath === '/crm'} />}
+            
+            {isEmployee && (
+                <>
+                    <MobileNavItem to="/calendar" icon={CalendarDays} label="Universal Calendar" active={currentPath === '/calendar'} />
+                    <MobileNavItem to="/tasks" icon={CheckSquare} label="Tasks" active={currentPath.startsWith('/tasks')} />
+                    <MobileNavItem to="/meetings" icon={Calendar} label="Meeting Tracker" active={currentPath.startsWith('/meetings')} />
+                    <MobileNavItem to="/companies" icon={Briefcase} label="Companies" active={currentPath.startsWith('/companies')} />
+                    <MobileNavItem to="/client-tracker" icon={ListTodo} label="Client Tracker" active={currentPath.startsWith('/client-tracker')} />
+                </>
+            )}
+            
+            {isSuperAdmin && (
+                <>
+                    <div className="my-2 border-t border-gray-100" />
+                    <div className="mb-2 px-2 mt-2">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Analytics</p>
+                    </div>
+                    <MobileNavItem to="/reports" icon={PieChart} label="Reports" active={currentPath === '/reports'} />
+                    <MobileNavItem to="/admin/performance" icon={BarChart2} label="Team Performance" active={currentPath === '/admin/performance'} />
+                </>
+            )}
+
+            <div className="my-2 border-t border-gray-100" />
+            <MobileNavItem to="/settings" icon={Settings} label="Settings" active={currentPath === '/settings'} />
+        </div>
+      )}
     </header>
   );
 };

@@ -1,11 +1,14 @@
 
 export type CRMStatus = 'onboarded' | 'drop' | 'on progress' | 'Quote Sent' | 'lead' | 'completed';
 
+export type UserRole = 'ROLE_SUPER_ADMIN' | 'ROLE_ADMIN' | 'ROLE_EMPLOYEE' | 'ROLE_CLIENT';
+
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
+  companyId?: number; // For Client Role
 }
 
 export interface AuthResponse {

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Users, Briefcase, Settings, PieChart, Layers, ChevronRight, CheckSquare, ListTodo, BarChart2, Calendar, CalendarDays, LayoutDashboard } from 'lucide-react';
+import { Users, Briefcase, Settings, PieChart, ChevronRight, CheckSquare, ListTodo, BarChart2, Calendar, CalendarDays, LayoutDashboard, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -25,7 +25,12 @@ export const Sidebar: React.FC = () => {
     const location = useLocation();
     const { user } = useAuth();
     const currentPath = location ? location.pathname : '/dashboard';
-    const isAdmin = user?.role === 'ROLE_ADMIN';
+    
+    const role = user?.role;
+    const isSuperAdmin = role === 'ROLE_SUPER_ADMIN';
+    const isAdmin = role === 'ROLE_ADMIN' || isSuperAdmin;
+    const isEmployee = role === 'ROLE_EMPLOYEE' || isAdmin; // Employees and above
+    const isClient = role === 'ROLE_CLIENT';
 
   return (
     <aside className="w-72 bg-[#0F172A] border-r border-slate-800 flex flex-col h-screen sticky top-0 z-30 hidden md:flex shadow-2xl">
@@ -40,18 +45,34 @@ export const Sidebar: React.FC = () => {
         <div className="mb-8">
             <p className="px-7 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Overview</p>
             <div className="space-y-1">
-                <NavItem icon={LayoutDashboard} label="My Dashboard" to="/dashboard" active={currentPath === '/dashboard'} />
+                {/* Client Specific View */}
+                {isClient && (
+                    <NavItem icon={Home} label="My Project" to="/portal" active={currentPath === '/portal'} />
+                )}
+
+                {/* Internal Team Views */}
+                {!isClient && (
+                    <NavItem icon={LayoutDashboard} label="My Dashboard" to="/dashboard" active={currentPath === '/dashboard'} />
+                )}
+                
+                {/* CRM - Admin & Super Admin Only */}
                 {isAdmin && <NavItem icon={Users} label="CRM & Leads" to="/crm" active={currentPath === '/crm'} />}
-                <NavItem icon={CalendarDays} label="Universal Calendar" to="/calendar" active={currentPath === '/calendar'} />
-                <NavItem icon={CheckSquare} label="Tasks" to="/tasks" active={currentPath.startsWith('/tasks')} />
-                <NavItem icon={Calendar} label="Meeting Tracker" to="/meetings" active={currentPath.startsWith('/meetings')} />
-                <NavItem icon={Briefcase} label="Companies" to="/companies" active={currentPath.startsWith('/companies')} />
-                <NavItem icon={ListTodo} label="Client Tracker" to="/client-tracker" active={currentPath.startsWith('/client-tracker')} />
+                
+                {/* Operational - Everyone except Client (Client has Portal) */}
+                {isEmployee && (
+                    <>
+                        <NavItem icon={CalendarDays} label="Universal Calendar" to="/calendar" active={currentPath === '/calendar'} />
+                        <NavItem icon={CheckSquare} label="Tasks" to="/tasks" active={currentPath.startsWith('/tasks')} />
+                        <NavItem icon={Calendar} label="Meeting Tracker" to="/meetings" active={currentPath.startsWith('/meetings')} />
+                        <NavItem icon={Briefcase} label="Companies" to="/companies" active={currentPath.startsWith('/companies')} />
+                        <NavItem icon={ListTodo} label="Client Tracker" to="/client-tracker" active={currentPath.startsWith('/client-tracker')} />
+                    </>
+                )}
             </div>
         </div>
 
-        {/* Analytics Section - Only for Admins */}
-        {isAdmin && (
+        {/* Analytics Section - Only for Super Admin */}
+        {isSuperAdmin && (
             <div className="mb-8 animate-in fade-in slide-in-from-left-2 duration-300">
                 <p className="px-7 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Analytics</p>
                 <div className="space-y-1">

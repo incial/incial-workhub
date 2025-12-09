@@ -13,42 +13,68 @@ import { AdminPerformancePage } from './pages/AdminPerformancePage';
 import { MeetingTrackerPage } from './pages/MeetingTrackerPage';
 import { UniversalCalendarPage } from './pages/UniversalCalendarPage';
 import { MyDashboardPage } from './pages/MyDashboardPage';
+import { ClientPortalPage } from './pages/ClientPortalPage';
 
-// Protected Route Wrapper
-const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
-
-// Admin Only Route Wrapper
-const AdminRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+// 1. Super Admin Only Route
+const SuperAdminRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
     const { isAuthenticated, user } = useAuth();
-    if (!isAuthenticated) {
-      return <Navigate to="/login" replace />;
-    }
-    if (user?.role !== 'ROLE_ADMIN') {
-        // Redirect employees to their dashboard if they try to access admin pages
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    
+    if (user?.role !== 'ROLE_SUPER_ADMIN') {
         return <Navigate to="/dashboard" replace />;
     }
     return children;
 };
 
-// Public Route Wrapper (redirects to dashboard if logged in)
-const PublicRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-    const { isAuthenticated } = useAuth();
-    if (isAuthenticated) {
-      return <Navigate to="/dashboard" replace />;
+// 2. Admin Route (Super Admin + Admin) - For CRM
+const AdminRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+    const { isAuthenticated, user } = useAuth();
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    
+    if (user?.role === 'ROLE_SUPER_ADMIN' || user?.role === 'ROLE_ADMIN') {
+        return children;
+    }
+    return <Navigate to="/dashboard" replace />;
+};
+
+// 3. Operational Route (SA + Admin + Employee)
+const OperationalRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+    const { isAuthenticated, user } = useAuth();
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    
+    if (user?.role === 'ROLE_CLIENT') {
+        return <Navigate to="/portal" replace />;
     }
     return children;
 };
 
-// Helper for root redirect
-const RootRedirect: React.FC = () => {
-    const { isAuthenticated } = useAuth();
+// 4. Client Route (Client Only)
+const ClientRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+    const { isAuthenticated, user } = useAuth();
     if (!isAuthenticated) return <Navigate to="/login" replace />;
+    
+    if (user?.role !== 'ROLE_CLIENT') {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return children;
+};
+
+// 5. Public Route
+const PublicRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+    const { isAuthenticated, user } = useAuth();
+    if (isAuthenticated) {
+        if (user?.role === 'ROLE_CLIENT') return <Navigate to="/portal" replace />;
+        return <Navigate to="/dashboard" replace />;
+    }
+    return children;
+};
+
+// 6. Root Redirect Logic
+const RootRedirect: React.FC = () => {
+    const { isAuthenticated, user } = useAuth();
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    
+    if (user?.role === 'ROLE_CLIENT') return <Navigate to="/portal" replace />;
     return <Navigate to="/dashboard" replace />;
 };
 
@@ -61,66 +87,72 @@ const AppRoutes = () => {
                 </PublicRoute>
             } />
             
-            {/* Universal Landing Page */}
+            {/* Client Portal */}
+            <Route path="/portal" element={
+                <ClientRoute>
+                    <ClientPortalPage />
+                </ClientRoute>
+            } />
+            
+            {/* Internal Dashboard */}
             <Route path="/dashboard" element={
-                <ProtectedRoute>
+                <OperationalRoute>
                     <MyDashboardPage />
-                </ProtectedRoute>
+                </OperationalRoute>
             } />
 
-            {/* Admin Only CRM */}
+            {/* CRM (Super Admin + Admin) */}
             <Route path="/crm" element={
                 <AdminRoute>
                     <CRMPage />
                 </AdminRoute>
             } />
             
+            {/* Operational Apps (SA + Admin + Employee) */}
             <Route path="/companies" element={
-                <ProtectedRoute>
+                <OperationalRoute>
                     <CompaniesPage />
-                </ProtectedRoute>
+                </OperationalRoute>
             } />
             <Route path="/tasks" element={
-                <ProtectedRoute>
+                <OperationalRoute>
                     <TasksPage />
-                </ProtectedRoute>
+                </OperationalRoute>
             } />
             <Route path="/meetings" element={
-                <ProtectedRoute>
+                <OperationalRoute>
                     <MeetingTrackerPage />
-                </ProtectedRoute>
+                </OperationalRoute>
             } />
             <Route path="/calendar" element={
-                <ProtectedRoute>
+                <OperationalRoute>
                     <UniversalCalendarPage />
-                </ProtectedRoute>
+                </OperationalRoute>
             } />
-
-            {/* Client Tracker Routes */}
             <Route path="/client-tracker" element={
-                <ProtectedRoute>
+                <OperationalRoute>
                     <ClientTrackerPage />
-                </ProtectedRoute>
+                </OperationalRoute>
             } />
             <Route path="/client-tracker/:id" element={
-                <ProtectedRoute>
+                <OperationalRoute>
                     <ClientDetailsPage />
-                </ProtectedRoute>
+                </OperationalRoute>
             } />
             
-            {/* Admin Only Routes */}
+            {/* Analytics (Super Admin Only) */}
             <Route path="/reports" element={
-                <AdminRoute>
+                <SuperAdminRoute>
                     <AnalyticsPage title="Reports" />
-                </AdminRoute>
+                </SuperAdminRoute>
             } />
              <Route path="/admin/performance" element={
-                <AdminRoute>
+                <SuperAdminRoute>
                     <AdminPerformancePage />
-                </AdminRoute>
+                </SuperAdminRoute>
             } />
 
-            {/* Smart Redirects */}
+            {/* Catch All */}
             <Route path="/" element={<RootRedirect />} />
             <Route path="*" element={<RootRedirect />} />
         </Routes>

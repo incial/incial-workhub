@@ -4,6 +4,7 @@ import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, 
 import { CRMEntry, SocialLinks } from '../../types';
 import { getStatusStyles, formatDate, getFollowUpColor, formatMoney } from '../../utils';
 import { CustomDatePicker } from '../ui/CustomDatePicker';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface CRMFormProps {
   isOpen: boolean;
@@ -13,17 +14,11 @@ interface CRMFormProps {
 }
 
 const LEAD_SOURCES = [
-  'Google Business',
-  'Direct Call',
-  'Website',
-  'Referral',
-  'Social Media',
-  'Email Campaign',
-  'Cold Call',
-  'Event',
-  'Partner',
-  'Direct Mail'
+  'Google Business', 'Direct Call', 'Website', 'Referral', 'Social Media', 
+  'Email Campaign', 'Cold Call', 'Event', 'Partner', 'Direct Mail'
 ];
+
+const ASSIGNEES = ['Vallapata', 'John Doe', 'Demo User', 'Admin User', 'Employee User'];
 
 const TAG_OPTIONS = [
   { label: 'Lead', color: 'bg-blue-100 text-blue-700 border-blue-200' },
@@ -107,7 +102,6 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
 
   const toggleWork = (workLabel: string) => {
       const currentWork = formData.work || [];
-      // Clean up legacy objects if present during edit toggling
       const cleanWork = currentWork.map((w: any) => typeof w === 'object' ? w.name : w);
       
       const exists = cleanWork.includes(workLabel);
@@ -532,46 +526,41 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                     </div>
 
                     <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Status</label>
-                        <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white"
-                            value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as any})}
-                        >
-                            <option value="lead">Lead</option>
-                            <option value="on progress">On Progress</option>
-                            <option value="Quote Sent">Quote Sent</option>
-                            <option value="onboarded">Onboarded</option>
-                            <option value="completed">Completed</option>
-                            <option value="drop">Drop</option>
-                        </select>
+                        <CustomSelect 
+                            label="Status"
+                            value={formData.status || 'lead'}
+                            onChange={(val) => setFormData({...formData, status: val as any})}
+                            options={[
+                                { label: 'Lead', value: 'lead' },
+                                { label: 'On Progress', value: 'on progress' },
+                                { label: 'Quote Sent', value: 'Quote Sent' },
+                                { label: 'Onboarded', value: 'onboarded' },
+                                { label: 'Completed', value: 'completed' },
+                                { label: 'Drop', value: 'drop' },
+                            ]}
+                        />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Lead Source</label>
-                        <select 
-                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white"
-                            value={formData.leadSources?.[0] || ''} 
-                            onChange={e => setFormData({...formData, leadSources: [e.target.value]})}
-                        >
-                            <option value="">Select Source...</option>
-                            {LEAD_SOURCES.map(source => (
-                                <option key={source} value={source}>{source}</option>
-                            ))}
-                        </select>
+                        <CustomSelect 
+                            label="Lead Source"
+                            value={formData.leadSources?.[0] || ''}
+                            onChange={(val) => setFormData({...formData, leadSources: [val]})}
+                            options={LEAD_SOURCES.map(source => ({ label: source, value: source }))}
+                            placeholder="Select Source"
+                        />
                     </div>
 
                     <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Assigned To</label>
-                        <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white"
-                            value={formData.assignedTo} onChange={e => setFormData({...formData, assignedTo: e.target.value})}
-                        >
-                            <option value="Vallapata">Vallapata</option>
-                            <option value="John Doe">John Doe</option>
-                            <option value="Demo User">Demo User</option>
-                            <option value="Admin User">Admin User</option>
-                            <option value="Employee User">Employee User</option>
-                        </select>
+                        <CustomSelect 
+                            label="Assigned To"
+                            value={formData.assignedTo || ''}
+                            onChange={(val) => setFormData({...formData, assignedTo: val})}
+                            options={ASSIGNEES.map(a => ({ label: a, value: a }))}
+                            placeholder="Select Assignee"
+                        />
                     </div>
                </div>
                

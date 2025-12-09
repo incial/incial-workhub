@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Calendar, User, AlignLeft, Tag, Layers, Flag, Link as LinkIcon, Edit2, ExternalLink, Clock, CheckCircle, History, Maximize2, Minimize2, Layout } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus, TaskType } from '../../types';
 import { formatDate } from '../../utils';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface ClientTaskFormProps {
   isOpen: boolean;
@@ -224,51 +225,39 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
             <div className="grid grid-cols-2 gap-6 pt-4 border-t border-gray-50">
                  
                  <div>
-                    <label className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <Layers className="h-4 w-4" /> Content Type
-                    </label>
-                    <select 
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-gray-900 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                        value={formData.taskType}
-                        onChange={e => setFormData({...formData, taskType: e.target.value as TaskType})}
-                    >
-                        {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                    <CustomSelect 
+                        label="Content Type"
+                        value={formData.taskType || 'General'}
+                        onChange={(val) => setFormData({...formData, taskType: val as TaskType})}
+                        options={TYPES.map(t => ({ label: t, value: t }))}
+                    />
                 </div>
 
                 <div>
-                    <label className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <Flag className="h-4 w-4" /> Priority
-                    </label>
-                    <select 
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-gray-900 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                        value={formData.priority}
-                        onChange={e => setFormData({...formData, priority: e.target.value as TaskPriority})}
-                    >
-                        {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
+                    <CustomSelect 
+                        label="Priority"
+                        value={formData.priority || 'Medium'}
+                        onChange={(val) => setFormData({...formData, priority: val as TaskPriority})}
+                        options={PRIORITIES.map(p => ({ label: p, value: p }))}
+                    />
                 </div>
 
                  <div>
-                    <label className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <User className="h-4 w-4" /> Assignee
-                    </label>
-                    <select 
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-gray-900 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                        value={formData.assignedTo}
-                        onChange={e => setFormData({...formData, assignedTo: e.target.value})}
-                    >
-                        {ASSIGNEES.map(a => <option key={a} value={a}>{a}</option>)}
-                    </select>
+                    <CustomSelect 
+                        label="Assignee"
+                        value={formData.assignedTo || ''}
+                        onChange={(val) => setFormData({...formData, assignedTo: val})}
+                        options={ASSIGNEES.map(a => ({ label: a, value: a }))}
+                    />
                 </div>
 
                  <div>
-                    <label className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                    <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
                         <Calendar className="h-4 w-4" /> Due Date
                     </label>
                     <input 
                         type="date"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-gray-900 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                        className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-gray-900 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm"
                         value={formData.dueDate || ''}
                         onChange={e => setFormData({...formData, dueDate: e.target.value})}
                     />

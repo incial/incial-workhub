@@ -41,30 +41,32 @@ const StatusDropdown = ({ task, onStatusChange }: { task: Task; onStatusChange: 
         <div className="relative inline-block" ref={ref}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border shadow-sm transition-all hover:opacity-80 active:scale-95 ${getTaskStatusStyles(task.status)}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border shadow-sm transition-all hover:opacity-90 hover:shadow-md active:scale-95 ${getTaskStatusStyles(task.status)}`}
             >
                 {task.status}
                 <ChevronDown className={`h-3 w-3 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {isOpen && (
-                <div className="absolute top-full left-0 z-50 mt-1 w-36 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute top-full left-0 z-50 mt-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="p-1">
                         {options.map(opt => (
                             <button
                                 key={opt}
                                 onClick={() => { onStatusChange(task, opt); setIsOpen(false); }}
-                                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-medium rounded-lg text-left transition-colors ${
-                                    task.status === opt ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors ${
+                                    task.status === opt ? 'bg-brand-50 text-brand-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                             >
-                                <span className={`w-2 h-2 rounded-full mr-2 ${
-                                    opt === 'Completed' ? 'bg-green-500' : 
-                                    opt === 'Posted' ? 'bg-sky-500' :
-                                    opt === 'In Review' ? 'bg-purple-500' :
-                                    opt === 'In Progress' ? 'bg-blue-500' : 'bg-gray-400'
-                                }`} />
-                                {opt}
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${
+                                        opt === 'Completed' ? 'bg-green-500' : 
+                                        opt === 'Posted' ? 'bg-sky-500' :
+                                        opt === 'In Review' ? 'bg-purple-500' :
+                                        opt === 'In Progress' ? 'bg-blue-500' : 'bg-gray-400'
+                                    }`} />
+                                    {opt}
+                                </div>
                                 {task.status === opt && <Check className="h-3 w-3 text-brand-600 ml-auto" />}
                             </button>
                         ))}
@@ -93,21 +95,21 @@ const PriorityDropdown = ({ task, onPriorityChange }: { task: Task; onPriorityCh
         <div className="relative inline-block" ref={ref}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-all hover:opacity-80 active:scale-95 ${getTaskPriorityStyles(task.priority)}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border shadow-sm transition-all hover:opacity-90 hover:shadow-md active:scale-95 ${getTaskPriorityStyles(task.priority)}`}
             >
                 {task.priority}
                 <ChevronDown className={`h-3 w-3 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {isOpen && (
-                <div className="absolute top-full left-0 z-50 mt-1 w-32 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute top-full left-0 z-50 mt-2 w-36 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="p-1">
                         {options.map(opt => (
                             <button
                                 key={opt}
                                 onClick={() => { onPriorityChange(task, opt); setIsOpen(false); }}
-                                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-medium rounded-lg text-left transition-colors ${
-                                    task.priority === opt ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors ${
+                                    task.priority === opt ? 'bg-brand-50 text-brand-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                             >
                                 {opt}
@@ -156,12 +158,14 @@ export const TasksTable: React.FC<TasksTableProps> = ({ data, companyMap, onEdit
                         {/* Client */}
                         <td className="px-6 py-3">
                             {clientName ? (
-                                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700">
-                                    <Building className="h-3 w-3 text-gray-400" />
-                                    {clientName}
+                                <div className="flex items-center gap-2 text-xs font-semibold text-gray-700">
+                                    <div className="flex items-center gap-1.5">
+                                        <Building className="h-3 w-3 text-gray-400" />
+                                        {clientName}
+                                    </div>
                                 </div>
                             ) : (
-                                <span className="text-xs text-gray-400 italic">Internal</span>
+                                <span className="text-xs text-gray-400 italic pl-1">Internal Task</span>
                             )}
                         </td>
 

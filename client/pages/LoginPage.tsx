@@ -2,11 +2,13 @@
 import React, { useState } from 'react';
 import { authApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, CheckCircle, Shield, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, CheckCircle, Shield, User, Eye, EyeOff, Crown, Briefcase } from 'lucide-react';
+
+type DemoRole = 'super' | 'admin' | 'employee' | 'client';
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('demo@incial.com');
-  const [password, setPassword] = useState('demo');
+  const [email, setEmail] = useState('super@incial.com');
+  const [password, setPassword] = useState('super');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,13 +29,24 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const fillCredentials = (role: 'admin' | 'employee') => {
-      if (role === 'admin') {
-          setEmail('demo@incial.com');
-          setPassword('demo');
-      } else {
-          setEmail('employee@incial.com');
-          setPassword('employee');
+  const fillCredentials = (role: DemoRole) => {
+      switch(role) {
+          case 'super':
+              setEmail('super@incial.com');
+              setPassword('super');
+              break;
+          case 'admin':
+              setEmail('admin@incial.com');
+              setPassword('admin');
+              break;
+          case 'employee':
+              setEmail('employee@incial.com');
+              setPassword('employee');
+              break;
+          case 'client':
+              setEmail('client@incial.com');
+              setPassword('client');
+              break;
       }
   };
 
@@ -157,33 +170,53 @@ export const LoginPage: React.FC = () => {
                     <div className="w-full border-t border-gray-200" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-500 font-medium">Demo Credentials</span>
+                    <span className="px-4 bg-white text-gray-500 font-medium">Demo Roles</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
+                <button 
+                    onClick={() => fillCredentials('super')}
+                    className="p-2.5 border border-gray-200 rounded-xl text-left hover:border-brand-500 hover:bg-brand-50/50 transition-all group"
+                >
+                    <div className="flex items-center gap-2 mb-1">
+                        <Crown className="h-4 w-4 text-brand-600" />
+                        <span className="text-sm font-bold text-gray-900">Super Admin</span>
+                    </div>
+                    <div className="text-[10px] text-gray-400 group-hover:text-brand-600">Full Access</div>
+                </button>
+
                 <button 
                     onClick={() => fillCredentials('admin')}
-                    className="p-3 border border-gray-200 rounded-xl text-left hover:border-blue-500 hover:bg-blue-50/50 transition-all group"
+                    className="p-2.5 border border-gray-200 rounded-xl text-left hover:border-blue-500 hover:bg-blue-50/50 transition-all group"
                 >
                     <div className="flex items-center gap-2 mb-1">
                         <Shield className="h-4 w-4 text-blue-600" />
                         <span className="text-sm font-bold text-gray-900">Admin</span>
                     </div>
-                    <div className="text-xs text-gray-500 font-mono">demo@incial.com</div>
-                    <div className="text-xs text-gray-400 mt-1 group-hover:text-blue-600">Click to fill</div>
+                    <div className="text-[10px] text-gray-400 group-hover:text-blue-600">No Analytics</div>
                 </button>
 
                 <button 
                     onClick={() => fillCredentials('employee')}
-                    className="p-3 border border-gray-200 rounded-xl text-left hover:border-indigo-500 hover:bg-indigo-50/50 transition-all group"
+                    className="p-2.5 border border-gray-200 rounded-xl text-left hover:border-indigo-500 hover:bg-indigo-50/50 transition-all group"
                 >
                     <div className="flex items-center gap-2 mb-1">
                         <User className="h-4 w-4 text-indigo-600" />
                         <span className="text-sm font-bold text-gray-900">Employee</span>
                     </div>
-                    <div className="text-xs text-gray-500 font-mono">employee@incial.com</div>
-                    <div className="text-xs text-gray-400 mt-1 group-hover:text-indigo-600">Click to fill</div>
+                    <div className="text-[10px] text-gray-400 group-hover:text-indigo-600">Operational Only</div>
+                </button>
+
+                <button 
+                    onClick={() => fillCredentials('client')}
+                    className="p-2.5 border border-gray-200 rounded-xl text-left hover:border-green-500 hover:bg-green-50/50 transition-all group"
+                >
+                    <div className="flex items-center gap-2 mb-1">
+                        <Briefcase className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-bold text-gray-900">Client</span>
+                    </div>
+                    <div className="text-[10px] text-gray-400 group-hover:text-green-600">Restricted View</div>
                 </button>
             </div>
          </div>

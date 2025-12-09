@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User, Image } from 'lucide-react';
 import { CRMEntry, CRMStatus, SocialLinks } from '../../types';
 import { getWorkTypeStyles } from '../../utils';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface CompaniesFormProps {
   isOpen: boolean;
@@ -142,24 +143,14 @@ export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, o
 
                 {/* Status */}
                 <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700">Status <span className="text-red-500">*</span></label>
-                    <div className="flex flex-wrap gap-3">
-                        {STATUS_OPTIONS.map(opt => (
-                            <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => setFormData({...formData, status: opt.value})}
-                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                                    formData.status === opt.value
-                                    ? 'bg-brand-50 border-brand-500 text-brand-700 ring-1 ring-brand-500'
-                                    : 'bg-white border-gray-200 text-gray-600 hover:border-brand-300 hover:bg-gray-50'
-                                }`}
-                            >
-                                {opt.label}
-                                {formData.status === opt.value && <Check className="h-3.5 w-3.5" />}
-                            </button>
-                        ))}
-                    </div>
+                    <CustomSelect 
+                        label="Status"
+                        value={formData.status || ''}
+                        onChange={(val) => setFormData({...formData, status: val as any})}
+                        options={STATUS_OPTIONS}
+                        placeholder="Select Status"
+                        required
+                    />
                 </div>
 
                 {/* Work Tags */}

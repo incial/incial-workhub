@@ -1,8 +1,6 @@
 
-
-
 import axios from 'axios';
-import { CRMEntry, Task, Meeting } from '../types';
+import { CRMEntry, Task, Meeting, User, UserRole, AuthResponse } from '../types';
 import { MOCK_CRM_DATA, MOCK_TASKS_DATA, MOCK_MEETINGS_DATA } from './mockData';
 
 // In a real app, this comes from env
@@ -131,28 +129,56 @@ export const meetingsApi = {
 };
 
 export const authApi = {
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string): Promise<AuthResponse> => {
     // REAL CALL: return api.post("/auth/login", { email, password });
     await delay(800);
     
-    // ADMIN LOGIN -> Mapped to 'Vallapata' to match mock data
-    if (email === 'demo@incial.com' && password === 'demo') {
+    // 1. SUPER ADMIN (Everything)
+    if (email === 'super@incial.com' && password === 'super') {
       return {
         statusCode: 200,
-        token: "mock-jwt-token-admin",
-        role: "ROLE_ADMIN",
-        user: { id: 1, name: "Vallapata", email, role: "ROLE_ADMIN" },
+        token: "mock-jwt-token-super",
+        role: "ROLE_SUPER_ADMIN",
+        user: { id: 1, name: "Super Admin", email, role: "ROLE_SUPER_ADMIN" as UserRole },
         message: "Login successful"
       };
     }
 
-    // EMPLOYEE LOGIN -> Mapped to 'John Doe' to match mock data
+    // 2. ADMIN (Everything except Analytics)
+    if (email === 'admin@incial.com' && password === 'admin') {
+      return {
+        statusCode: 200,
+        token: "mock-jwt-token-admin",
+        role: "ROLE_ADMIN",
+        user: { id: 2, name: "Vallapata (Admin)", email, role: "ROLE_ADMIN" as UserRole },
+        message: "Login successful"
+      };
+    }
+
+    // 3. EMPLOYEE (Tasks, Companies, Client Tracker, Meetings)
     if (email === 'employee@incial.com' && password === 'employee') {
       return {
         statusCode: 200,
         token: "mock-jwt-token-employee",
         role: "ROLE_EMPLOYEE",
-        user: { id: 2, name: "John Doe", email, role: "ROLE_EMPLOYEE" },
+        user: { id: 3, name: "John Doe", email, role: "ROLE_EMPLOYEE" as UserRole },
+        message: "Login successful"
+      };
+    }
+
+    // 4. CLIENT (Own Company Data Only) - Mapping to Company ID 1 (SMR Rubbers)
+    if (email === 'client@incial.com' && password === 'client') {
+      return {
+        statusCode: 200,
+        token: "mock-jwt-token-client",
+        role: "ROLE_CLIENT",
+        user: { 
+            id: 4, 
+            name: "Anil Michael", 
+            email, 
+            role: "ROLE_CLIENT" as UserRole,
+            companyId: 1 // Linked to SMR Rubbers in mock data
+        },
         message: "Login successful"
       };
     }

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Calendar, User, AlignLeft, Flag, CheckCircle, History, Link as LinkIcon, ExternalLink, Edit2, Clock, Building, Maximize2, Minimize2 } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus } from '../../types';
 import { CustomDatePicker } from '../ui/CustomDatePicker';
+import { CustomSelect } from '../ui/CustomSelect';
 import { formatDate } from '../../utils';
 
 interface TaskFormProps {
@@ -192,50 +193,41 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
             <div className="grid grid-cols-2 gap-6 pt-4 border-t border-gray-50">
                 {/* Status */}
                 <div>
-                   <label className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <CheckCircle className="h-4 w-4" /> Status
-                   </label>
-                   <select 
-                        className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        value={formData.status}
-                        onChange={e => setFormData({...formData, status: e.target.value as TaskStatus})}
-                   >
-                        {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                   </select>
+                   <CustomSelect 
+                        label="Status"
+                        value={formData.status || ''}
+                        onChange={(val) => setFormData({...formData, status: val as TaskStatus})}
+                        options={STATUSES.map(s => ({ label: s, value: s }))}
+                        placeholder="Select Status"
+                   />
                 </div>
 
                 {/* Priority */}
                 <div>
-                   <label className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <Flag className="h-4 w-4" /> Priority
-                   </label>
-                   <select 
-                        className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        value={formData.priority}
-                        onChange={e => setFormData({...formData, priority: e.target.value as TaskPriority})}
-                   >
-                        {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-                   </select>
+                   <CustomSelect 
+                        label="Priority"
+                        value={formData.priority || ''}
+                        onChange={(val) => setFormData({...formData, priority: val as TaskPriority})}
+                        options={PRIORITIES.map(p => ({ label: p, value: p }))}
+                        placeholder="Select Priority"
+                   />
                 </div>
 
                 {/* Assigned To */}
                 <div>
-                   <label className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <User className="h-4 w-4" /> Assignee
-                   </label>
-                   <select 
-                        className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        value={formData.assignedTo}
-                        onChange={e => setFormData({...formData, assignedTo: e.target.value})}
-                   >
-                        {ASSIGNEES.map(a => <option key={a} value={a}>{a}</option>)}
-                   </select>
+                   <CustomSelect 
+                        label="Assignee"
+                        value={formData.assignedTo || ''}
+                        onChange={(val) => setFormData({...formData, assignedTo: val})}
+                        options={ASSIGNEES.map(a => ({ label: a, value: a }))}
+                        placeholder="Select Assignee"
+                   />
                 </div>
 
                 {/* Due Date */}
                 <div>
-                   <label className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <Calendar className="h-4 w-4" /> Due Date
+                   <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+                        Due Date
                    </label>
                    <div className="w-full">
                         <CustomDatePicker 

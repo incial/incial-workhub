@@ -43,7 +43,7 @@ const StatusDropdown = ({ task, onStatusChange }: { task: Task; onStatusChange: 
         <div className="relative inline-block" ref={ref}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm transition-all hover:opacity-80 active:scale-95 whitespace-nowrap ${getStyles(task.status)}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border shadow-sm transition-all hover:opacity-90 hover:shadow-md active:scale-95 whitespace-nowrap ${getStyles(task.status)}`}
             >
                 <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
                 {task.status === 'drop' as any ? 'Dropped' : task.status}
@@ -51,13 +51,13 @@ const StatusDropdown = ({ task, onStatusChange }: { task: Task; onStatusChange: 
             </button>
             
             {isOpen && (
-                <div className="absolute top-full left-0 z-50 mt-1 w-36 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute top-full left-0 z-50 mt-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="p-1">
                         {options.map(opt => (
                             <button
                                 key={opt}
                                 onClick={() => { onStatusChange(task, opt); setIsOpen(false); }}
-                                className={`w-full text-left px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center justify-between group ${task.status === opt ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50'}`}
+                                className={`w-full text-left px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center justify-between group ${task.status === opt ? 'bg-brand-50 text-brand-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}
                             >
                                 {opt}
                                 {task.status === opt && <Check className="h-3 w-3 text-brand-600" />}
