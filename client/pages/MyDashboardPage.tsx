@@ -35,11 +35,11 @@ export const MyDashboardPage: React.FC = () => {
                     meetingsApi.getAll()
                 ]);
 
-                // Filter Tasks for current user
+                // Filter Tasks for current user (Active Pipeline)
+                // Exclude: Completed, Done, Dropped
                 const myTasks = tasksData.filter(t => 
                     t.assignedTo === user?.name && 
-                    t.status !== 'Completed' && 
-                    t.status !== 'Done'
+                    !['Completed', 'Done', 'Dropped'].includes(t.status)
                 );
                 setTasks(myTasks);
 
@@ -69,8 +69,11 @@ export const MyDashboardPage: React.FC = () => {
         return 'Good evening';
     }, []);
 
+    // Generate local YYYY-MM-DD string for today based on IST
+    const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+
     const highPriorityCount = tasks.filter(t => t.priority === 'High').length;
-    const dueTodayCount = tasks.filter(t => t.dueDate === new Date().toISOString().split('T')[0]).length;
+    const dueTodayCount = tasks.filter(t => t.dueDate === todayStr).length;
     const nextMeeting = meetings[0];
 
     const sortedTasks = useMemo(() => {
@@ -152,7 +155,7 @@ export const MyDashboardPage: React.FC = () => {
                                     <>
                                         <h3 className="text-sm font-bold truncate mb-0.5">{nextMeeting.title}</h3>
                                         <p className="text-xs text-white/70 font-medium">
-                                            {new Date(nextMeeting.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} Today
+                                            {new Date(nextMeeting.dateTime).toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit', timeZone: 'Asia/Kolkata'})} Today
                                         </p>
                                     </>
                                 ) : (
@@ -202,7 +205,9 @@ export const MyDashboardPage: React.FC = () => {
                                                         }`}>
                                                             {task.priority}
                                                         </span>
-                                                        <span className="text-xs text-gray-400 font-medium">Due {formatDate(task.dueDate)}</span>
+                                                        <span className={`text-xs font-medium ${task.dueDate === todayStr ? 'text-orange-600 font-bold' : 'text-gray-400'}`}>
+                                                            Due {formatDate(task.dueDate)} {task.dueDate === todayStr ? '(Today)' : ''}
+                                                        </span>
                                                     </div>
                                                     <h3 className="text-sm font-bold text-gray-900 truncate group-hover:text-brand-600 transition-colors">
                                                         {task.title}
@@ -260,17 +265,17 @@ export const MyDashboardPage: React.FC = () => {
                                                     <div className="flex items-start gap-4">
                                                         <div className="flex flex-col items-center justify-center bg-gray-50 border border-gray-100 rounded-xl w-14 h-14 flex-shrink-0">
                                                             <span className="text-[10px] font-bold text-red-500 uppercase">
-                                                                {new Date(meeting.dateTime).toLocaleDateString('en-US', { month: 'short' })}
+                                                                {new Date(meeting.dateTime).toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' })}
                                                             </span>
                                                             <span className="text-xl font-bold text-gray-900">
-                                                                {new Date(meeting.dateTime).getDate()}
+                                                                {new Date(meeting.dateTime).toLocaleDateString('en-IN', { day: 'numeric', timeZone: 'Asia/Kolkata' })}
                                                             </span>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <h4 className="text-sm font-bold text-gray-900 truncate mb-1">{meeting.title}</h4>
                                                             <div className="flex items-center gap-2 text-xs text-gray-500">
                                                                 <Clock className="h-3.5 w-3.5" />
-                                                                <span>{new Date(meeting.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                                                <span>{new Date(meeting.dateTime).toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit', timeZone: 'Asia/Kolkata'})}</span>
                                                             </div>
                                                         </div>
                                                     </div>

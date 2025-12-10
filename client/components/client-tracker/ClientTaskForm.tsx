@@ -28,9 +28,9 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
         setFormData(initialData);
         setMode('view');
       } else {
-        // Use local time for default date
+        // Use IST local time for default date
         const today = new Date();
-        const localIsoDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const localIsoDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(today);
 
         setFormData({
           companyId,
@@ -163,13 +163,13 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
            {/* Footer Metadata */}
            {formData.createdAt && (
                <div className="flex flex-col gap-1 pt-6 border-t border-gray-100 text-xs text-gray-400">
-                    <p>Created on {new Date(formData.createdAt).toLocaleDateString()}</p>
+                    <p>Created on {new Date(formData.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                     {formData.lastUpdatedBy && (
                         <p className="flex items-center gap-1">
                             <History className="h-3 w-3" /> 
                             Updated by <span className="font-semibold">{formData.lastUpdatedBy}</span> 
                             <span className="mx-1">•</span> 
-                            {new Date(formData.lastUpdatedAt || '').toLocaleDateString()}
+                            {new Date(formData.lastUpdatedAt || '').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}
                         </p>
                     )}
                </div>

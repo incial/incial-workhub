@@ -1,6 +1,11 @@
 
 import { CRMEntry, Task, Meeting } from '../types';
 
+// Helper for local date string YYYY-MM-DD in IST
+const getISTToday = () => {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+}
+
 export const MOCK_CRM_DATA: CRMEntry[] = [
   {
     id: 1,
@@ -12,7 +17,7 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     address: "Kinfra Industrial Park, Thumba, Trivandrum, Kerala",
     companyImageUrl: "https://ui-avatars.com/api/?name=SMR+Rubbers&background=0D8ABC&color=fff&size=128", // Sample
     lastContact: "2023-10-25",
-    nextFollowUp: new Date().toISOString().split('T')[0], // Today
+    nextFollowUp: getISTToday(), // Today
     dealValue: 35000.00,
     notes: "Proposal revised, waiting for signoff. Logo refreshment needed.",
     status: "on progress",
@@ -157,7 +162,7 @@ export const MOCK_CRM_DATA: CRMEntry[] = [
     contactName: "Alice Chen",
     assignedTo: "John Doe",
     lastContact: "2023-11-01",
-    nextFollowUp: new Date().toISOString().split('T')[0],
+    nextFollowUp: getISTToday(),
     dealValue: 12000.00,
     notes: "Needs a Shopify store setup and Instagram ads strategy.",
     status: "lead",
@@ -251,7 +256,7 @@ export const MOCK_TASKS_DATA: Task[] = [
     priority: "High",
     taskType: "General",
     assignedTo: "Vallapata",
-    dueDate: new Date().toISOString().split('T')[0], // Today
+    dueDate: getISTToday(), // Ensure this matches IST "Today"
     createdAt: "2023-10-20T10:00:00Z",
     taskLink: "https://docs.google.com/document/d/sample-proposal",
     lastUpdatedBy: "Vallapata",
@@ -321,7 +326,7 @@ export const MOCK_TASKS_DATA: Task[] = [
     priority: "Medium",
     taskType: "General",
     assignedTo: "Vallapata",
-    dueDate: new Date().toISOString().split('T')[0],
+    dueDate: getISTToday(),
     createdAt: "2023-11-01T09:00:00Z",
     isVisibleOnMainBoard: true
   },
@@ -347,7 +352,7 @@ export const MOCK_TASKS_DATA: Task[] = [
     priority: "High",
     taskType: "General",
     assignedTo: "John Doe",
-    dueDate: new Date().toISOString().split('T')[0],
+    dueDate: getISTToday(),
     createdAt: "2023-11-02T08:00:00Z",
     isVisibleOnMainBoard: true // Pinned to Main Board example
   }

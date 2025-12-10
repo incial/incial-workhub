@@ -22,16 +22,14 @@ export const MeetingForm: React.FC<MeetingFormProps> = ({ isOpen, onClose, onSub
       if (initialData) {
         setFormData(initialData);
       } else {
-        // Create Mode defaults: Local Time for datetime-local input
+        // Create Mode defaults: Local Time for datetime-local input, adjusted for IST
         const now = new Date();
-        // Construct YYYY-MM-DDThh:mm manually to avoid timezone shift from toISOString
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        
-        const localDateTimeStr = `${year}-${month}-${day}T${hours}:${minutes}`;
+        const isoLikeStr = new Intl.DateTimeFormat('sv-SE', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+        }).format(now);
+        // sv-SE outputs "YYYY-MM-DD HH:mm"
+        const localDateTimeStr = isoLikeStr.replace(' ', 'T');
 
         setFormData({
           title: '',
@@ -120,7 +118,7 @@ export const MeetingForm: React.FC<MeetingFormProps> = ({ isOpen, onClose, onSub
                       {/* Date Time */}
                       <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5" /> Date & Time
+                              <Clock className="h-3.5 w-3.5" /> Date & Time (IST)
                           </label>
                           <input 
                               type="datetime-local"

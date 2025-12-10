@@ -150,7 +150,8 @@ export const authApi = {
         statusCode: 200,
         token: "mock-jwt-token-admin",
         role: "ROLE_ADMIN",
-        user: { id: 2, name: "Vallapata (Admin)", email, role: "ROLE_ADMIN" as UserRole },
+        // FIX: Changed name from "Vallapata (Admin)" to "Vallapata" to match MOCK_TASKS_DATA
+        user: { id: 2, name: "Vallapata", email, role: "ROLE_ADMIN" as UserRole },
         message: "Login successful"
       };
     }

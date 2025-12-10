@@ -10,43 +10,58 @@ export const formatMoney = (amount: number) => {
 export const formatDate = (dateString: string) => {
   if (!dateString) return '-';
   
-  // Check for YYYY-MM-DD format to parse as local date
+  // Check for YYYY-MM-DD format (Task Due Dates, CRM Followups) - Treat as plain date
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const [y, m, d] = dateString.split('-').map(Number);
-      const date = new Date(y, m - 1, d); // Local midnight
-      return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+      const date = new Date(y, m - 1, d); // Local midnight construction to preserve date
+      return new Intl.DateTimeFormat('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
   }
 
+  // ISO Strings (Timestamps) - Convert to IST
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+  return new Intl.DateTimeFormat('en-IN', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      timeZone: 'Asia/Kolkata' 
+  }).format(date);
 };
 
 export const formatDateTime = (dateString: string) => {
   if (!dateString) return '-';
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', { 
+  return new Intl.DateTimeFormat('en-IN', { 
     month: 'short', 
     day: 'numeric', 
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
+    timeZone: 'Asia/Kolkata'
   }).format(date);
 };
 
 export const getFollowUpColor = (dateString: string) => {
   if (!dateString) return 'text-gray-500';
   
-  const today = new Date();
+  // Get Today in IST as YYYY-MM-DD
+  const todayISTStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+  
+  // Parse Today IST to a local Date object for comparison
+  const [ty, tm, td] = todayISTStr.split('-').map(Number);
+  const today = new Date(ty, tm - 1, td);
   today.setHours(0, 0, 0, 0);
   
-  // Parse as local if strict date string
+  // Parse input date
   let checkDate: Date;
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const [y, m, d] = dateString.split('-').map(Number);
       checkDate = new Date(y, m - 1, d);
   } else {
-      checkDate = new Date(dateString);
+      // If it's a timestamp, convert to IST date string first then parse
+      const istStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date(dateString));
+      const [y, m, d] = istStr.split('-').map(Number);
+      checkDate = new Date(y, m - 1, d);
   }
   checkDate.setHours(0, 0, 0, 0);
 
