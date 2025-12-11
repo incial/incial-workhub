@@ -22,7 +22,7 @@ public class CrmService {
         List<CrmEntryDto> dtoList = entries.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-        
+
         Map<String, List<CrmEntryDto>> response = new HashMap<>();
         response.put("crmList", dtoList);
         return response;
@@ -37,7 +37,7 @@ public class CrmService {
     public CrmEntryDto updateEntry(Long id, CrmEntryDto dto) {
         CrmEntry entry = crmEntryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("CRM Entry not found with id: " + id));
-        
+
         updateEntityFromDto(entry, dto);
         CrmEntry updated = crmEntryRepository.save(entry);
         return convertToDto(updated);

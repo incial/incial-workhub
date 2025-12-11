@@ -31,11 +31,17 @@ public class User {
     @Column(nullable = false, length = 50)
     private String role;
 
+    @Column(name = "tasks_completed", nullable = false)
+    private Integer tasksCompleted = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (tasksCompleted == null) {
+            tasksCompleted = 0;
+        }
     }
 }

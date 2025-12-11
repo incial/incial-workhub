@@ -32,23 +32,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // CSRF protection is disabled because this is a stateless REST API using JWT tokens
-            // JWT tokens in Authorization header are not susceptible to CSRF attacks
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/api/v1/crm/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/v1/companies/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                .requestMatchers("/api/v1/tasks/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // CSRF protection is disabled because this is a stateless REST API using JWT tokens
+                // JWT tokens in Authorization header are not susceptible to CSRF attacks
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api/v1/crm/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPER_ADMIN")
+                        .requestMatchers("/api/v1/companies/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_SUPER_ADMIN")
+                        .requestMatchers("/api/v1/tasks/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_SUPER_ADMIN")
+                        .requestMatchers("/api/v1/meetings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_SUPER_ADMIN")
+                        .requestMatchers("/api/v1/users/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_SUPER_ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         // Allow H2 console frames
         http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));

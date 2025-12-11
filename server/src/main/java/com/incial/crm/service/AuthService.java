@@ -49,8 +49,8 @@ public class AuthService {
         }
 
         // Validate role
-        if (!role.equals("ROLE_ADMIN") && !role.equals("ROLE_EMPLOYEE")) {
-            throw new RuntimeException("Invalid role. Must be ADMIN or EMPLOYEE");
+        if (!role.equals("ROLE_ADMIN") && !role.equals("ROLE_EMPLOYEE") && !role.equals("ROLE_SUPER_ADMIN")) {
+            throw new RuntimeException("Invalid role. Must be ADMIN, EMPLOYEE, or SUPER_ADMIN");
         }
 
         // Create new user (createdAt is set automatically by @PrePersist)
@@ -89,7 +89,6 @@ public class AuthService {
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            // 🔥 FIX: pass username string now
             String token = jwtUtil.generateToken(user.getEmail());
 
             UserDto userDto = UserDto.builder()
