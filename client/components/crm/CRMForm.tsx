@@ -536,8 +536,8 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="w-full">
                         <label className="block mb-1.5 text-sm font-medium text-gray-700">Deal Value (₹)</label>
-                        <input type="number" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                        value={formData.dealValue} onChange={e => setFormData({...formData, dealValue: Number(e.target.value)})} />
+                        <input type="number" step="0.01" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
+                        value={formData.dealValue} onChange={e => setFormData({...formData, dealValue: parseFloat(e.target.value) || 0})} />
                     </div>
 
                     <div className="w-full">

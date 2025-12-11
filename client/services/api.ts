@@ -36,6 +36,43 @@ const handleApiError = (error: any) => {
     }
 };
 
+// Helper to clean payload
+// 1. Removes id, createdAt, lastUpdatedAt (backend handled)
+// 2. Removes keys with empty string values (prevents unique constraint/validation errors)
+// 3. Preserves empty objects/arrays (Backend converters often prefer {}/[] over null)
+const cleanPayload = (data: any): any => {
+    if (Array.isArray(data)) {
+        return data.map(cleanPayload);
+    }
+    
+    if (data !== null && typeof data === 'object') {
+        const cleaned: any = {};
+        
+        // Fields to explicitly exclude
+        const excludeFields = ['id', 'createdAt', 'lastUpdatedAt'];
+
+        Object.keys(data).forEach(key => {
+            if (excludeFields.includes(key)) return;
+
+            const value = data[key];
+
+            // Recursively clean objects
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                const cleanedObj = cleanPayload(value);
+                // Keep the object even if empty (e.g. socials: {}) to avoid NPE in backend converters
+                cleaned[key] = cleanedObj;
+            } 
+            // Keep non-empty values (0 is valid for numbers, false is valid for booleans)
+            else if (value !== "" && value !== null && value !== undefined) {
+                cleaned[key] = value;
+            }
+        });
+        return cleaned;
+    }
+    
+    return data;
+};
+
 // ============================================================================
 // 🔌 API ENDPOINTS
 // ============================================================================
@@ -61,14 +98,16 @@ export const crmApi = {
 
   create: async (data: Omit<CRMEntry, 'id'>): Promise<CRMEntry> => {
     try {
-        const res = await api.post("/crm/create", data);
+        const payload = cleanPayload(data);
+        const res = await api.post("/crm/create", payload);
         return res.data;
     } catch (error) { throw handleApiError(error); }
   },
 
   update: async (id: number, data: Partial<CRMEntry>): Promise<CRMEntry> => {
      try {
-        const res = await api.put(`/crm/update/${id}`, data);
+        const payload = cleanPayload(data);
+        const res = await api.put(`/crm/update/${id}`, payload);
         return res.data;
      } catch (error) { throw handleApiError(error); }
   },
@@ -91,14 +130,16 @@ export const tasksApi = {
 
   create: async (data: Omit<Task, 'id' | 'createdAt'>): Promise<Task> => {
     try {
-        const res = await api.post("/tasks/create", data);
+        const payload = cleanPayload(data);
+        const res = await api.post("/tasks/create", payload);
         return res.data;
     } catch (error) { throw handleApiError(error); }
   },
 
   update: async (id: number, data: Partial<Task>): Promise<Task> => {
      try {
-        const res = await api.put(`/tasks/update/${id}`, data);
+        const payload = cleanPayload(data);
+        const res = await api.put(`/tasks/update/${id}`, payload);
         return res.data;
      } catch (error) { throw handleApiError(error); }
   },
@@ -121,14 +162,16 @@ export const meetingsApi = {
 
   create: async (data: Omit<Meeting, 'id' | 'createdAt'>): Promise<Meeting> => {
     try {
-        const res = await api.post("/meetings/create", data);
+        const payload = cleanPayload(data);
+        const res = await api.post("/meetings/create", payload);
         return res.data;
     } catch (error) { throw handleApiError(error); }
   },
 
   update: async (id: number, data: Partial<Meeting>): Promise<Meeting> => {
     try {
-        const res = await api.put(`/meetings/update/${id}`, data);
+        const payload = cleanPayload(data);
+        const res = await api.put(`/meetings/update/${id}`, payload);
         return res.data;
     } catch (error) { throw handleApiError(error); }
   },

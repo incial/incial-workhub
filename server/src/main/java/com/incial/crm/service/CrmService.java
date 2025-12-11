@@ -107,6 +107,8 @@ public class CrmService {
     }
 
     private void updateEntityFromDto(CrmEntry entity, CrmEntryDto dto) {
+        String user = UserService.getCurrentUsername();
+
         if (dto.getCompany() != null) entity.setCompany(dto.getCompany());
         if (dto.getContactName() != null) entity.setContactName(dto.getContactName());
         if (dto.getEmail() != null) entity.setEmail(dto.getEmail());
@@ -125,6 +127,6 @@ public class CrmService {
         if (dto.getLeadSources() != null) entity.setLeadSources(dto.getLeadSources());
         if (dto.getDriveLink() != null) entity.setDriveLink(dto.getDriveLink());
         if (dto.getSocials() != null) entity.setSocials(dto.getSocials());
-        if (dto.getLastUpdatedBy() != null) entity.setLastUpdatedBy(dto.getLastUpdatedBy());
+        if (dto.getLastUpdatedBy() != null) entity.setLastUpdatedBy(user);
     }
 }

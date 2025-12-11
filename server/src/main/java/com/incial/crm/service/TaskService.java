@@ -113,12 +113,14 @@ public class TaskService {
     }
 
     private void updateEntityFromDto(Task entity, TaskDto dto) {
+        String user = UserService.getCurrentUsername();
+
         if (dto.getTitle() != null) entity.setTitle(dto.getTitle());
         if (dto.getDescription() != null) entity.setDescription(dto.getDescription());
         if (dto.getStatus() != null) entity.setStatus(dto.getStatus());
         if (dto.getPriority() != null) entity.setPriority(dto.getPriority());
         if (dto.getAssignedTo() != null) entity.setAssignedTo(dto.getAssignedTo());
         if (dto.getDueDate() != null) entity.setDueDate(dto.getDueDate());
-        if (dto.getLastUpdatedBy() != null) entity.setLastUpdatedBy(dto.getLastUpdatedBy());
+        if (dto.getLastUpdatedBy() != null) entity.setLastUpdatedBy(user);
     }
 }

@@ -4,6 +4,8 @@ import com.incial.crm.dto.UserDto;
 import com.incial.crm.entity.User;
 import com.incial.crm.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -58,4 +60,13 @@ public class UserService {
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
+
+    public static String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "SYSTEM";
+        }
+        return authentication.getName();
+    }
+
 }
