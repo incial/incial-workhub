@@ -93,6 +93,27 @@ export const MeetingTrackerPage: React.FC = () => {
       }
   };
 
+  const handleStatusChange = async (meeting: Meeting, newStatus: MeetingStatus) => {
+      const updated = { 
+          ...meeting, 
+          status: newStatus,
+          lastUpdatedBy: user?.name || 'Unknown',
+          lastUpdatedAt: new Date().toISOString()
+      };
+      // Optimistic update
+      setMeetings(prev => prev.map(m => m.id === meeting.id ? updated : m));
+      
+      try {
+          await meetingsApi.update(meeting.id, { 
+              status: newStatus,
+              lastUpdatedBy: user?.name || 'Unknown',
+              lastUpdatedAt: new Date().toISOString()
+          });
+      } catch (e) {
+          fetchData(); // Revert on failure
+      }
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
@@ -189,6 +210,7 @@ export const MeetingTrackerPage: React.FC = () => {
                                     data={filteredMeetings} 
                                     onEdit={handleEdit} 
                                     onDelete={(id) => setDeleteId(id)} 
+                                    onStatusChange={handleStatusChange}
                                 />
                             ) : (
                                 <div className="h-full p-6">

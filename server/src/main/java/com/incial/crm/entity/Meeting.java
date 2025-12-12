@@ -1,5 +1,6 @@
 package com.incial.crm.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,7 @@ public class Meeting {
     private String title;
 
     @Column(name = "date_time", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dateTime;
 
     @Column(length = 50)
@@ -43,11 +45,23 @@ public class Meeting {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "last_updated_by", length = 255)
+    private String lastUpdatedBy;
+
+    @Column(name = "last_updated_at")
+    private LocalDateTime lastUpdatedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        lastUpdatedAt = LocalDateTime.now();
         if (status == null || status.isEmpty()) {
             status = "Scheduled";
         }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        lastUpdatedAt = LocalDateTime.now();
     }
 }

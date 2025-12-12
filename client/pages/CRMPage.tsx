@@ -117,12 +117,19 @@ export const CRMPage: React.FC = () => {
               const updatedEntry = { ...editingEntry, ...finalData } as CRMEntry;
               setEntries(entries.map(e => e.id === updatedEntry.id ? updatedEntry : e)); // Optimistic
               await crmApi.update(updatedEntry.id, finalData);
+              // TODO: Replace with toast notification system for better UX
+              alert("✅ Deal updated successfully!");
           } else {
               const newEntry = await crmApi.create(finalData as CRMEntry);
               setEntries([newEntry, ...entries]);
+              // TODO: Replace with toast notification system for better UX
+              alert("✅ Deal created successfully!");
           }
-      } catch (e) {
+      } catch (e: any) {
           console.error("Failed to save", e);
+          const errorMessage = e.message || "Unknown error occurred";
+          // TODO: Replace with toast notification system for better UX
+          alert(`❌ Failed to save deal: ${errorMessage}`);
           fetchData(); // Revert on error
       }
   };

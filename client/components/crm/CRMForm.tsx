@@ -19,6 +19,8 @@ const LEAD_SOURCES = [
   'Email Campaign', 'Cold Call', 'Event', 'Partner', 'Direct Mail'
 ];
 
+const SOCIAL_MEDIA_KEYS: (keyof SocialLinks)[] = ['website', 'linkedin', 'instagram', 'facebook', 'twitter', 'other'];
+
 const TAG_OPTIONS = [
   { label: 'Lead', color: 'bg-blue-100 text-blue-700 border-blue-200' },
   { label: 'Customer', color: 'bg-green-100 text-green-700 border-green-200' },
@@ -73,6 +75,12 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
             setMode('view');
         } else {
             // Reset for Create Mode
+            // Initialize socials dynamically from SOCIAL_MEDIA_KEYS constant
+            const emptySocials: SocialLinks = {};
+            SOCIAL_MEDIA_KEYS.forEach(key => {
+                emptySocials[key] = '';
+            });
+            
             setFormData({
                 company: '',
                 contactName: '',
@@ -88,7 +96,9 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 address: '',
                 companyImageUrl: '',
                 referenceId: '',
-                socials: {},
+                // Initialize socials with empty strings instead of an empty object
+                // This ensures the cleanPayload function omits it entirely if no values are provided
+                socials: emptySocials,
                 lastContact: new Date().toISOString().split('T')[0],
                 nextFollowUp: new Date().toISOString().split('T')[0],
                 notes: '',

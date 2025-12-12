@@ -4,9 +4,10 @@ import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
 import { PieChart, BarChart, TrendingUp, AlertCircle, Lock, Download, FileText, CheckSquare, Users, HelpCircle, Layers, DollarSign } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { crmApi, tasksApi } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { crmApi, tasksApi, usersApi } from '../services/api';
 import { formatMoney } from '../utils';
-import { CRMEntry } from '../types';
+import { CRMEntry, Task } from '../types';
 
 interface AnalyticsPageProps {
   title: string;
@@ -14,6 +15,7 @@ interface AnalyticsPageProps {
 
 export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
     const { user } = useAuth();
+    const { showToast } = useToast();
     const [entries, setEntries] = useState<CRMEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -38,36 +40,152 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
         loadData();
     }, [user, hasPermission]);
 
-    const handleExport = async (type: 'crm' | 'tasks') => {
-        if (!window.confirm(`Are you sure you want to export ${type.toUpperCase()} data to CSV?`)) return;
+    const handleExport = async (type: 'crm' | 'tasks' | 'performance') => {
+        // Removed window.confirm to allow immediate download
+        showToast(`Generating ${type.toUpperCase()} CSV...`, 'info');
 
         try {
-            let data: any[] = [];
+            let csvContent = "";
             let filename = `${type}_export_${new Date().toISOString().split('T')[0]}.csv`;
 
             if (type === 'crm') {
                 const res = await crmApi.getAll();
-                data = res.crmList;
+                const data = res.crmList;
+                
+                if (!data || data.length === 0) { 
+                    showToast("No data available to export.", 'error'); 
+                    return; 
+                }
+
+                // Define Headers for CRM
+                const headers = [
+                    "SI No", "Reference ID", "Company", "Contact Name", "Email", "Phone", 
+                    "Status", "Deal Value", "Assigned To", "Lead Source", 
+                    "Tags", "Work Types", "Next Follow Up", "Last Contact", 
+                    "Website", "LinkedIn", "Notes", "Address"
+                ];
+                
+                csvContent += headers.join(",") + "\n";
+
+                // Map Rows
+                data.forEach((item, index) => {
+                    const row = [
+                        index + 1,
+                        item.referenceId || "",
+                        `"${(item.company || "").replace(/"/g, '""')}"`,
+                        `"${(item.contactName || "").replace(/"/g, '""')}"`,
+                        item.email || "",
+                        item.phone ? `"${item.phone}"` : "",
+                        item.status || "",
+                        item.dealValue || 0,
+                        item.assignedTo || "Unassigned",
+                        `"${(item.leadSources || []).join("; ")}"`,
+                        `"${(item.tags || []).join("; ")}"`,
+                        `"${(item.work || []).map(w => (w && typeof w === 'object') ? (w as any).name : w).join("; ")}"`, // Handle legacy object structure if present
+                        item.nextFollowUp || "",
+                        item.lastContact || "",
+                        item.socials?.website || "",
+                        item.socials?.linkedin || "",
+                        `"${(item.notes || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`, // Escape newlines in notes
+                        `"${(item.address || "").replace(/"/g, '""')}"`
+                    ];
+                    csvContent += row.join(",") + "\n";
+                });
+
             } else if (type === 'tasks') {
-                data = await tasksApi.getAll();
+                const [tasksData, crmData] = await Promise.all([
+                    tasksApi.getAll(),
+                    crmApi.getAll()
+                ]);
+                
+                // Create lookup for Company Names
+                const companyMap: Record<number, string> = {};
+                crmData.crmList.forEach(c => companyMap[c.id] = c.company);
+
+                if (!tasksData || tasksData.length === 0) { 
+                    showToast("No data available to export.", 'error'); 
+                    return; 
+                }
+
+                // Define Headers for Tasks
+                const headers = [
+                    "SI No", "Title", "Status", "Priority", "Task Type", 
+                    "Assigned To", "Client / Company", "Due Date", 
+                    "Link", "Description", "Created At"
+                ];
+                
+                csvContent += headers.join(",") + "\n";
+
+                tasksData.forEach((task, index) => {
+                    const clientName = task.companyId ? companyMap[task.companyId] || "Unknown Client" : "Internal";
+                    
+                    const row = [
+                        index + 1,
+                        `"${(task.title || "").replace(/"/g, '""')}"`,
+                        task.status || "",
+                        task.priority || "",
+                        task.taskType || "",
+                        task.assignedTo || "Unassigned",
+                        `"${clientName.replace(/"/g, '""')}"`,
+                        task.dueDate || "",
+                        task.taskLink || "",
+                        `"${(task.description || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+                        task.createdAt ? new Date(task.createdAt).toLocaleDateString() : ""
+                    ];
+                    csvContent += row.join(",") + "\n";
+                });
+            } else if (type === 'performance') {
+                 const [tasks, users] = await Promise.all([
+                    tasksApi.getAll(),
+                    usersApi.getAll()
+                ]);
+                
+                if (!tasks || tasks.length === 0) {
+                    showToast("No task data available for performance calculation.", 'error');
+                    return;
+                }
+
+                // Create user lookup map for roles
+                const userRoleMap: Record<string, string> = {};
+                users.forEach(u => { userRoleMap[u.name] = u.role; });
+                
+                // Group by User
+                const userMap: Record<string, Task[]> = {};
+                tasks.forEach(task => {
+                    const assignee = task.assignedTo || 'Unassigned';
+                    if (!userMap[assignee]) userMap[assignee] = [];
+                    userMap[assignee].push(task);
+                });
+
+                const headers = ["Name", "Role", "Total Tasks", "Completed", "In Progress", "Pending (Todo)", "Completion Rate (%)"];
+                csvContent += headers.join(",") + "\n";
+
+                Object.keys(userMap).forEach(user => {
+                    const userTasks = userMap[user];
+                    const total = userTasks.length;
+                    const completed = userTasks.filter(t => t.status === 'Completed' || t.status === 'Done').length;
+                    const inProgress = userTasks.filter(t => t.status === 'In Progress').length;
+                    const pending = userTasks.filter(t => t.status === 'Not Started').length;
+                    const completionRate = total > 0 ? (completed / total) * 100 : 0;
+                    
+                    const rawRole = userRoleMap[user] || (user === 'Unassigned' ? 'System' : 'Employee');
+                    const formattedRole = rawRole.replace('ROLE_', '').split('_')
+                        .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+                        .join(' ');
+
+                    const row = [
+                        `"${user}"`,
+                        `"${formattedRole}"`,
+                        total,
+                        completed,
+                        inProgress,
+                        pending,
+                        completionRate.toFixed(2)
+                    ];
+                    csvContent += row.join(",") + "\n";
+                });
             }
 
-            if (!data || data.length === 0) {
-                alert("No data available to export.");
-                return;
-            }
-
-            // Convert to CSV
-            const headers = Object.keys(data[0]).join(',');
-            const rows = data.map(obj => 
-                Object.values(obj).map(val => {
-                    if (val === null || val === undefined) return '';
-                    if (typeof val === 'object') return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
-                    return `"${String(val).replace(/"/g, '""')}"`;
-                }).join(',')
-            );
-            const csvContent = [headers, ...rows].join('\n');
-            
             // Trigger Download
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -80,9 +198,11 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
+            showToast(`${type.toUpperCase().replace('_', ' ')} data exported successfully!`, 'success');
+
         } catch (e) {
             console.error("Export failed", e);
-            alert("Failed to export data. Please try again.");
+            showToast("Failed to export data. Please try again.", 'error');
         }
     };
 
@@ -264,7 +384,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
                         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <FileText className="h-5 w-5 text-gray-500" /> Data Exports
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             
                             <button 
                                 onClick={() => handleExport('crm')}
@@ -293,6 +413,22 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
                                     <h3 className="font-bold text-gray-900">Export Tasks</h3>
                                     <p className="text-xs text-gray-500 mt-1 mb-2">Download all task assignments and priorities.</p>
                                     <span className="text-xs font-semibold text-orange-600 flex items-center gap-1">
+                                        Download CSV <Download className="h-3 w-3" />
+                                    </span>
+                                </div>
+                            </button>
+
+                            <button 
+                                onClick={() => handleExport('performance')}
+                                className="group bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left flex items-start gap-4"
+                            >
+                                <div className="h-10 w-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
+                                    <BarChart className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900">Export Team Performance</h3>
+                                    <p className="text-xs text-gray-500 mt-1 mb-2">Download efficiency stats and completion rates by user.</p>
+                                    <span className="text-xs font-semibold text-purple-600 flex items-center gap-1">
                                         Download CSV <Download className="h-3 w-3" />
                                     </span>
                                 </div>

@@ -17,23 +17,31 @@ export const MeetingForm: React.FC<MeetingFormProps> = ({ isOpen, onClose, onSub
   const [formData, setFormData] = useState<Partial<Meeting>>({});
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
 
+  // Helper to format Date object to "YYYY-MM-DDThh:mm" for input
+  const toDateTimeInput = (dateStr: string | Date) => {
+      const date = new Date(dateStr);
+      // Format to sv-SE (YYYY-MM-DD hh:mm) in Asia/Kolkata timezone
+      const isoLikeStr = new Intl.DateTimeFormat('sv-SE', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric', month: '2-digit', day: '2-digit', 
+          hour: '2-digit', minute: '2-digit'
+      }).format(date);
+      return isoLikeStr.replace(' ', 'T');
+  };
+
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        setFormData(initialData);
+        setFormData({
+            ...initialData,
+            // Ensure the date is formatted correctly for the input
+            dateTime: toDateTimeInput(initialData.dateTime)
+        });
       } else {
-        // Create Mode defaults: Local Time for datetime-local input, adjusted for IST
-        const now = new Date();
-        const isoLikeStr = new Intl.DateTimeFormat('sv-SE', {
-            timeZone: 'Asia/Kolkata',
-            year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
-        }).format(now);
-        // sv-SE outputs "YYYY-MM-DD HH:mm"
-        const localDateTimeStr = isoLikeStr.replace(' ', 'T');
-
+        // Create Mode defaults
         setFormData({
           title: '',
-          dateTime: localDateTimeStr, 
+          dateTime: toDateTimeInput(new Date()), 
           status: 'Scheduled',
           meetingLink: '',
           notes: ''

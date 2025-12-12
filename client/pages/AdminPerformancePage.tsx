@@ -1,13 +1,15 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
-import { tasksApi } from '../services/api';
+import { tasksApi, usersApi } from '../services/api';
 import { Task } from '../types';
-import { Trophy, CheckCircle, Clock, AlertCircle, BarChart2, TrendingUp, Medal, Crown, Activity, Target, Zap } from 'lucide-react';
+import { Trophy, CheckCircle2, Target, Zap, Crown, Medal, TrendingUp, Star, Sparkles, LayoutGrid, Activity } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 interface UserStats {
   name: string;
+  role: string;
   total: number;
   completed: number;
   inProgress: number;
@@ -16,6 +18,7 @@ interface UserStats {
 }
 
 export const AdminPerformancePage: React.FC = () => {
+  const { showToast } = useToast();
   const [stats, setStats] = useState<UserStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,7 +26,16 @@ export const AdminPerformancePage: React.FC = () => {
     const fetchAndCalculate = async () => {
       setIsLoading(true);
       try {
-        const tasks = await tasksApi.getAll();
+        const [tasks, users] = await Promise.all([
+            tasksApi.getAll(),
+            usersApi.getAll()
+        ]);
+        
+        // Create user lookup map for roles
+        const userRoleMap: Record<string, string> = {};
+        users.forEach(u => {
+            userRoleMap[u.name] = u.role;
+        });
         
         // Group by User
         const userMap: Record<string, Task[]> = {};
@@ -42,8 +54,15 @@ export const AdminPerformancePage: React.FC = () => {
             const inProgress = userTasks.filter(t => t.status === 'In Progress').length;
             const pending = userTasks.filter(t => t.status === 'Not Started').length;
             
+            // Format Role
+            const rawRole = userRoleMap[user] || (user === 'Unassigned' ? 'System' : 'Employee');
+            const formattedRole = rawRole.replace('ROLE_', '').split('_')
+                .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+                .join(' ');
+
             return {
                 name: user,
+                role: formattedRole,
                 total,
                 completed,
                 inProgress,
@@ -58,6 +77,7 @@ export const AdminPerformancePage: React.FC = () => {
         setStats(calculatedStats);
       } catch (e) {
         console.error(e);
+        showToast("Failed to load performance data.", "error");
       } finally {
         setIsLoading(false);
       }
@@ -68,214 +88,250 @@ export const AdminPerformancePage: React.FC = () => {
 
   // Global Metrics
   const totalTasks = stats.reduce((acc, s) => acc + s.total, 0);
-  const totalCompleted = stats.reduce((acc, s) => acc + s.completed, 0);
   const avgCompletionRate = stats.length > 0 ? stats.reduce((acc, s) => acc + s.completionRate, 0) / stats.length : 0;
 
   const topPerformers = stats.slice(0, 3);
 
   const getRankConfig = (index: number) => {
       if (index === 0) return {
-          bg: 'bg-gradient-to-b from-yellow-50 via-yellow-50/50 to-white',
-          border: 'border-yellow-200',
-          icon: <Crown className="h-6 w-6 text-yellow-500 fill-yellow-500" />,
-          rankColor: 'text-yellow-600 bg-yellow-100',
-          shadow: 'shadow-yellow-500/10'
+          containerClass: 'order-2 -mt-12 z-20 scale-110',
+          cardClass: 'bg-gradient-to-b from-yellow-50 via-white to-white border-yellow-200 shadow-yellow-500/20 shadow-2xl',
+          icon: <Crown className="h-8 w-8 text-yellow-500 fill-yellow-500 animate-pulse" />,
+          titleColor: 'text-yellow-700',
+          badgeClass: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+          ringColor: 'ring-yellow-400'
       };
       if (index === 1) return {
-          bg: 'bg-gradient-to-b from-slate-50 via-slate-50/50 to-white',
-          border: 'border-slate-200',
+          containerClass: 'order-1 z-10',
+          cardClass: 'bg-gradient-to-b from-slate-50 via-white to-white border-slate-200 shadow-slate-400/10 shadow-xl',
           icon: <Medal className="h-6 w-6 text-slate-400" />,
-          rankColor: 'text-slate-600 bg-slate-100',
-          shadow: 'shadow-slate-500/10'
+          titleColor: 'text-slate-700',
+          badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
+          ringColor: 'ring-slate-300'
       };
       if (index === 2) return {
-          bg: 'bg-gradient-to-b from-orange-50 via-orange-50/50 to-white',
-          border: 'border-orange-200',
+          containerClass: 'order-3 z-10 mt-4',
+          cardClass: 'bg-gradient-to-b from-orange-50 via-white to-white border-orange-200 shadow-orange-500/10 shadow-xl',
           icon: <Medal className="h-6 w-6 text-orange-400" />,
-          rankColor: 'text-orange-600 bg-orange-100',
-          shadow: 'shadow-orange-500/10'
+          titleColor: 'text-orange-700',
+          badgeClass: 'bg-orange-50 text-orange-700 border-orange-100',
+          ringColor: 'ring-orange-300'
       };
-      return { bg: 'bg-white', border: 'border-gray-100', icon: null, rankColor: 'text-gray-500', shadow: '' };
+      return { containerClass: '', cardClass: '', icon: null, titleColor: '', badgeClass: '', ringColor: '' };
   };
 
   const getPerformanceBadge = (rate: number) => {
-      if (rate >= 80) return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1 w-fit"><Zap className="h-3 w-3" /> Elite</span>;
-      if (rate >= 50) return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200 flex items-center gap-1 w-fit"><Activity className="h-3 w-3" /> Pro</span>;
-      return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200 w-fit">Rookie</span>;
+      if (rate >= 80) return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-100 shadow-sm"><Zap className="h-3 w-3" /> ELITE</span>;
+      if (rate >= 50) return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"><Activity className="h-3 w-3" /> PRO</span>;
+      return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-gray-50 text-gray-600 border border-gray-100 shadow-sm">ROOKIE</span>;
   };
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative">
         <Navbar />
         
-        <main className="flex-1 p-8 overflow-y-auto custom-scrollbar h-[calc(100vh-80px)]">
-           <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        {/* Ambient Background Effects */}
+        <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none z-0" />
+        <div className="absolute top-20 right-20 w-96 h-96 bg-purple-100/30 rounded-full blur-[100px] pointer-events-none z-0" />
+        <div className="absolute top-40 left-10 w-72 h-72 bg-blue-100/30 rounded-full blur-[80px] pointer-events-none z-0" />
+
+        <main className="flex-1 p-8 overflow-y-auto custom-scrollbar h-[calc(100vh-80px)] relative z-10">
+           
+           {/* Header Section */}
+           <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 mb-12">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
-                        <BarChart2 className="h-8 w-8 text-brand-600" /> Team Performance
+                    <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+                            Team Performance
+                        </span>
+                        <Trophy className="h-8 w-8 text-yellow-500 fill-yellow-500 hidden sm:block animate-bounce-slow" />
                     </h1>
-                    <p className="text-gray-500 mt-2 text-lg font-medium">Real-time productivity insights and leaderboards.</p>
+                    <p className="text-lg text-gray-500 mt-2 font-medium max-w-xl leading-relaxed">
+                        Real-time insights into team productivity, task completion rates, and leaderboard rankings.
+                    </p>
                 </div>
                 
-                {/* Summary Metrics */}
-                <div className="flex gap-4">
-                    <div className="bg-white px-5 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                            <Target className="h-5 w-5" />
+                {/* Global Stats Cards */}
+                <div className="flex flex-wrap gap-4">
+                    <div className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white/50 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] flex items-center gap-4 hover:transform hover:scale-[1.02] transition-all duration-300">
+                        <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20">
+                            <Target className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Tasks</p>
-                            <p className="text-xl font-bold text-gray-900">{totalTasks}</p>
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Tasks</p>
+                            <p className="text-2xl font-bold text-gray-900">{totalTasks}</p>
                         </div>
                     </div>
-                    <div className="bg-white px-5 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-                            <CheckCircle className="h-5 w-5" />
+                    
+                    <div className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white/50 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] flex items-center gap-4 hover:transform hover:scale-[1.02] transition-all duration-300">
+                        <div className="p-3 bg-gradient-to-br from-emerald-400 to-green-600 text-white rounded-xl shadow-lg shadow-green-500/20">
+                            <CheckCircle2 className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Avg Completion</p>
-                            <p className="text-xl font-bold text-gray-900">{avgCompletionRate.toFixed(0)}%</p>
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Completion</p>
+                            <p className="text-2xl font-bold text-gray-900">{avgCompletionRate.toFixed(0)}%</p>
                         </div>
                     </div>
                 </div>
            </div>
 
            {isLoading ? (
-             <div className="animate-pulse space-y-6">
-                 <div className="h-40 bg-gray-200 rounded-2xl w-full"></div>
-                 <div className="h-64 bg-gray-200 rounded-2xl w-full"></div>
+             <div className="animate-pulse space-y-8">
+                 <div className="flex justify-center gap-8 items-end h-64">
+                     <div className="w-64 h-48 bg-gray-200 rounded-t-3xl" />
+                     <div className="w-64 h-64 bg-gray-200 rounded-t-3xl" />
+                     <div className="w-64 h-40 bg-gray-200 rounded-t-3xl" />
+                 </div>
+                 <div className="h-96 bg-gray-200 rounded-3xl w-full" />
              </div>
            ) : (
              <>
-                {/* Top Performers Podium */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 items-end">
-                    {/* Reorder for visual podium effect: 2nd, 1st, 3rd */}
-                    {[topPerformers[1], topPerformers[0], topPerformers[2]].map((user, i) => {
-                        if (!user) return null;
-                        // Map back to original rank index
-                        const rankIndex = i === 1 ? 0 : i === 0 ? 1 : 2; 
-                        const config = getRankConfig(rankIndex);
-                        const isWinner = rankIndex === 0;
+                {/* 🏆 PODIUM SECTION */}
+                <div className="mb-20 px-4">
+                    <div className="flex flex-col md:flex-row justify-center items-end gap-6 md:gap-8 max-w-5xl mx-auto">
+                        {/* Map specific ranks to array indices for layout */}
+                        {[topPerformers[1], topPerformers[0], topPerformers[2]].map((user, i) => {
+                            if (!user) return null;
+                            const rank = i === 1 ? 0 : i === 0 ? 1 : 2; 
+                            const config = getRankConfig(rank);
 
-                        return (
-                            <div 
-                                key={user.name} 
-                                className={`relative p-6 rounded-3xl border flex flex-col items-center text-center transition-all hover:scale-[1.02] duration-300 ${config.bg} ${config.border} ${config.shadow} ${isWinner ? 'h-80 justify-center z-10 shadow-2xl' : 'h-64 justify-end shadow-lg'}`}
-                            >
-                                <div className={`absolute -top-5 left-1/2 -translate-x-1/2 p-3 bg-white rounded-2xl shadow-lg border border-gray-100 ${isWinner ? 'scale-125' : ''}`}>
-                                    {config.icon || <span className="text-lg font-bold text-gray-400">#{rankIndex + 1}</span>}
-                                </div>
+                            return (
+                                <div key={user.name} className={`w-full md:w-80 flex flex-col ${config.containerClass}`}>
+                                    <div className={`relative p-8 rounded-3xl border flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-2 ${config.cardClass}`}>
+                                        
+                                        {/* Rank Badge */}
+                                        <div className="absolute -top-6">
+                                            <div className="bg-white p-3 rounded-2xl shadow-lg border border-gray-100">
+                                                {config.icon}
+                                            </div>
+                                        </div>
 
-                                <div className="mt-6 mb-3 relative">
-                                    <div className={`rounded-full p-1 bg-gradient-to-tr ${isWinner ? 'from-yellow-400 to-orange-500' : 'from-gray-200 to-gray-300'}`}>
-                                        <div className="h-20 w-20 rounded-full bg-white flex items-center justify-center text-2xl font-bold text-gray-800">
-                                            {user.name.charAt(0)}
+                                        {/* Avatar */}
+                                        <div className="mt-6 mb-4 relative">
+                                            <div className={`p-1.5 rounded-full bg-white shadow-sm ring-4 ${config.ringColor}`}>
+                                                <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 flex items-center justify-center text-2xl font-bold text-gray-700 uppercase tracking-tighter">
+                                                    {user.name.slice(0, 2)}
+                                                </div>
+                                            </div>
+                                            {rank === 0 && (
+                                                <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                                                    <Sparkles className="h-3 w-3" /> Winner
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Content */}
+                                        <h3 className={`text-xl font-bold mb-1 truncate w-full ${config.titleColor}`}>{user.name}</h3>
+                                        <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md mb-6 ${config.badgeClass}`}>
+                                            {user.role}
+                                        </span>
+
+                                        <div className="grid grid-cols-2 gap-3 w-full mt-auto">
+                                            <div className="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase">Tasks</p>
+                                                <p className="text-xl font-bold text-gray-900">{user.completed}</p>
+                                            </div>
+                                            <div className="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase">Rate</p>
+                                                <p className={`text-xl font-bold ${user.completionRate >= 80 ? 'text-green-600' : 'text-gray-900'}`}>
+                                                    {user.completionRate.toFixed(0)}%
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span className={`absolute -bottom-2 -right-2 px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-sm ${config.rankColor}`}>
-                                        #{rankIndex + 1}
-                                    </span>
                                 </div>
-                                
-                                <h3 className={`font-bold text-gray-900 mb-1 ${isWinner ? 'text-2xl' : 'text-xl'}`}>{user.name}</h3>
-                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-6">{getPerformanceBadge(user.completionRate)}</p>
-                                
-                                <div className="grid grid-cols-2 gap-3 w-full mt-auto">
-                                    <div className="bg-white/80 p-2.5 rounded-xl border border-gray-100/50 backdrop-blur-sm">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Tasks</p>
-                                        <p className="text-lg font-bold text-gray-900">{user.completed}/{user.total}</p>
-                                    </div>
-                                    <div className="bg-white/80 p-2.5 rounded-xl border border-gray-100/50 backdrop-blur-sm">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Rate</p>
-                                        <p className={`text-lg font-bold ${user.completionRate >= 80 ? 'text-green-600' : 'text-gray-900'}`}>
-                                            {user.completionRate.toFixed(0)}%
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
 
-                {/* Detailed Stats Table */}
-                <div className="bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100/50 overflow-hidden">
-                    <div className="px-8 py-6 border-b border-gray-100 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {/* 📊 DETAILED TABLE SECTION */}
+                <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden">
+                    <div className="px-8 py-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50">
                         <div>
-                            <h3 className="font-bold text-gray-900 text-lg">Detailed Breakdown</h3>
-                            <p className="text-sm text-gray-500">Comprehensive view of all team members.</p>
+                            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                                <LayoutGrid className="h-5 w-5 text-gray-400" /> 
+                                Performance Breakdown
+                            </h3>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                            <Sparkles className="h-4 w-4 text-yellow-500" />
+                            <span>Top 3 highlighted</span>
                         </div>
                     </div>
                     
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[11px] uppercase tracking-wider font-bold">
-                                    <th className="px-8 py-4 w-1/4">Team Member</th>
-                                    <th className="px-8 py-4 text-center">Efficiency</th>
-                                    <th className="px-8 py-4 text-center">Workload</th>
-                                    <th className="px-8 py-4">Progress Distribution</th>
+                                <tr className="bg-gray-50/80 text-gray-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
+                                    <th className="px-8 py-5 w-1/4">Team Member</th>
+                                    <th className="px-8 py-5 text-center">Efficiency Score</th>
+                                    <th className="px-8 py-5 text-center">Task Distribution</th>
+                                    <th className="px-8 py-5 w-1/3">Completion Velocity</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {stats.map((user, idx) => (
-                                    <tr key={user.name} className="hover:bg-gray-50/80 transition-colors group">
+                                    <tr key={user.name} className="hover:bg-blue-50/30 transition-colors group">
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-4">
-                                                <span className="text-gray-300 font-bold text-sm w-4">{idx + 1}</span>
-                                                <div className="h-10 w-10 rounded-xl bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 group-hover:bg-brand-600 group-hover:text-white transition-colors shadow-sm">
+                                                <div className={`text-sm font-bold w-6 text-center ${idx < 3 ? 'text-yellow-500 scale-110' : 'text-gray-300'}`}>
+                                                    {idx < 3 ? <Star className="h-4 w-4 fill-current" /> : `#${idx + 1}`}
+                                                </div>
+                                                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-600 shadow-sm border border-white">
                                                     {user.name.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <span className="font-bold text-gray-900 block">{user.name}</span>
-                                                    <span className="text-xs text-gray-500">Team Member</span>
+                                                    <span className="font-bold text-gray-900 block text-sm">{user.name}</span>
+                                                    <span className="text-[10px] font-semibold text-brand-600 bg-brand-50 px-2 py-0.5 rounded border border-brand-100 uppercase tracking-wide">
+                                                        {user.role}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </td>
                                         
                                         <td className="px-8 py-5">
-                                            <div className="flex flex-col items-center">
+                                            <div className="flex flex-col items-center gap-1">
                                                 <span className="text-xl font-bold text-gray-900">{user.completionRate.toFixed(0)}%</span>
                                                 {getPerformanceBadge(user.completionRate)}
                                             </div>
                                         </td>
 
                                         <td className="px-8 py-5">
-                                            <div className="flex justify-center gap-3">
-                                                <div className="text-center">
-                                                    <span className="block text-lg font-bold text-green-600">{user.completed}</span>
-                                                    <span className="text-[10px] font-bold text-gray-400 uppercase">Done</span>
+                                            <div className="flex justify-center items-center gap-4 text-xs">
+                                                <div className="text-center group-hover:-translate-y-1 transition-transform">
+                                                    <span className="block font-bold text-green-600 text-lg">{user.completed}</span>
+                                                    <span className="text-gray-400 font-medium">Done</span>
                                                 </div>
-                                                <div className="w-px bg-gray-100 h-8 self-center"></div>
-                                                <div className="text-center">
-                                                    <span className="block text-lg font-bold text-blue-600">{user.inProgress}</span>
-                                                    <span className="text-[10px] font-bold text-gray-400 uppercase">Active</span>
+                                                <div className="h-8 w-px bg-gray-200" />
+                                                <div className="text-center group-hover:-translate-y-1 transition-transform delay-75">
+                                                    <span className="block font-bold text-blue-600 text-lg">{user.inProgress}</span>
+                                                    <span className="text-gray-400 font-medium">Active</span>
                                                 </div>
-                                                <div className="w-px bg-gray-100 h-8 self-center"></div>
-                                                <div className="text-center">
-                                                    <span className="block text-lg font-bold text-gray-400">{user.pending}</span>
-                                                    <span className="text-[10px] font-bold text-gray-400 uppercase">Todo</span>
+                                                <div className="h-8 w-px bg-gray-200" />
+                                                <div className="text-center group-hover:-translate-y-1 transition-transform delay-100">
+                                                    <span className="block font-bold text-gray-500 text-lg">{user.pending}</span>
+                                                    <span className="text-gray-400 font-medium">Todo</span>
                                                 </div>
                                             </div>
                                         </td>
 
                                         <td className="px-8 py-5">
-                                            <div className="w-full max-w-xs">
-                                                <div className="flex justify-between text-xs font-semibold text-gray-500 mb-1.5">
-                                                    <span>Completion Progress</span>
-                                                    <span>{user.completed}/{user.total}</span>
+                                            <div className="w-full max-w-xs mx-auto">
+                                                <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider">
+                                                    <span>Progress</span>
+                                                    <span>{user.completed} / {user.total}</span>
                                                 </div>
-                                                <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                                                <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
                                                     <div 
-                                                        className="h-full bg-green-500 transition-all duration-700" 
+                                                        className="h-full bg-gradient-to-r from-emerald-400 to-green-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(16,185,129,0.4)]" 
                                                         style={{ width: `${(user.completed / user.total) * 100}%` }}
-                                                        title="Completed"
                                                     />
                                                     <div 
-                                                        className="h-full bg-blue-400 transition-all duration-700" 
+                                                        className="h-full bg-blue-400/30 transition-all duration-1000" 
                                                         style={{ width: `${(user.inProgress / user.total) * 100}%` }}
-                                                        title="In Progress"
                                                     />
                                                 </div>
                                             </div>

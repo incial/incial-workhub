@@ -94,6 +94,11 @@ public class TaskService {
                 .priority(entity.getPriority())
                 .assignedTo(entity.getAssignedTo())
                 .dueDate(entity.getDueDate())
+                .companyId(entity.getCompanyId())
+                .taskType(entity.getTaskType())
+                .attachments(entity.getAttachments())
+                .taskLink(entity.getTaskLink())
+                .isVisibleOnMainBoard(entity.getIsVisibleOnMainBoard())
                 .createdAt(entity.getCreatedAt())
                 .lastUpdatedBy(entity.getLastUpdatedBy())
                 .lastUpdatedAt(entity.getLastUpdatedAt())
@@ -108,6 +113,11 @@ public class TaskService {
                 .priority(dto.getPriority())
                 .assignedTo(dto.getAssignedTo())
                 .dueDate(dto.getDueDate())
+                .companyId(dto.getCompanyId())
+                .taskType(dto.getTaskType())
+                .attachments(dto.getAttachments())
+                .taskLink(dto.getTaskLink())
+                .isVisibleOnMainBoard(dto.getIsVisibleOnMainBoard())
                 .lastUpdatedBy(dto.getLastUpdatedBy())
                 .build();
     }
@@ -121,6 +131,11 @@ public class TaskService {
         if (dto.getPriority() != null) entity.setPriority(dto.getPriority());
         if (dto.getAssignedTo() != null) entity.setAssignedTo(dto.getAssignedTo());
         if (dto.getDueDate() != null) entity.setDueDate(dto.getDueDate());
-        if (dto.getLastUpdatedBy() != null) entity.setLastUpdatedBy(user);
+        if (dto.getCompanyId() != null) entity.setCompanyId(dto.getCompanyId());
+        if (dto.getTaskType() != null) entity.setTaskType(dto.getTaskType());
+        if (dto.getAttachments() != null) entity.setAttachments(dto.getAttachments());
+        if (dto.getTaskLink() != null) entity.setTaskLink(dto.getTaskLink());
+        if (dto.getIsVisibleOnMainBoard() != null) entity.setIsVisibleOnMainBoard(dto.getIsVisibleOnMainBoard());
+        entity.setLastUpdatedBy(user);
     }
 }

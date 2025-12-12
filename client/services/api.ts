@@ -19,6 +19,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Response Interceptor to handle Token Expiration (401/403)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Check for Unauthorized (401) or Forbidden (403) which usually means token expired/invalid
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        // Dispatch a custom event that AuthContext will listen to
+        window.dispatchEvent(new Event('auth:unauthorized'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Helper to extract error message from backend response
 const handleApiError = (error: any) => {
     if (error.response) {

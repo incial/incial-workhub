@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -23,6 +24,12 @@ public class TaskDto {
     
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dueDate;
+    
+    private Long companyId;
+    private String taskType;
+    private List<String> attachments;
+    private String taskLink;
+    private Boolean isVisibleOnMainBoard;
     
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
     private LocalDateTime createdAt;

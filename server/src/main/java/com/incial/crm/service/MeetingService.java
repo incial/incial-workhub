@@ -54,6 +54,8 @@ public class MeetingService {
                 .crmEntryId(entity.getCrmEntryId())
                 .assignedTo(entity.getAssignedTo())
                 .createdAt(entity.getCreatedAt())
+                .lastUpdatedBy(entity.getLastUpdatedBy())
+                .lastUpdatedAt(entity.getLastUpdatedAt())
                 .build();
     }
 
@@ -70,6 +72,8 @@ public class MeetingService {
     }
 
     private void updateEntityFromDto(Meeting entity, MeetingDto dto) {
+        String user = UserService.getCurrentUsername();
+        
         if (dto.getTitle() != null) entity.setTitle(dto.getTitle());
         if (dto.getDateTime() != null) entity.setDateTime(dto.getDateTime());
         if (dto.getStatus() != null) entity.setStatus(dto.getStatus());
@@ -77,5 +81,6 @@ public class MeetingService {
         if (dto.getNotes() != null) entity.setNotes(dto.getNotes());
         if (dto.getCrmEntryId() != null) entity.setCrmEntryId(dto.getCrmEntryId());
         if (dto.getAssignedTo() != null) entity.setAssignedTo(dto.getAssignedTo());
+        entity.setLastUpdatedBy(user);
     }
 }

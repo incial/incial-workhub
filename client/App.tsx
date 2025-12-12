@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { CRMPage } from './pages/CRMPage';
 import { CompaniesPage } from './pages/CompaniesPage';
 import { TasksPage } from './pages/TasksPage';
@@ -161,9 +163,11 @@ const AppRoutes = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-        <HashRouter>
-            <AppRoutes />
-        </HashRouter>
+        <ToastProvider>
+            <HashRouter>
+                <AppRoutes />
+            </HashRouter>
+        </ToastProvider>
     </AuthProvider>
   );
 };

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "tasks")
@@ -37,6 +38,22 @@ public class Task {
 
     @Column(name = "due_date")
     private LocalDate dueDate;
+
+    @Column(name = "company_id")
+    private Long companyId;
+
+    @Column(name = "task_type", length = 50)
+    private String taskType;
+
+    @Convert(converter = StringListConverter.class)
+    @Column(name = "attachments", columnDefinition = "TEXT")
+    private List<String> attachments;
+
+    @Column(name = "task_link", columnDefinition = "TEXT")
+    private String taskLink;
+
+    @Column(name = "is_visible_on_main_board")
+    private Boolean isVisibleOnMainBoard;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
