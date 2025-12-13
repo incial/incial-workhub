@@ -1,8 +1,8 @@
 
-import React from 'react';
-import { CRMEntry } from '../../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { CRMEntry, CRMStatus } from '../../types';
 import { getCompanyStatusStyles, getWorkTypeStyles } from '../../utils';
-import { Trash2, MoreHorizontal, Hash, User, Eye, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, Edit2 } from 'lucide-react';
+import { Trash2, MoreHorizontal, Hash, User, Eye, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, Edit2, ChevronDown, Check } from 'lucide-react';
 
 interface CompaniesTableProps {
   data: CRMEntry[];
@@ -10,9 +10,71 @@ interface CompaniesTableProps {
   onEdit: (company: CRMEntry) => void;
   onView: (company: CRMEntry) => void;
   onDelete: (id: number) => void;
+  onStatusChange: (company: CRMEntry, newStatus: CRMStatus) => void;
 }
 
-export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading, onEdit, onView, onDelete }) => {
+const CompanyStatusDropdown = ({ company, onStatusChange }: { company: CRMEntry; onStatusChange: (c: CRMEntry, s: CRMStatus) => void }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    
+    // Statuses relevant to companies view
+    const options: CRMStatus[] = [
+        'onboarded', 
+        'on progress', 
+        'Quote Sent', 
+        'completed', 
+        'drop'
+    ];
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (ref.current && !ref.current.contains(event.target as Node)) setIsOpen(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const formatStatus = (s: string) => {
+        if (s === 'Quote Sent') return 'Quote Sent';
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    return (
+        <div className="relative inline-block" ref={ref}>
+            <button 
+                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ring-1 inset ring-opacity-10 capitalize whitespace-nowrap transition-all hover:opacity-90 active:scale-95 ${getCompanyStatusStyles(company.status)}`}
+            >
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
+                {formatStatus(company.status)}
+                <ChevronDown className={`h-3 w-3 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isOpen && (
+                <div className="absolute top-full left-0 z-50 mt-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="p-1">
+                        {options.map(opt => (
+                            <button
+                                key={opt}
+                                onClick={(e) => { e.stopPropagation(); onStatusChange(company, opt); setIsOpen(false); }}
+                                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors capitalize ${
+                                    company.status === opt 
+                                    ? 'bg-brand-50 text-brand-700 font-bold' 
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                            >
+                                {formatStatus(opt)}
+                                {company.status === opt && <Check className="h-3 w-3 text-brand-600 ml-auto" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading, onEdit, onView, onDelete, onStatusChange }) => {
   if (isLoading) {
     return (
       <div className="p-20 text-center">
@@ -35,7 +97,7 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
   }
 
   return (
-    <div className="overflow-x-auto custom-scrollbar bg-white min-h-[500px]">
+    <div className="overflow-x-auto custom-scrollbar bg-white min-h-[500px] pb-32">
       <table className="w-full text-left border-collapse whitespace-nowrap">
         <thead>
           <tr className="bg-gray-50/50 border-b border-gray-100">
@@ -168,12 +230,9 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
                  </div>
               </td>
 
-              {/* Status Badge */}
+              {/* Status Badge (Dropdown) */}
               <td className="px-6 py-4">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold ring-1 inset ring-opacity-10 capitalize ${getCompanyStatusStyles(row.status)}`}>
-                   <span className="w-1.5 h-1.5 rounded-full bg-current mr-2 opacity-60"></span>
-                   {row.status}
-                </span>
+                <CompanyStatusDropdown company={row} onStatusChange={onStatusChange} />
               </td>
 
               {/* Actions */}

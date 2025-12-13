@@ -7,7 +7,7 @@ import { CRMTable } from '../components/crm/CRMTable';
 import { CRMStats } from '../components/crm/CRMStats';
 import { CRMForm } from '../components/crm/CRMForm';
 import { DeleteConfirmationModal } from '../components/ui/DeleteConfirmationModal';
-import { FilterState, CRMEntry } from '../types';
+import { FilterState, CRMEntry, CRMStatus } from '../types';
 import { Plus } from 'lucide-react';
 import { crmApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -134,6 +134,30 @@ export const CRMPage: React.FC = () => {
       }
   };
 
+  const handleStatusChange = async (entry: CRMEntry, newStatus: CRMStatus) => {
+      const updatedEntry = { 
+          ...entry, 
+          status: newStatus,
+          lastUpdatedBy: user?.name || 'Unknown',
+          lastUpdatedAt: new Date().toISOString()
+      };
+      
+      // Optimistic Update
+      setEntries(prev => prev.map(e => e.id === entry.id ? updatedEntry : e));
+      
+      try {
+          await crmApi.update(entry.id, { 
+              status: newStatus,
+              lastUpdatedBy: user?.name || 'Unknown',
+              lastUpdatedAt: new Date().toISOString()
+          });
+          showToast(`Status updated to ${newStatus}`, 'success');
+      } catch (e) {
+          showToast("Failed to update status", 'error');
+          fetchData(); // Revert
+      }
+  };
+
   const itemToDeleteName = useMemo(() => {
       if (!deleteId) return '';
       const item = entries.find(e => e.id === deleteId);
@@ -178,6 +202,7 @@ export const CRMPage: React.FC = () => {
                     isLoading={isLoading} 
                     onView={handleEdit} 
                     onDelete={handleRequestDelete}
+                    onStatusChange={handleStatusChange}
                 />
             </div>
             
