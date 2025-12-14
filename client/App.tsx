@@ -17,6 +17,7 @@ import { UniversalCalendarPage } from './pages/UniversalCalendarPage';
 import { MyDashboardPage } from './pages/MyDashboardPage';
 import { ClientPortalPage } from './pages/ClientPortalPage';
 import { GamePage } from './pages/GamePage';
+import { ProfilePage } from './pages/ProfilePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
 
@@ -112,7 +113,14 @@ const PublicRoute: React.FC<{ children: React.ReactElement }> = ({ children }) =
     return children;
 };
 
-// 6. Root Redirect Logic
+// 6. Generic Private Route (Any Authenticated User)
+const PrivateRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    return children;
+};
+
+// 7. Root Redirect Logic
 const RootRedirect: React.FC = () => {
     const { isAuthenticated, user } = useAuth();
     if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -144,6 +152,13 @@ const AppRoutes = () => {
                     <OperationalRoute>
                         <MyDashboardPage />
                     </OperationalRoute>
+                } />
+
+                {/* Profile (Accessible by all logged in users) */}
+                <Route path="/profile" element={
+                    <PrivateRoute>
+                        <ProfilePage />
+                    </PrivateRoute>
                 } />
 
                 {/* CRM (Super Admin + Admin) */}
