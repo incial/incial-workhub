@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Clock, Link as LinkIcon, FileText, AlignLeft, Video, Maximize2, Minimize2, Trash2, History } from 'lucide-react';
+import { X, Save, Calendar, Clock, Link as LinkIcon, AlignLeft, Video, Maximize2, Minimize2, Trash2, History } from 'lucide-react';
 import { Meeting, MeetingStatus } from '../../types';
 import { CustomSelect } from '../ui/CustomSelect';
 
@@ -18,25 +18,14 @@ export const MeetingForm: React.FC<MeetingFormProps> = ({ isOpen, onClose, onSub
   const [formData, setFormData] = useState<Partial<Meeting>>({});
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
 
-  // Helper to format Date object to "YYYY-MM-DDThh:mm" for input (forcing IST context)
+  // Helper to format Date object to "YYYY-MM-DDThh:mm" for input
   const toDateTimeInput = (dateStr: string | Date) => {
       if (!dateStr) return '';
       const date = new Date(dateStr);
-      try {
-          // Use Intl to extract IST parts safely
-          const options: Intl.DateTimeFormatOptions = { 
-              timeZone: 'Asia/Kolkata', 
-              year: 'numeric', month: '2-digit', day: '2-digit', 
-              hour: '2-digit', minute: '2-digit', hour12: false 
-          };
-          const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(date);
-          const getPart = (type: string) => parts.find(p => p.type === type)?.value || '00';
-          
-          return `${getPart('year')}-${getPart('month')}-${getPart('day')}T${getPart('hour')}:${getPart('minute')}`;
-      } catch (e) {
-          // Fallback to local if Intl fails
-          return date.toISOString().slice(0, 16);
-      }
+      // Format to local ISO string for input[type="datetime-local"]
+      // This preserves the "face value" of the time if we treat the input string as truth
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
   useEffect(() => {
@@ -107,8 +96,8 @@ export const MeetingForm: React.FC<MeetingFormProps> = ({ isOpen, onClose, onSub
         </div>
       )}
 
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all scale-100">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all scale-100" onClick={(e) => e.stopPropagation()}>
           
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white">
@@ -142,7 +131,7 @@ export const MeetingForm: React.FC<MeetingFormProps> = ({ isOpen, onClose, onSub
                       {/* Date Time */}
                       <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5" /> Date & Time (IST)
+                              <Clock className="h-3.5 w-3.5" /> Date & Time
                           </label>
                           <input 
                               type="datetime-local"
@@ -203,13 +192,13 @@ export const MeetingForm: React.FC<MeetingFormProps> = ({ isOpen, onClose, onSub
                       />
                   </div>
 
-                  {/* Audit Info - Hidden if updatedBy is missing */}
+                  {/* Audit Info */}
                   {initialData?.lastUpdatedBy && (
                       <div className="flex items-center gap-2 text-xs text-gray-400 mt-4 justify-end border-t border-gray-50 pt-3">
                           <History className="h-3 w-3" />
                           <span>
                               Last updated by <span className="font-semibold text-gray-600">{getDisplayName(initialData.lastUpdatedBy)}</span>
-                              {initialData.lastUpdatedAt && ` on ${new Date(initialData.lastUpdatedAt).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true })}`}
+                              {initialData.lastUpdatedAt && ` on ${initialData.lastUpdatedAt}`}
                           </span>
                       </div>
                   )}

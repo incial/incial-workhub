@@ -19,8 +19,6 @@ const LEAD_SOURCES = [
   'Email Campaign', 'Cold Call', 'Event', 'Partner', 'Direct Mail'
 ];
 
-const SOCIAL_MEDIA_KEYS: (keyof SocialLinks)[] = ['website', 'linkedin', 'instagram', 'facebook', 'twitter', 'other'];
-
 const TAG_OPTIONS = [
   { label: 'Lead', color: 'bg-blue-100 text-blue-700 border-blue-200' },
   { label: 'Customer', color: 'bg-green-100 text-green-700 border-green-200' },
@@ -75,12 +73,6 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
             setMode('view');
         } else {
             // Reset for Create Mode
-            // Initialize socials dynamically from SOCIAL_MEDIA_KEYS constant
-            const emptySocials: SocialLinks = {};
-            SOCIAL_MEDIA_KEYS.forEach(key => {
-                emptySocials[key] = '';
-            });
-            
             setFormData({
                 company: '',
                 contactName: '',
@@ -96,9 +88,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 address: '',
                 companyImageUrl: '',
                 referenceId: '',
-                // Initialize socials with empty strings instead of an empty object
-                // This ensures the cleanPayload function omits it entirely if no values are provided
-                socials: emptySocials,
+                socials: {},
                 lastContact: new Date().toISOString().split('T')[0],
                 nextFollowUp: new Date().toISOString().split('T')[0],
                 notes: '',
@@ -403,7 +393,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 <div className="flex items-center gap-2 text-xs text-gray-400">
                     <History className="h-3.5 w-3.5" />
                     <span>
-                        Last updated by <span className="font-semibold text-gray-600">{formData.lastUpdatedBy}</span> on {new Date(formData.lastUpdatedAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        Last updated by <span className="font-semibold text-gray-600">{formData.lastUpdatedBy}</span> on {formData.lastUpdatedAt}
                     </span>
                 </div>
             </div>
@@ -736,8 +726,8 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
             </div>
         )}
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white z-10">
             <h2 className="text-xl font-bold text-gray-800">

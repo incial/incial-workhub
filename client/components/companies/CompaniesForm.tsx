@@ -1,291 +1,198 @@
 
-import React, { useState, useEffect } from 'react';
-import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User, Image } from 'lucide-react';
-import { CRMEntry, CRMStatus, SocialLinks } from '../../types';
-import { getWorkTypeStyles } from '../../utils';
-import { CustomSelect } from '../ui/CustomSelect';
+import React from 'react';
+import { X, Hash, User, Calendar, Tag, Clock, ExternalLink, HardDrive, Linkedin, Instagram, Facebook, Twitter, Globe, Link as LinkIcon, Edit2 } from 'lucide-react';
+import { CRMEntry } from '../../types';
+import { getCompanyStatusStyles, getWorkTypeStyles, formatDate } from '../../utils';
 
-interface CompaniesFormProps {
+interface CompanyDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Partial<CRMEntry>) => void;
-  initialData?: CRMEntry;
+  onEdit?: (company: CRMEntry) => void;
+  company?: CRMEntry;
 }
 
-const WORK_TYPES = [
-  "Marketing", "Website", "Poster", "Video", "VFX", 
-  "LinkedIn", "Other", "Ads", "Branding", "UI/UX"
-];
+export const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({ isOpen, onClose, onEdit, company }) => {
+  if (!isOpen || !company) return null;
 
-// Restricted statuses allowed for "Companies" view
-const STATUS_OPTIONS: { label: string; value: CRMStatus }[] = [
-    { label: "On Progress", value: "on progress" },
-    { label: "Onboarded", value: "onboarded" },
-    { label: "Quote Sent", value: "Quote Sent" },
-    { label: "Completed", value: "completed" },
-    { label: "Dropped", value: "drop" },
-];
-
-export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
-  const [formData, setFormData] = useState<Partial<CRMEntry>>({});
-  
-  useEffect(() => {
-    if (isOpen && initialData) {
-        // If referenceId is missing (it was showing as fallback in table), pre-fill it here
-        const fallbackRefId = `REF-${new Date().getFullYear()}-${String(initialData.id).padStart(3, '0')}`;
-        
-        setFormData({
-            ...initialData,
-            referenceId: initialData.referenceId || fallbackRefId
-        });
-    }
-  }, [initialData, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.company || !formData.status) {
-        alert("Please fill in required fields");
-        return;
-    }
-    onSubmit(formData);
-    onClose();
-  };
-
-  const toggleWork = (type: string) => {
-      const current = formData.work || [];
-      if (current.includes(type)) {
-          setFormData(prev => ({ ...prev, work: current.filter(t => t !== type) }));
-      } else {
-          setFormData(prev => ({ ...prev, work: [...current, type] }));
-      }
-  };
-
-  const updateSocials = (key: keyof SocialLinks, value: string) => {
-    setFormData(prev => ({
-        ...prev,
-        socials: {
-            ...prev.socials,
-            [key]: value
-        }
-    }));
-  };
+  const hasSocials = company.socials && Object.values(company.socials).some(Boolean);
+  const refId = company.referenceId || `REF-${new Date().getFullYear()}-${company.id.toString().padStart(3, '0')}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white z-10">
-          <h2 className="text-xl font-bold text-gray-800">
-            Edit Company Details
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
-              <X className="h-5 w-5" />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all scale-100" onClick={(e) => e.stopPropagation()}>
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50">
+            <div className="flex items-center gap-4">
+                 {/* Logo Logic */}
+                 <div className="h-12 w-12 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-sm overflow-hidden relative">
+                    {company.companyImageUrl ? (
+                        <>
+                            <img 
+                                src={company.companyImageUrl} 
+                                alt={company.company} 
+                                className="h-full w-full object-cover" 
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                }}
+                            />
+                            <div className="hidden h-full w-full flex items-center justify-center text-lg font-bold text-gray-400">
+                                {company.company.charAt(0)}
+                            </div>
+                        </>
+                    ) : (
+                        <span className="text-lg font-bold text-gray-400">{company.company.charAt(0)}</span>
+                    )}
+                 </div>
+
+                 <div>
+                     <h2 className="text-xl font-bold text-gray-900 leading-tight">{company.company}</h2>
+                     <div className="flex items-center gap-2 mt-1">
+                         <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 flex items-center gap-1">
+                            <Hash className="h-3 w-3" /> {refId}
+                         </span>
+                     </div>
+                 </div>
+            </div>
+            <div className="flex items-center gap-2">
+                {onEdit && (
+                    <button 
+                        onClick={() => onEdit(company)}
+                        className="px-3 py-1.5 bg-white border border-gray-200 hover:border-brand-300 text-gray-600 hover:text-brand-600 rounded-lg flex items-center gap-1.5 text-xs font-bold transition-colors shadow-sm"
+                    >
+                        <Edit2 className="h-3.5 w-3.5" /> Edit Details
+                    </button>
+                )}
+                <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full transition-colors">
+                    <X className="h-5 w-5" />
+                </button>
+            </div>
         </div>
 
-        {/* Modal Content */}
-        <div className="overflow-y-auto p-6 flex-1 bg-white custom-scrollbar">
-            <form onSubmit={handleSubmit} className="space-y-6">
-                
-                {/* Reference ID & Name */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Reference ID</label>
-                        <div className="relative">
-                            <Hash className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                required 
-                                type="text" 
-                                className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none bg-gray-50 font-mono text-sm" 
-                                value={formData.referenceId || ''} 
-                                onChange={e => setFormData({...formData, referenceId: e.target.value})}
-                                placeholder="Auto-generated"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Client Name <span className="text-red-500">*</span></label>
-                        <div className="relative">
-                             <Building className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                required 
-                                type="text" 
-                                className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                                value={formData.company || ''} 
-                                onChange={e => setFormData({...formData, company: e.target.value})}
-                                placeholder="e.g. Acme Corp"
-                            />
-                        </div>
-                    </div>
-                </div>
+        <div className="p-6 space-y-6">
+            
+            {/* Status Section */}
+            <div>
+                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Project Status</h3>
+                 <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold border shadow-sm capitalize ${getCompanyStatusStyles(company.status)}`}>
+                    <span className="w-2 h-2 rounded-full bg-current mr-2 opacity-60"></span>
+                    {company.status}
+                </span>
+            </div>
 
-                {/* Contact Person (Full Width) */}
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700">Contact Person</label>
-                    <div className="relative">
-                            <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                        <input 
-                            type="text" 
-                            className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                            value={formData.contactName || ''} 
-                            onChange={e => setFormData({...formData, contactName: e.target.value})}
-                            placeholder="Primary Contact Name"
-                        />
-                    </div>
+            {/* Key Contact */}
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
+                <div>
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-2">
+                        <User className="h-4 w-4" /> Key Contact
+                    </h3>
+                    <p className="text-gray-900 font-medium text-lg">
+                        {company.contactName || <span className="text-gray-400 italic text-sm">No contact person listed</span>}
+                    </p>
                 </div>
+            </div>
 
-                {/* Company Logo */}
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <Image className="h-3.5 w-3.5 text-gray-500" /> Company Logo URL
-                    </label>
-                    <input type="url" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                    placeholder="https://..."
-                    value={formData.companyImageUrl || ''} onChange={e => setFormData({...formData, companyImageUrl: e.target.value})} />
-                </div>
-
-                {/* Status */}
-                <div className="w-full">
-                    <CustomSelect 
-                        label="Status"
-                        value={formData.status || ''}
-                        onChange={(val) => setFormData({...formData, status: val as any})}
-                        options={STATUS_OPTIONS}
-                        placeholder="Select Status"
-                        required
-                    />
-                </div>
-
-                {/* Work Tags */}
-                <div className="w-full">
-                    <label className="block mb-2 text-sm font-medium text-gray-700">Work Types <span className="text-red-500">*</span></label>
-                    <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        {WORK_TYPES.map(type => {
-                            const isSelected = formData.work?.includes(type);
-                            return (
-                                <button
-                                    key={type}
-                                    type="button"
-                                    onClick={() => toggleWork(type)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all shadow-sm ${
-                                        isSelected
-                                            ? getWorkTypeStyles(type) + ' ring-2 ring-offset-1 ring-current opacity-100'
-                                            : 'bg-white text-gray-500 border-gray-200 opacity-70 hover:opacity-100'
-                                    }`}
-                                >
-                                    {type}
-                                </button>
-                            );
-                        })}
+            {/* Socials / Online Presence */}
+            {hasSocials && (
+                <div>
+                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Globe className="h-4 w-4" /> Online Presence
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                        {company.socials?.website && (
+                             <a href={company.socials.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-brand-600 rounded-lg border border-gray-100 transition-colors" title="Website">
+                                <Globe className="h-5 w-5" />
+                             </a>
+                        )}
+                        {company.socials?.linkedin && (
+                             <a href={company.socials.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-700 rounded-lg border border-gray-100 transition-colors" title="LinkedIn">
+                                <Linkedin className="h-5 w-5" />
+                             </a>
+                        )}
+                        {company.socials?.instagram && (
+                             <a href={company.socials.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 hover:bg-pink-50 text-gray-600 hover:text-pink-600 rounded-lg border border-gray-100 transition-colors" title="Instagram">
+                                <Instagram className="h-5 w-5" />
+                             </a>
+                        )}
+                        {company.socials?.facebook && (
+                             <a href={company.socials.facebook} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 rounded-lg border border-gray-100 transition-colors" title="Facebook">
+                                <Facebook className="h-5 w-5" />
+                             </a>
+                        )}
+                        {company.socials?.twitter && (
+                             <a href={company.socials.twitter} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-sky-500 rounded-lg border border-gray-100 transition-colors" title="Twitter">
+                                <Twitter className="h-5 w-5" />
+                             </a>
+                        )}
+                         {company.socials?.other && (
+                             <a href={company.socials.other} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-900 rounded-lg border border-gray-100 transition-colors" title="Other Link">
+                                <LinkIcon className="h-5 w-5" />
+                             </a>
+                        )}
                     </div>
                 </div>
+            )}
 
-                {/* Drive Link Input */}
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <HardDrive className="h-3.5 w-3.5 text-gray-500" /> Google Drive Link
-                    </label>
-                    <input 
-                        type="url" 
-                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                        value={formData.driveLink || ''} 
-                        onChange={e => setFormData({...formData, driveLink: e.target.value})} 
-                        placeholder="https://drive.google.com/..."
-                    />
+            {/* Work Scope */}
+            <div>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <Tag className="h-4 w-4" /> Scope of Work
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                    {company.work && company.work.length > 0 ? (
+                        company.work.map((w: any) => {
+                             const label = typeof w === 'object' ? w.name : w;
+                             return (
+                                <span key={label} className={`px-3 py-1 rounded-full text-xs font-bold border ${getWorkTypeStyles(label)}`}>
+                                    {label}
+                                </span>
+                             );
+                        })
+                    ) : (
+                        <span className="text-sm text-gray-400 italic">No work types assigned</span>
+                    )}
                 </div>
+            </div>
 
-                {/* Social Media Inputs */}
-                <div className="w-full border-t border-gray-100 pt-4 mt-2">
-                    <label className="block mb-3 text-xs font-bold text-gray-400 uppercase tracking-widest">Online Presence</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="relative">
-                            <Globe className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Website URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.website || ''}
-                                onChange={e => updateSocials('website', e.target.value)}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Linkedin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="LinkedIn URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.linkedin || ''}
-                                onChange={e => updateSocials('linkedin', e.target.value)}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Instagram className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Instagram URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.instagram || ''}
-                                onChange={e => updateSocials('instagram', e.target.value)}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Facebook className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Facebook URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.facebook || ''}
-                                onChange={e => updateSocials('facebook', e.target.value)}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Twitter className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Twitter (X) URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.twitter || ''}
-                                onChange={e => updateSocials('twitter', e.target.value)}
-                            />
-                        </div>
-                         <div className="relative">
-                            <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Other Link"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.other || ''}
-                                onChange={e => updateSocials('other', e.target.value)}
-                            />
-                        </div>
-                    </div>
+            {/* Project Resources - Drive Link */}
+            {company.driveLink && (
+                <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                     <h3 className="text-xs font-bold text-blue-800 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <HardDrive className="h-4 w-4" /> Project Resources
+                    </h3>
+                    <a 
+                        href={company.driveLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors group"
+                    >
+                        Access Project Assets
+                        <ExternalLink className="h-3.5 w-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    </a>
                 </div>
-                
-                {/* Update History Footer */}
-                {formData.lastUpdatedBy && (
-                    <div className="flex items-center justify-end pt-4 mt-6 border-t border-gray-100">
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                            <History className="h-3.5 w-3.5" />
-                            <span>
-                                Last updated by <span className="font-semibold text-gray-600">{formData.lastUpdatedBy}</span> on {new Date(formData.lastUpdatedAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                        </div>
+            )}
+
+            {/* Timestamps */}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                <div>
+                    <p className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                        <Calendar className="h-3 w-3" /> Last Contact
+                    </p>
+                    <p className="text-sm font-medium text-gray-700">{formatDate(company.lastContact)}</p>
+                </div>
+                {company.lastUpdatedBy && (
+                    <div>
+                        <p className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                            <Clock className="h-3 w-3" /> Last Update
+                        </p>
+                        <p className="text-sm font-medium text-gray-700">
+                            {formatDate(company.lastUpdatedAt || '')} <span className="text-gray-400 text-xs">by {company.lastUpdatedBy}</span>
+                        </p>
                     </div>
                 )}
+            </div>
 
-                {/* Footer Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <button type="button" onClick={onClose} className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" className="px-5 py-2.5 text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors font-medium flex items-center gap-2 shadow-lg shadow-brand-500/30">
-                        <Save className="h-4 w-4" /> Save Changes
-                    </button>
-                </div>
-            </form>
         </div>
       </div>
     </div>
