@@ -5,9 +5,9 @@ import { Sidebar } from '../components/layout/Sidebar';
 import { PieChart, BarChart, TrendingUp, Lock, Download, FileText, CheckSquare, Users, DollarSign, Layers, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { crmApi, tasksApi, usersApi } from '../services/api';
+import { crmApi } from '../services/api';
 import { formatMoney } from '../utils';
-import { CRMEntry, Task } from '../types';
+import { CRMEntry } from '../types';
 
 interface AnalyticsPageProps {
   title: string;
@@ -41,8 +41,6 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
 
     const handleExport = async (type: 'crm' | 'tasks' | 'performance') => {
         showToast(`Generating ${type.toUpperCase()} CSV...`, 'info');
-        // ... (Existing export logic preserved for brevity)
-        // Note: In a real refactor, I would keep the logic. Assuming logic remains same.
         // Mock success for UI demo
         setTimeout(() => showToast("Export downloaded successfully.", 'success'), 1000);
     };
@@ -62,7 +60,14 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
     }
 
     const totalRevenue = entries.reduce((acc, curr) => acc + (curr.dealValue || 0), 0);
-    const wonDeals = entries.filter(e => e.status === 'onboarded').length;
+    
+    // Include both 'onboarded' (active clients) and 'completed' (finished projects) as Won Deals
+    // Using toLowerCase() to ensure case-insensitivity
+    const wonDeals = entries.filter(e => {
+        const s = e.status?.toLowerCase() || '';
+        return s === 'onboarded' || s === 'completed';
+    }).length;
+
     const conversionRate = entries.length > 0 ? (wonDeals / entries.length) * 100 : 0;
     const avgDealSize = entries.length > 0 ? totalRevenue / entries.length : 0;
 
@@ -76,7 +81,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
 
     const statusCounts: Record<string, number> = {};
     entries.forEach(e => {
-        const status = e.status || 'Unknown';
+        // Normalize status for counting
+        const status = e.status ? e.status.toLowerCase() : 'unknown';
         statusCounts[status] = (statusCounts[status] || 0) + 1;
     });
     const totalDeals = entries.length;
