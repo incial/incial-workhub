@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User, Image } from 'lucide-react';
+import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User } from 'lucide-react';
 import { CRMEntry, CRMStatus, SocialLinks } from '../../types';
 import { getWorkTypeStyles } from '../../utils';
 import { CustomSelect } from '../ui/CustomSelect';
@@ -73,8 +73,8 @@ export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, o
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white z-10">
           <h2 className="text-xl font-bold text-gray-800">
@@ -135,16 +135,6 @@ export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, o
                             placeholder="Primary Contact Name"
                         />
                     </div>
-                </div>
-
-                {/* Company Logo */}
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <Image className="h-3.5 w-3.5 text-gray-500" /> Company Logo URL
-                    </label>
-                    <input type="url" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                    placeholder="https://..."
-                    value={formData.companyImageUrl || ''} onChange={e => setFormData({...formData, companyImageUrl: e.target.value})} />
                 </div>
 
                 {/* Status */}
@@ -270,7 +260,7 @@ export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, o
                         <div className="flex items-center gap-2 text-xs text-gray-400">
                             <History className="h-3.5 w-3.5" />
                             <span>
-                                Last updated by <span className="font-semibold text-gray-600">{formData.lastUpdatedBy}</span> on {new Date(formData.lastUpdatedAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                Last updated by <span className="font-semibold text-gray-600">{formData.lastUpdatedBy}</span> on {formData.lastUpdatedAt}
                             </span>
                         </div>
                     </div>

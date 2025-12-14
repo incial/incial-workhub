@@ -190,7 +190,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
                             <History className="h-3 w-3" /> 
                             Updated by <span className="font-semibold">{formData.lastUpdatedBy}</span> 
                             <span className="mx-1">•</span> 
-                            {new Date(formData.lastUpdatedAt || '').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                            {formData.lastUpdatedAt}
                         </p>
                     )}
                </div>
@@ -350,8 +350,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
             </div>
         )}
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col transform transition-all scale-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all animate-in fade-in duration-200" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col transform transition-all scale-100" onClick={(e) => e.stopPropagation()}>
             
             {/* Modal Top Bar */}
             <div className="flex items-center justify-between p-5 border-b border-gray-100">

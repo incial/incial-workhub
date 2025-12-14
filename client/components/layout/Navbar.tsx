@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Bell, LogOut, ChevronDown, User, Settings, CreditCard, Menu, Check, LayoutDashboard, Users, CalendarDays, CheckSquare, Calendar, Briefcase, ListTodo, PieChart, BarChart2, Home, PanelLeft } from 'lucide-react';
+import { Search, Bell, LogOut, ChevronDown, User, Menu, Check, LayoutDashboard, Users, CalendarDays, CheckSquare, Calendar, Briefcase, ListTodo, PieChart, BarChart2, Home, PanelLeft, Gamepad2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLayout } from '../../context/LayoutContext';
 
@@ -190,24 +190,27 @@ export const Navbar: React.FC = () => {
                         </div>
                     </div>
                     <div className="p-1.5 space-y-0.5">
-                        <button className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-50 hover:text-brand-600 transition-colors group">
+                        <Link 
+                            to="/profile" 
+                            onClick={() => setIsProfileOpen(false)} 
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-50 hover:text-brand-600 transition-colors group"
+                        >
                             <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-brand-100 text-gray-500 group-hover:text-brand-600 transition-colors">
                                 <User className="h-4 w-4" />
                             </div>
                             My Profile
-                        </button>
-                        <button className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-50 hover:text-brand-600 transition-colors group">
-                             <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-brand-100 text-gray-500 group-hover:text-brand-600 transition-colors">
-                                <Settings className="h-4 w-4" />
+                        </Link>
+                        
+                        <Link 
+                            to="/break" 
+                            onClick={() => setIsProfileOpen(false)} 
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-50 hover:text-brand-600 transition-colors group"
+                        >
+                            <div className="p-1.5 rounded-lg bg-indigo-50 group-hover:bg-indigo-100 text-indigo-500 group-hover:text-indigo-600 transition-colors">
+                                <Gamepad2 className="h-4 w-4" />
                             </div>
-                            Settings
-                        </button>
-                         <button className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-50 hover:text-brand-600 transition-colors group">
-                             <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-brand-100 text-gray-500 group-hover:text-brand-600 transition-colors">
-                                <CreditCard className="h-4 w-4" />
-                            </div>
-                            Billing
-                        </button>
+                            Focus Break
+                        </Link>
                     </div>
                     <div className="p-1.5 border-t border-gray-50">
                         <button 
@@ -260,7 +263,8 @@ export const Navbar: React.FC = () => {
             )}
 
             <div className="my-2 border-t border-gray-100" />
-            <MobileNavItem to="/settings" icon={Settings} label="Settings" active={currentPath === '/settings'} />
+            <MobileNavItem to="/break" icon={Gamepad2} label="Focus Break" active={currentPath === '/break'} />
+            <MobileNavItem to="/profile" icon={User} label="My Profile" active={currentPath === '/profile'} />
         </div>
       )}
     </header>

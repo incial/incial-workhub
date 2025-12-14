@@ -11,6 +11,7 @@ export interface User {
   companyId?: number; // For Client Role
   googleId?: string; // For Google OAuth users
   avatarUrl?: string; // Profile picture from Google
+  createdAt?: string; // Timestamp of account creation
 }
 
 export interface AuthResponse {

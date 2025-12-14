@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, DollarSign, CheckCircle, Clock, AlertCircle, History, ExternalLink, HardDrive, Linkedin, Instagram, Facebook, Twitter, Globe, Link as LinkIcon, Maximize2, Minimize2, MapPin, Image } from 'lucide-react';
-import { CRMEntry, SocialLinks } from '../../types';
-import { getStatusStyles, formatDate, getFollowUpColor, formatMoney } from '../../utils';
+import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, DollarSign, CheckCircle, Clock, AlertCircle, History, ExternalLink, HardDrive, Linkedin, Instagram, Facebook, Twitter, Globe, Link as LinkIcon, Maximize2, Minimize2, MapPin, Hash, Building } from 'lucide-react';
+import { CRMEntry, SocialLinks, CRMStatus } from '../../types';
+import { getStatusStyles, formatDate, getFollowUpColor, formatMoney, getWorkTypeStyles } from '../../utils';
 import { CustomDatePicker } from '../ui/CustomDatePicker';
 import { CustomSelect } from '../ui/CustomSelect';
 import { usersApi } from '../../services/api';
@@ -19,7 +19,14 @@ const LEAD_SOURCES = [
   'Email Campaign', 'Cold Call', 'Event', 'Partner', 'Direct Mail'
 ];
 
-const SOCIAL_MEDIA_KEYS: (keyof SocialLinks)[] = ['website', 'linkedin', 'instagram', 'facebook', 'twitter', 'other'];
+const STATUS_OPTIONS: { label: string; value: CRMStatus }[] = [
+    { label: 'Lead', value: 'lead' },
+    { label: 'On Progress', value: 'on progress' },
+    { label: 'Quote Sent', value: 'Quote Sent' },
+    { label: 'Onboarded', value: 'onboarded' },
+    { label: 'Completed', value: 'completed' },
+    { label: 'Dropped', value: 'drop' },
+];
 
 const TAG_OPTIONS = [
   { label: 'Lead', color: 'bg-blue-100 text-blue-700 border-blue-200' },
@@ -54,7 +61,6 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
   const [assigneeOptions, setAssigneeOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
-    // Fetch users for assignment dropdown
     const fetchUsers = async () => {
         try {
             const users = await usersApi.getAll();
@@ -74,31 +80,21 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
             setFormData(initialData);
             setMode('view');
         } else {
-            // Reset for Create Mode
-            // Initialize socials dynamically from SOCIAL_MEDIA_KEYS constant
-            const emptySocials: SocialLinks = {};
-            SOCIAL_MEDIA_KEYS.forEach(key => {
-                emptySocials[key] = '';
-            });
-            
             setFormData({
                 company: '',
                 contactName: '',
                 email: '',
                 phone: '',
                 status: 'lead',
-                assignedTo: '', // Will be selected from dropdown
+                assignedTo: '',
                 dealValue: 0,
                 tags: [],
                 work: [],
                 leadSources: [],
                 driveLink: '',
                 address: '',
-                companyImageUrl: '',
                 referenceId: '',
-                // Initialize socials with empty strings instead of an empty object
-                // This ensures the cleanPayload function omits it entirely if no values are provided
-                socials: emptySocials,
+                socials: {},
                 lastContact: new Date().toISOString().split('T')[0],
                 nextFollowUp: new Date().toISOString().split('T')[0],
                 notes: '',
@@ -127,6 +123,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
 
   const toggleWork = (workLabel: string) => {
       const currentWork = formData.work || [];
+      // Handle legacy object format if present, usually it's string[]
       const cleanWork = currentWork.map((w: any) => typeof w === 'object' ? w.name : w);
       
       const exists = cleanWork.includes(workLabel);
@@ -135,6 +132,15 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
           setFormData(prev => ({ ...prev, work: cleanWork.filter(w => w !== workLabel) }));
       } else {
           setFormData(prev => ({ ...prev, work: [...cleanWork, workLabel] }));
+      }
+  };
+
+  const toggleLeadSource = (source: string) => {
+      const current = formData.leadSources || [];
+      if (current.includes(source)) {
+          setFormData(prev => ({ ...prev, leadSources: current.filter(s => s !== source) }));
+      } else {
+          setFormData(prev => ({ ...prev, leadSources: [...current, source] }));
       }
   };
 
@@ -148,25 +154,9 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
       }));
   };
 
-  const toggleEdit = () => {
-    setMode('edit');
-  };
-
-  const handleCancel = () => {
-    if (initialData && mode === 'edit') {
-        setFormData(initialData);
-        setMode('view');
-    } else {
-        onClose();
-    }
-  };
-
-  const isView = mode === 'view';
-
-  // --- PREMIUM VIEW RENDERER ---
+  // --- Render View ---
   const renderView = () => (
     <div className="space-y-6">
-        {/* Header Hero */}
         <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div>
@@ -183,7 +173,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                         <span className="font-medium">{formData.contactName}</span>
                     </div>
                 </div>
-                <div className={`px-4 py-1.5 rounded-full text-sm font-semibold border shadow-sm ${getStatusStyles(formData.status || '')}`}>
+                <div className={`px-4 py-1.5 rounded-full text-sm font-semibold border shadow-sm capitalize ${getStatusStyles(formData.status || '')}`}>
                     {formData.status}
                 </div>
             </div>
@@ -217,563 +207,273 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Col: Contact Info & Socials */}
             <div className="space-y-6">
                 <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
-                        <User className="h-4 w-4 text-brand-500" /> Contact Details
+                        <User className="h-4 w-4 text-brand-600" /> Contact Details
                     </h3>
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center">
-                                <Phone className="h-4 w-4 text-gray-500" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Phone</p>
-                                <a href={`tel:${formData.phone}`} className="text-sm font-medium text-brand-600 hover:underline">
-                                    {formData.phone || 'N/A'}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-sm">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-700">{formData.phone || 'No phone'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <Mail className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-700">{formData.email || 'No email'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-700">{formData.address || 'No address'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-brand-600" /> Socials & Web
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {formData.socials && Object.entries(formData.socials).map(([key, val]) => {
+                            if (!val) return null;
+                            return (
+                                <a key={key} href={val} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:text-brand-600 hover:border-brand-200 transition-colors capitalize flex items-center gap-1.5">
+                                    <ExternalLink className="h-3 w-3" /> {key}
                                 </a>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center">
-                                <Mail className="h-4 w-4 text-gray-500" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Email</p>
-                                <a href={`mailto:${formData.email}`} className="text-sm font-medium text-brand-600 hover:underline">
-                                    {formData.email || 'N/A'}
-                                </a>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center">
-                                <Briefcase className="h-4 w-4 text-gray-500" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Lead Source</p>
-                                <p className="text-sm font-medium text-gray-900">
-                                    {formData.leadSources?.[0] || 'Unknown'}
-                                </p>
-                            </div>
-                        </div>
-                        {formData.address && (
-                            <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center">
-                                    <MapPin className="h-4 w-4 text-gray-500" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500">Address</p>
-                                    <p className="text-sm font-medium text-gray-900">{formData.address}</p>
-                                </div>
-                            </div>
+                            );
+                        })}
+                        {(!formData.socials || !Object.values(formData.socials).some(Boolean)) && (
+                            <span className="text-gray-400 text-sm italic">No social links added</span>
                         )}
                     </div>
                 </div>
+            </div>
 
-                {/* Socials View */}
-                {(formData.socials && Object.values(formData.socials).some(Boolean)) && (
-                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-brand-500" /> Online Presence
-                        </h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {formData.socials.website && (
-                                <a href={formData.socials.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-brand-600 transition-colors">
-                                    <Globe className="h-4 w-4" />
-                                    <span className="text-sm font-medium">Website</span>
-                                </a>
-                            )}
-                            {formData.socials.linkedin && (
-                                <a href={formData.socials.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-700 transition-colors">
-                                    <Linkedin className="h-4 w-4" />
-                                    <span className="text-sm font-medium">LinkedIn</span>
-                                </a>
-                            )}
-                            {formData.socials.instagram && (
-                                <a href={formData.socials.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-pink-600 transition-colors">
-                                    <Instagram className="h-4 w-4" />
-                                    <span className="text-sm font-medium">Instagram</span>
-                                </a>
-                            )}
-                            {formData.socials.facebook && (
-                                <a href={formData.socials.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 transition-colors">
-                                    <Facebook className="h-4 w-4" />
-                                    <span className="text-sm font-medium">Facebook</span>
-                                </a>
-                            )}
-                            {formData.socials.twitter && (
-                                <a href={formData.socials.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-sky-500 transition-colors">
-                                    <Twitter className="h-4 w-4" />
-                                    <span className="text-sm font-medium">Twitter</span>
-                                </a>
-                            )}
-                             {formData.socials.other && (
-                                <a href={formData.socials.other} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-gray-900 transition-colors col-span-2">
-                                    <LinkIcon className="h-4 w-4" />
-                                    <span className="text-sm font-medium truncate">{formData.socials.other}</span>
-                                </a>
-                            )}
+            <div className="space-y-6">
+                <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-brand-600" /> Classification
+                    </h3>
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 mb-2">Work Type</p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {(formData.work || []).map((w: any) => {
+                                    const label = typeof w === 'object' ? w.name : w;
+                                    return <span key={label} className={`px-2 py-1 text-[10px] font-bold rounded border ${getWorkTypeStyles(label)}`}>{label}</span>;
+                                })}
+                                {(!formData.work?.length) && <span className="text-gray-400 text-xs">-</span>}
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 mb-2">Tags</p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {(formData.tags || []).map(t => (
+                                    <span key={t} className="px-2 py-1 bg-purple-50 text-purple-700 text-[10px] font-bold rounded border border-purple-100">{t}</span>
+                                ))}
+                                {(!formData.tags?.length) && <span className="text-gray-400 text-xs">-</span>}
+                            </div>
                         </div>
                     </div>
-                )}
-            </div>
-
-            {/* Right Col: Scope & Tags */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-brand-500" /> Tags & Work
-                </h3>
-                
-                <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-400 mb-2">Scope of Work</p>
-                    <div className="space-y-2">
-                        {formData.work && formData.work.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                                {formData.work.map((w: any) => {
-                                    // Handle both string and legacy object formats
-                                    const label = typeof w === 'object' && w !== null ? w.name : w;
-                                    const opt = WORK_OPTIONS.find(o => o.label === label);
-                                    return (
-                                        <div key={label} className={`px-2.5 py-1 text-sm rounded border font-medium capitalize ${opt ? opt.color : 'bg-gray-100 text-gray-700'}`}>
-                                            {label}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        ) : <span className="text-sm text-gray-400 italic">No work items selected</span>}
-                    </div>
                 </div>
 
-                <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-400 mb-2">Tags</p>
-                    <div className="flex flex-wrap gap-2">
-                        {formData.tags && formData.tags.length > 0 ? (
-                            formData.tags.map(t => {
-                                const opt = TAG_OPTIONS.find(o => o.label === t);
-                                return (
-                                    <span key={t} className={`px-2 py-0.5 text-xs rounded border font-medium ${opt ? opt.color : 'bg-gray-100'}`}>
-                                        {t}
-                                    </span>
-                                )
-                            })
-                        ) : <span className="text-sm text-gray-400 italic">No tags</span>}
+                <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-brand-600" /> Notes
+                    </h3>
+                    <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 whitespace-pre-wrap min-h-[80px]">
+                        {formData.notes || <span className="text-gray-400 italic">No notes added.</span>}
                     </div>
                 </div>
-
-                {formData.driveLink && (
-                    <div className="pt-3 border-t border-gray-100">
-                        <a 
-                            href={formData.driveLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 -mx-2 rounded-lg transition-colors"
-                        >
-                            <HardDrive className="h-4 w-4" />
-                            Open Project Assets
-                            <ExternalLink className="h-3 w-3 opacity-50" />
-                        </a>
-                    </div>
-                )}
             </div>
         </div>
-
-        {/* Common Notes Area */}
-        <div className="bg-amber-50 rounded-xl border border-amber-100 p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-amber-800 uppercase tracking-wide flex items-center gap-2">
-                    <FileText className="h-4 w-4" /> Notes
-                </h3>
-                <button 
-                    type="button" 
-                    onClick={() => setIsNotesExpanded(true)}
-                    className="text-xs font-medium text-amber-700 hover:text-amber-900 flex items-center gap-1 hover:bg-amber-100 px-2 py-1 rounded transition-colors"
-                >
-                    <Maximize2 className="h-3 w-3" /> Expand
-                </button>
-            </div>
-            <div className="prose prose-sm text-gray-800 max-w-none whitespace-pre-wrap">
-                {formData.notes || <span className="italic text-gray-400">No notes available.</span>}
-            </div>
-        </div>
-        
-        {/* Update History Footer */}
-        {formData.lastUpdatedBy && (
-            <div className="flex items-center justify-end pt-4 mt-6 border-t border-gray-100">
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <History className="h-3.5 w-3.5" />
-                    <span>
-                        Last updated by <span className="font-semibold text-gray-600">{formData.lastUpdatedBy}</span> on {new Date(formData.lastUpdatedAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                </div>
-            </div>
-        )}
     </div>
   );
 
-  // --- EDIT FORM RENDERER ---
-  const renderEditForm = () => (
-    <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Contact Info */}
-            <div className="space-y-6">
-               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Contact Information</h3>
-               
-               <div className="w-full">
-                 <label className="block mb-1.5 text-sm font-medium text-gray-700">Company</label>
-                 <input required type="text" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                   value={formData.company || ''} onChange={e => setFormData({...formData, company: e.target.value})} />
-               </div>
-
-               <div className="w-full">
-                 <label className="block mb-1.5 text-sm font-medium text-gray-700">Contact Person</label>
-                 <input required type="text" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                   value={formData.contactName || ''} onChange={e => setFormData({...formData, contactName: e.target.value})} />
-               </div>
-
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                        value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} />
-                    </div>
-                    
-                    <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Phone</label>
-                        <input type="text" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                        value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                    </div>
-               </div>
-
-               <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700">Address</label>
-                    <textarea 
-                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none resize-none h-20"
-                        placeholder="Full street address..."
-                        value={formData.address || ''} 
-                        onChange={e => setFormData({...formData, address: e.target.value})} 
-                    />
-               </div>
-
-               {/* Social Media Inputs */}
-               <div className="pt-4 border-t border-gray-50">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Online Presence</h4>
-                    <div className="space-y-3">
-                        <div className="relative">
-                            <Globe className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Website URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.website || ''}
-                                onChange={e => updateSocials('website', e.target.value)}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Linkedin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="LinkedIn URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.linkedin || ''}
-                                onChange={e => updateSocials('linkedin', e.target.value)}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Instagram className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Instagram URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.instagram || ''}
-                                onChange={e => updateSocials('instagram', e.target.value)}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Facebook className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Facebook URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.facebook || ''}
-                                onChange={e => updateSocials('facebook', e.target.value)}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Twitter className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Twitter (X) URL"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.twitter || ''}
-                                onChange={e => updateSocials('twitter', e.target.value)}
-                            />
-                        </div>
-                         <div className="relative">
-                            <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url" 
-                                placeholder="Other Link"
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                value={formData.socials?.other || ''}
-                                onChange={e => updateSocials('other', e.target.value)}
-                            />
-                        </div>
-                    </div>
-               </div>
+  // --- Render Edit ---
+  const renderEdit = () => (
+    <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Core Info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Client / Company <span className="text-red-500">*</span></label>
+                <div className="relative">
+                    <Building className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="text" required className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none" 
+                        value={formData.company || ''} onChange={e => setFormData({...formData, company: e.target.value})} placeholder="Company Name" />
+                </div>
             </div>
-
-            {/* Deal Info */}
-            <div className="space-y-6">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Deal Details</h3>
-                
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700">Reference ID</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-gray-50 text-gray-600 font-mono text-sm" 
-                    placeholder="Auto-generated or Enter ID"
-                    value={formData.referenceId || ''} onChange={e => setFormData({...formData, referenceId: e.target.value})} />
+            <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Reference ID</label>
+                <div className="relative">
+                    <Hash className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="text" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none bg-gray-50 font-mono text-sm" 
+                        value={formData.referenceId || ''} onChange={e => setFormData({...formData, referenceId: e.target.value})} placeholder="REF-202X-001" />
                 </div>
-
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <Image className="h-3.5 w-3.5 text-gray-500" /> Company Logo URL
-                    </label>
-                    <input type="url" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                    placeholder="https://..."
-                    value={formData.companyImageUrl || ''} onChange={e => setFormData({...formData, companyImageUrl: e.target.value})} />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Deal Value (₹)</label>
-                        <input type="number" step="0.01" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                        value={formData.dealValue} onChange={e => setFormData({...formData, dealValue: parseFloat(e.target.value) || 0})} />
-                    </div>
-
-                    <div className="w-full">
-                        <CustomSelect 
-                            label="Status"
-                            value={formData.status || 'lead'}
-                            onChange={(val) => setFormData({...formData, status: val as any})}
-                            options={[
-                                { label: 'Lead', value: 'lead' },
-                                { label: 'On Progress', value: 'on progress' },
-                                { label: 'Quote Sent', value: 'Quote Sent' },
-                                { label: 'Onboarded', value: 'onboarded' },
-                                { label: 'Completed', value: 'completed' },
-                                { label: 'Drop', value: 'drop' },
-                            ]}
-                        />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="w-full">
-                        <CustomSelect 
-                            label="Lead Source"
-                            value={formData.leadSources?.[0] || ''}
-                            onChange={(val) => setFormData({...formData, leadSources: [val]})}
-                            options={LEAD_SOURCES.map(source => ({ label: source, value: source }))}
-                            placeholder="Select Source"
-                        />
-                    </div>
-
-                    <div className="w-full">
-                        <CustomSelect 
-                            label="Assigned To"
-                            value={formData.assignedTo || ''}
-                            onChange={(val) => setFormData({...formData, assignedTo: val})}
-                            options={assigneeOptions}
-                            placeholder="Select Assignee"
-                        />
-                    </div>
-               </div>
-               
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Last Contact</label>
-                        <CustomDatePicker 
-                            value={formData.lastContact || ''} 
-                            onChange={val => setFormData({...formData, lastContact: val})}
-                            placeholder="Select Date"
-                        />
-                    </div>
-
-                    <div className="w-full">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-700">Next Follow Up</label>
-                        <CustomDatePicker 
-                            value={formData.nextFollowUp || ''} 
-                            onChange={val => setFormData({...formData, nextFollowUp: val})}
-                            placeholder="Select Date"
-                        />
-                    </div>
-               </div>
-               
-               {/* Drive Link Input */}
-               <div className="w-full">
-                  <label className="block mb-1.5 text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <HardDrive className="h-3.5 w-3.5 text-gray-500" /> Google Drive Link
-                  </label>
-                  <input 
-                    type="url" 
-                    placeholder="https://drive.google.com/..."
-                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                    value={formData.driveLink || ''} 
-                    onChange={e => setFormData({...formData, driveLink: e.target.value})} 
-                  />
-               </div>
             </div>
         </div>
-        
-        <div className="space-y-6 border-t border-gray-100 pt-6">
-             <div className="w-full">
-                 <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-sm font-medium text-gray-700">Common Notes</label>
-                    <button 
-                        type="button" 
-                        onClick={() => setIsNotesExpanded(true)}
-                        className="text-xs font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1 hover:bg-brand-50 px-2 py-1 rounded transition-colors"
-                    >
-                        <Maximize2 className="h-3 w-3" /> Expand Editor
-                    </button>
-                 </div>
-                 <textarea className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 focus:outline-none h-32 text-gray-700 leading-relaxed shadow-sm resize-none"
-                    placeholder="Enter general notes about the deal here..."
-                    value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})}
-                 ></textarea>
-             </div>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700">Tags</label>
-                    <div className="flex flex-wrap gap-2">
-                        {TAG_OPTIONS.map(option => {
-                            const isSelected = formData.tags?.includes(option.label);
-                            return (
-                                <button
-                                    key={option.label}
-                                    type="button"
-                                    onClick={() => toggleTag(option.label)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                                        isSelected
-                                            ? option.color + ' ring-2 ring-offset-1 ring-brand-300'
-                                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                                    }`}
-                                >
-                                    {option.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
 
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700">Work Types</label>
-                    <div className="space-y-4">
-                        <div className="flex flex-wrap gap-2">
-                            {WORK_OPTIONS.map(option => {
-                                // Defensive check against legacy objects
-                                const currentWork = (formData.work || []).map((w: any) => typeof w === 'object' ? w.name : w);
-                                const isSelected = currentWork.includes(option.label);
-                                return (
-                                    <button
-                                        key={option.label}
-                                        type="button"
-                                        onClick={() => toggleWork(option.label)}
-                                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                                            isSelected
-                                                ? option.color + ' ring-2 ring-offset-1 ring-brand-300'
-                                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                                    }`}
-                                    >
-                                        {option.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+        {/* Contact Info */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1">
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Contact Name</label>
+                <div className="relative">
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="text" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        value={formData.contactName || ''} onChange={e => setFormData({...formData, contactName: e.target.value})} placeholder="Full Name" />
                 </div>
-             </div>
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Email</label>
+                <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="email" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="email@example.com" />
+                </div>
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Phone</label>
+                <div className="relative">
+                    <Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="tel" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 98765 43210" />
+                </div>
+            </div>
         </div>
-    </div>
+
+        {/* Pipeline Info */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <div className="col-span-2 md:col-span-1">
+                <CustomSelect label="Status" value={formData.status || 'lead'} onChange={(val) => setFormData({...formData, status: val as CRMStatus})} options={STATUS_OPTIONS} />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+                <CustomSelect label="Assigned To" value={formData.assignedTo || ''} onChange={(val) => setFormData({...formData, assignedTo: val})} options={assigneeOptions} placeholder="Unassigned" />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Deal Value (₹)</label>
+                <div className="relative">
+                    <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="number" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        value={formData.dealValue || ''} onChange={e => setFormData({...formData, dealValue: parseFloat(e.target.value) || 0})} />
+                </div>
+            </div>
+            <div className="col-span-2 md:col-span-1">
+                <CustomDatePicker label="Next Follow Up" value={formData.nextFollowUp || ''} onChange={(date) => setFormData({...formData, nextFollowUp: date})} />
+            </div>
+        </div>
+
+        {/* Classification Tags */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Work Type</label>
+                <div className="flex flex-wrap gap-2">
+                    {WORK_OPTIONS.map(opt => {
+                        const isSelected = formData.work?.map((w: any) => typeof w === 'object' ? w.name : w).includes(opt.label);
+                        return (
+                            <button key={opt.label} type="button" onClick={() => toggleWork(opt.label)}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${isSelected ? opt.color + ' ring-2 ring-offset-1 ring-current' : 'bg-white text-gray-500 border-gray-200'}`}>
+                                {opt.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tags</label>
+                <div className="flex flex-wrap gap-2">
+                    {TAG_OPTIONS.map(opt => {
+                        const isSelected = formData.tags?.includes(opt.label);
+                        return (
+                            <button key={opt.label} type="button" onClick={() => toggleTag(opt.label)}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${isSelected ? opt.color + ' ring-2 ring-offset-1 ring-current' : 'bg-white text-gray-500 border-gray-200'}`}>
+                                {opt.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+
+        {/* Drive Link */}
+        <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 flex items-center gap-1.5"><HardDrive className="h-3.5 w-3.5" /> Drive Link</label>
+            <input type="url" className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                value={formData.driveLink || ''} onChange={e => setFormData({...formData, driveLink: e.target.value})} placeholder="https://drive.google.com/..." />
+        </div>
+
+        {/* Notes */}
+        <div>
+            <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase">Notes</label>
+                <button type="button" onClick={() => setIsNotesExpanded(true)} className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1"><Maximize2 className="h-3 w-3" /> Expand</button>
+            </div>
+            <textarea className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm h-24 resize-none"
+                value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Add deal notes..." />
+        </div>
+
+        {/* Socials */}
+        <div className="pt-4 border-t border-gray-100">
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-3">Online Presence</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="relative">
+                    <Globe className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="url" placeholder="Website" className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500" value={formData.socials?.website || ''} onChange={e => updateSocials('website', e.target.value)} />
+                </div>
+                <div className="relative">
+                    <Linkedin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="url" placeholder="LinkedIn" className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500" value={formData.socials?.linkedin || ''} onChange={e => updateSocials('linkedin', e.target.value)} />
+                </div>
+                <div className="relative">
+                    <Instagram className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="url" placeholder="Instagram" className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500" value={formData.socials?.instagram || ''} onChange={e => updateSocials('instagram', e.target.value)} />
+                </div>
+                <div className="relative">
+                    <Facebook className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="url" placeholder="Facebook" className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500" value={formData.socials?.facebook || ''} onChange={e => updateSocials('facebook', e.target.value)} />
+                </div>
+            </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
+            <button type="button" onClick={() => initialData ? setMode('view') : onClose()} className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">Cancel</button>
+            <button type="submit" className="px-5 py-2.5 text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors font-medium flex items-center gap-2 shadow-lg shadow-brand-500/30"><Save className="h-4 w-4" /> Save Changes</button>
+        </div>
+    </form>
   );
 
   return (
     <>
-        {/* Expanded Notes Overlay */}
         {isNotesExpanded && (
             <div className="fixed inset-0 z-[60] bg-white flex flex-col animate-in fade-in duration-200">
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
-                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-gray-500" /> 
-                        Common Notes {mode === 'edit' ? '(Editing)' : ''}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                        <button 
-                            type="button"
-                            onClick={() => setIsNotesExpanded(false)}
-                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"
-                        >
-                            <Minimize2 className="h-4 w-4" /> Done
-                        </button>
-                    </div>
+                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2"><FileText className="h-5 w-5 text-gray-500" /> Notes Editor</h3>
+                    <button type="button" onClick={() => setIsNotesExpanded(false)} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"><Minimize2 className="h-4 w-4" /> Done</button>
                 </div>
                 <div className="flex-1 p-6 overflow-y-auto max-w-5xl mx-auto w-full">
                     {mode === 'edit' ? (
-                        <textarea 
-                            className="w-full h-full p-4 text-base text-gray-800 bg-transparent border-none focus:ring-0 resize-none outline-none leading-relaxed"
-                            placeholder="Enter general notes about the deal here..."
-                            value={formData.notes || ''}
-                            onChange={e => setFormData({...formData, notes: e.target.value})}
-                            autoFocus
-                        />
+                        <textarea className="w-full h-full p-4 text-base text-gray-800 bg-transparent border-none focus:ring-0 resize-none outline-none leading-relaxed" placeholder="Type your notes here..." value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} autoFocus />
                     ) : (
-                        <div className="prose prose-lg max-w-none text-gray-800 whitespace-pre-wrap leading-relaxed">
-                            {formData.notes || <span className="text-gray-400 italic">No notes available.</span>}
-                        </div>
+                        <div className="prose prose-lg max-w-none text-gray-800 whitespace-pre-wrap leading-relaxed">{formData.notes || <span className="text-gray-400 italic">No notes provided.</span>}</div>
                     )}
                 </div>
             </div>
         )}
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white z-10">
-            <h2 className="text-xl font-bold text-gray-800">
-                {initialData ? (isView ? 'Deal Overview' : 'Edit Deal') : 'Create New Deal'}
-            </h2>
-            <div className="flex items-center gap-2">
-                {isView && (
-                    <button onClick={toggleEdit} className="px-4 py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors">
-                        <Edit2 className="h-4 w-4" /> Edit Details
-                    </button>
-                )}
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
-                    <X className="h-5 w-5" />
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-800">{mode === 'view' ? 'Deal Details' : (initialData ? 'Edit Deal' : 'New Deal')}</h2>
+                    <div className="flex items-center gap-2">
+                        {mode === 'view' && (
+                            <button onClick={() => setMode('edit')} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"><Edit2 className="h-4 w-4" /> Edit</button>
+                        )}
+                        <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"><X className="h-5 w-5" /></button>
+                    </div>
+                </div>
+                <div className="overflow-y-auto p-6 flex-1 custom-scrollbar">
+                    {mode === 'view' ? renderView() : renderEdit()}
+                </div>
             </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="overflow-y-auto p-6 flex-1 bg-white custom-scrollbar">
-                <form onSubmit={handleSubmit}>
-                    {isView ? renderView() : renderEditForm()}
-                    
-                    {/* Footer Actions (Only for Edit Mode or to Close) */}
-                    {!isView && (
-                        <div className="flex justify-end gap-3 pt-8 mt-4 border-t border-gray-100">
-                            <button type="button" onClick={handleCancel} className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
-                                Cancel
-                            </button>
-                            <button type="submit" className="px-5 py-2.5 text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors font-medium flex items-center gap-2 shadow-lg shadow-brand-500/30">
-                                <Save className="h-4 w-4" /> Save Changes
-                            </button>
-                        </div>
-                    )}
-                </form>
-            </div>
-        </div>
         </div>
     </>
   );

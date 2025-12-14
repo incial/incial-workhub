@@ -18,8 +18,8 @@ export const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({ isOpen
   const refId = company.referenceId || `REF-${new Date().getFullYear()}-${company.id.toString().padStart(3, '0')}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all scale-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all scale-100" onClick={(e) => e.stopPropagation()}>
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50">
