@@ -4,10 +4,16 @@ import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info';
 
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 export interface ToastMessage {
   id: string;
   message: string;
   type: ToastType;
+  action?: ToastAction;
 }
 
 interface ToastProps {
@@ -22,14 +28,16 @@ const ToastItem: React.FC<ToastProps> = ({ toast, onDismiss }) => {
     // Trigger enter animation
     requestAnimationFrame(() => setIsVisible(true));
     
-    // Auto dismiss
+    // Auto dismiss (longer duration if there is an action)
+    const duration = toast.action ? 8000 : 4000;
+    
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(() => onDismiss(toast.id), 300); // Wait for exit animation
-    }, 4000);
+    }, duration);
 
     return () => clearTimeout(timer);
-  }, [toast.id, onDismiss]);
+  }, [toast.id, onDismiss, toast.action]);
 
   const handleDismiss = () => {
     setIsVisible(false);
@@ -58,12 +66,29 @@ const ToastItem: React.FC<ToastProps> = ({ toast, onDismiss }) => {
       `}
     >
       <div className="flex-shrink-0">{icons[toast.type]}</div>
-      <div className="flex-1 text-sm font-semibold leading-relaxed tracking-wide">
-        {toast.message}
+      <div className="flex-1 flex flex-col">
+        <span className="text-sm font-semibold leading-relaxed tracking-wide">
+            {toast.message}
+        </span>
+        {toast.action && (
+            <button 
+                onClick={() => {
+                    toast.action?.onClick();
+                    handleDismiss();
+                }}
+                className={`mt-2 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg w-fit transition-colors ${
+                    toast.type === 'info' 
+                    ? 'bg-blue-600 text-white hover:bg-blue-500' 
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
+            >
+                {toast.action.label}
+            </button>
+        )}
       </div>
       <button 
         onClick={handleDismiss} 
-        className={`p-1 rounded-full transition-colors ${toast.type === 'info' ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-400'}`}
+        className={`p-1 rounded-full transition-colors self-start ${toast.type === 'info' ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-400'}`}
       >
         <X className="h-4 w-4" />
       </button>

@@ -1,8 +1,8 @@
 
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastProvider } from './context/ToastContext';
+import { ToastProvider, useToast } from './context/ToastContext';
 import { LayoutProvider } from './context/LayoutContext';
 import { CRMPage } from './pages/CRMPage';
 import { CompaniesPage } from './pages/CompaniesPage';
@@ -16,8 +16,47 @@ import { MeetingTrackerPage } from './pages/MeetingTrackerPage';
 import { UniversalCalendarPage } from './pages/UniversalCalendarPage';
 import { MyDashboardPage } from './pages/MyDashboardPage';
 import { ClientPortalPage } from './pages/ClientPortalPage';
+import { GamePage } from './pages/GamePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
+
+// --- Session Monitor Component ---
+const SessionMonitor: React.FC = () => {
+    const { showToast } = useToast();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { isAuthenticated } = useAuth();
+    const timerRef = useRef<number | null>(null);
+    const hasTriggeredRef = useRef(false);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            hasTriggeredRef.current = false;
+            return;
+        }
+
+        // Set timer for 15 minutes (15 * 60 * 1000 ms)
+        timerRef.current = window.setTimeout(() => {
+            if (location.pathname !== '/break' && !hasTriggeredRef.current) {
+                hasTriggeredRef.current = true;
+                showToast(
+                    "You've been active for a while. How about a quick focus break?", 
+                    "info", 
+                    {
+                        label: "Play Game",
+                        onClick: () => navigate('/break')
+                    }
+                );
+            }
+        }, 15 * 60 * 1000); 
+
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, [isAuthenticated, showToast, navigate, location.pathname]);
+
+    return null;
+};
 
 // 1. Super Admin Only Route
 const SuperAdminRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
@@ -84,85 +123,95 @@ const RootRedirect: React.FC = () => {
 
 const AppRoutes = () => {
     return (
-        <Routes>
-            <Route path="/login" element={
-                <PublicRoute>
-                    <LoginPage />
-                </PublicRoute>
-            } />
-            
-            {/* Client Portal */}
-            <Route path="/portal" element={
-                <ClientRoute>
-                    <ClientPortalPage />
-                </ClientRoute>
-            } />
-            
-            {/* Internal Dashboard */}
-            <Route path="/dashboard" element={
-                <OperationalRoute>
-                    <MyDashboardPage />
-                </OperationalRoute>
-            } />
+        <>
+            <SessionMonitor />
+            <Routes>
+                <Route path="/login" element={
+                    <PublicRoute>
+                        <LoginPage />
+                    </PublicRoute>
+                } />
+                
+                {/* Client Portal */}
+                <Route path="/portal" element={
+                    <ClientRoute>
+                        <ClientPortalPage />
+                    </ClientRoute>
+                } />
+                
+                {/* Internal Dashboard */}
+                <Route path="/dashboard" element={
+                    <OperationalRoute>
+                        <MyDashboardPage />
+                    </OperationalRoute>
+                } />
 
-            {/* CRM (Super Admin + Admin) */}
-            <Route path="/crm" element={
-                <AdminRoute>
-                    <CRMPage />
-                </AdminRoute>
-            } />
-            
-            {/* Operational Apps (SA + Admin + Employee) */}
-            <Route path="/companies" element={
-                <OperationalRoute>
-                    <CompaniesPage />
-                </OperationalRoute>
-            } />
-            <Route path="/tasks" element={
-                <OperationalRoute>
-                    <TasksPage />
-                </OperationalRoute>
-            } />
-            <Route path="/meetings" element={
-                <OperationalRoute>
-                    <MeetingTrackerPage />
-                </OperationalRoute>
-            } />
-            <Route path="/calendar" element={
-                <OperationalRoute>
-                    <UniversalCalendarPage />
-                </OperationalRoute>
-            } />
-            <Route path="/client-tracker" element={
-                <OperationalRoute>
-                    <ClientTrackerPage />
-                </OperationalRoute>
-            } />
-            <Route path="/client-tracker/:id" element={
-                <OperationalRoute>
-                    <ClientDetailsPage />
-                </OperationalRoute>
-            } />
-            
-            {/* Analytics (Super Admin Only) */}
-            <Route path="/reports" element={
-                <SuperAdminRoute>
-                    <AnalyticsPage title="Reports" />
-                </SuperAdminRoute>
-            } />
-             <Route path="/admin/performance" element={
-                <SuperAdminRoute>
-                    <AdminPerformancePage />
-                </SuperAdminRoute>
-            } />
+                {/* CRM (Super Admin + Admin) */}
+                <Route path="/crm" element={
+                    <AdminRoute>
+                        <CRMPage />
+                    </AdminRoute>
+                } />
+                
+                {/* Operational Apps (SA + Admin + Employee) */}
+                <Route path="/companies" element={
+                    <OperationalRoute>
+                        <CompaniesPage />
+                    </OperationalRoute>
+                } />
+                <Route path="/tasks" element={
+                    <OperationalRoute>
+                        <TasksPage />
+                    </OperationalRoute>
+                } />
+                <Route path="/meetings" element={
+                    <OperationalRoute>
+                        <MeetingTrackerPage />
+                    </OperationalRoute>
+                } />
+                <Route path="/calendar" element={
+                    <OperationalRoute>
+                        <UniversalCalendarPage />
+                    </OperationalRoute>
+                } />
+                <Route path="/client-tracker" element={
+                    <OperationalRoute>
+                        <ClientTrackerPage />
+                    </OperationalRoute>
+                } />
+                <Route path="/client-tracker/:id" element={
+                    <OperationalRoute>
+                        <ClientDetailsPage />
+                    </OperationalRoute>
+                } />
+                
+                {/* Focus Break Game */}
+                <Route path="/break" element={
+                    <OperationalRoute>
+                        <GamePage />
+                    </OperationalRoute>
+                } />
+                
+                {/* Analytics (Super Admin Only) */}
+                <Route path="/reports" element={
+                    <SuperAdminRoute>
+                        <AnalyticsPage title="Reports" />
+                    </SuperAdminRoute>
+                } />
+                 <Route path="/admin/performance" element={
+                    <SuperAdminRoute>
+                        <AdminPerformancePage />
+                    </SuperAdminRoute>
+                } />
 
-            {/* System Routes */}
-            <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                {/* System Routes */}
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-            {/* Catch All */}
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+                {/* Catch All */}
+                <Route path="/" element={<RootRedirect />} />
+                <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+        </>
     );
 }
 

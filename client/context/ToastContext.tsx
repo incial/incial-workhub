@@ -1,9 +1,9 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { ToastContainer, ToastMessage, ToastType } from '../components/ui/Toast';
+import { ToastContainer, ToastMessage, ToastType, ToastAction } from '../components/ui/Toast';
 
 interface ToastContextType {
-  showToast: (message: string, type: ToastType) => void;
+  showToast: (message: string, type: ToastType, action?: ToastAction) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -11,9 +11,9 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const showToast = useCallback((message: string, type: ToastType) => {
+  const showToast = useCallback((message: string, type: ToastType, action?: ToastAction) => {
     const id = Math.random().toString(36).substr(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, action }]);
   }, []);
 
   const removeToast = useCallback((id: string) => {
