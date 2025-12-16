@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: incial-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: incialdb
+      POSTGRES_USER: incial_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD environment variable is required}
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - incial-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incial_user -d incialdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Application (Optional - for local testing with Docker)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: incial-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/incialdb
+      DB_USER: incial_user
+      DB_PASS: ${DB_PASSWORD:-change_me_in_production}
+      JWT_SECRET: ${JWT_SECRET}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - incial-network
+    profiles:
+      - full-stack
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  incial-network:
+    driver: bridge
