@@ -144,22 +144,12 @@ public class AuthService {
             String pictureUrl = (String) payload.get("picture");
 
             // Find user by Google ID or email
-            User user = userRepository.findByEmail(email).orElse(null);
+            User user = userRepository.findByEmail(email).orElseThrow(
+                    () -> new UsernameNotFoundException("User not associated with this email ,Contact sales")
+            );
 
-            if (user == null) {
-                // Create new user with Google OAuth
-                // Generate a secure random password that cannot be guessed
-                String randomPassword = java.util.UUID.randomUUID().toString() + "-" + System.currentTimeMillis();
-                user = User.builder()
-                        .name(name)
-                        .email(email)
-                        .passwordHash(passwordEncoder.encode(randomPassword))
-                        .role("ROLE_EMPLOYEE") // Default role for OAuth users
-                        .googleId(googleId)
-                        .avatarUrl(pictureUrl)
-                        .build();
-                user = userRepository.save(user);
-            } else {
+
+            if(user != null) {
                 // Update existing user with Google info only if values changed
                 boolean needsUpdate = false;
                 if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {

@@ -1,9 +1,9 @@
 spring:
   profiles:
     active: local
-  application:
-    name: incial- backend
 
+  application:
+    name: incial-backend
 
   datasource:
     url: ${DB_URL}
@@ -23,7 +23,6 @@ spring:
     port: 587
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
-
     properties:
       mail:
         smtp:
@@ -31,18 +30,23 @@ spring:
           starttls:
             enable: true
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: https://milestone-tracker-f3or.onrender.com/login/oauth2/code/{registrationId}
+            scope:
+              - profile
+              - email
+
 # ===========================
 # JWT Configuration
 # ===========================
 jwt:
   secret: ${JWT_SECRET}
-
-# ===========================
-# Google OAuth Configuration
-# ===========================
-google:
-  client:
-    id: ${GOOGLE_CLIENT_ID:}
 
 # ===========================
 # Logging
@@ -53,18 +57,8 @@ logging:
     org.springframework.security: DEBUG
 
 # ===========================
-# Swagger Configuration
+# Env Printer
 # ===========================
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-
-# ===========================
-# For Envs
-# ===========================
-
 env:
   printer:
     enabled: true

@@ -1,13 +1,6 @@
 package com.incial.crm.controller;
 
-import com.incial.crm.dto.LoginRequest;
-import com.incial.crm.dto.LoginResponse;
-import com.incial.crm.dto.RegisterRequest;
-import com.incial.crm.dto.RegisterResponse;
-import com.incial.crm.dto.ForgotPasswordRequest;
-import com.incial.crm.dto.VerifyOtpRequest;
-import com.incial.crm.dto.ChangePasswordRequest;
-import com.incial.crm.dto.ApiResponse;
+import com.incial.crm.dto.*;
 import com.incial.crm.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +29,7 @@ public class AuthController {
     }
 
     @PostMapping("/google-login")
-    public ResponseEntity<LoginResponse> googleLogin(@Valid @RequestBody com.incial.crm.dto.GoogleLoginRequest request) {
+    public ResponseEntity<LoginResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
         LoginResponse response = authService.loginWithGoogle(request);
         return ResponseEntity.ok(response);
     }
