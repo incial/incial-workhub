@@ -30,17 +30,9 @@ spring:
           starttls:
             enable: true
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-            redirect-uri: https://milestone-tracker-f3or.onrender.com/login/oauth2/code/{registrationId}
-            scope:
-              - profile
-              - email
+google:
+  client:
+    id: ${GOOGLE_CLIENT_ID}
 
 # ===========================
 # JWT Configuration

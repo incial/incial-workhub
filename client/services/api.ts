@@ -291,12 +291,23 @@ export const authApi = {
     } catch (error) { throw handleApiError(error); }
   },
 
-  googleLogin: async (idToken: string): Promise<AuthResponse> => {
+  googleLogin: async (credential: string): Promise<AuthResponse> => {
     try {
-        const res = await api.post("/auth/google-login", { idToken });
+        const res = await api.post(
+            "/auth/google-login",
+            { credential },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
         return res.data;
-    } catch (error) { throw handleApiError(error); }
-  },
+    } catch (error) { 
+        throw handleApiError(error); 
+    }
+}
+,
 
   forgotPassword: async (data: ForgotPasswordRequest): Promise<ApiResponse> => {
     try {

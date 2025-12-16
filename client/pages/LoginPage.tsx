@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { authApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -56,8 +55,8 @@ export const LoginPage: React.FC = () => {
 
     const handleGoogleCallback = async (response: any) => {
         // 1. Client-side Validation
-        if (!response?.credential) {
-            console.error("Google Sign-In Error: No credential received");
+        if (!response?.credential || response.credential?.trim() === '') {
+            console.error("Google Sign-In Error: No credential received or empty credential");
             setError('Google authentication failed. Please try again.');
             return;
         }

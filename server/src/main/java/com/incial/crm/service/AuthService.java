@@ -18,6 +18,7 @@ import com.incial.crm.dto.ForgotPasswordRequest;
 import com.incial.crm.dto.VerifyOtpRequest;
 import com.incial.crm.dto.ChangePasswordRequest;
 import com.incial.crm.dto.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -41,8 +43,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
 
-    @Value("${google.client.id:}")
+    @Value("${google.client.id}")
     private String googleClientId;
+
 
     public RegisterResponse register(RegisterRequest request) {
         // Check if user already exists
@@ -125,6 +128,14 @@ public class AuthService {
 
     public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
         try {
+            log.debug("Processing Google login request");
+
+            // Check if Google Client ID is configured
+            if (googleClientId == null || googleClientId.trim().isEmpty()) {
+                log.error("Google Client ID is not configured. Please set the GOOGLE_CLIENT_ID environment variable.");
+                throw new IllegalStateException("Google authentication is not properly configured. Please contact the administrator.");
+            }
+
             // Verify Google ID token
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     new NetHttpTransport(),
@@ -132,8 +143,9 @@ public class AuthService {
                     .setAudience(Collections.singletonList(googleClientId))
                     .build();
 
-            GoogleIdToken idToken = verifier.verify(request.getIdToken());
+            GoogleIdToken idToken = verifier.verify(request.getCredential());
             if (idToken == null) {
+                log.error("Google token verification failed - invalid token");
                 throw new RuntimeException("Invalid Google ID token");
             }
 
@@ -143,26 +155,23 @@ public class AuthService {
             String name = (String) payload.get("name");
             String pictureUrl = (String) payload.get("picture");
 
-            // Find user by Google ID or email
+            // Find user by email - user must be pre-registered
             User user = userRepository.findByEmail(email).orElseThrow(
-                    () -> new UsernameNotFoundException("User not associated with this email ,Contact sales")
+                    () -> new UsernameNotFoundException("User not associated with this email. Contact sales")
             );
 
-
-            if(user != null) {
-                // Update existing user with Google info only if values changed
-                boolean needsUpdate = false;
-                if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
-                    user.setGoogleId(googleId);
-                    needsUpdate = true;
-                }
-                if (pictureUrl != null && (user.getAvatarUrl() == null || !user.getAvatarUrl().equals(pictureUrl))) {
-                    user.setAvatarUrl(pictureUrl);
-                    needsUpdate = true;
-                }
-                if (needsUpdate) {
-                    userRepository.save(user);
-                }
+            // Update existing user with Google info only if values changed
+            boolean needsUpdate = false;
+            if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
+                user.setGoogleId(googleId);
+                needsUpdate = true;
+            }
+            if (pictureUrl != null && (user.getAvatarUrl() == null || !user.getAvatarUrl().equals(pictureUrl))) {
+                user.setAvatarUrl(pictureUrl);
+                needsUpdate = true;
+            }
+            if (needsUpdate) {
+                userRepository.save(user);
             }
 
             String token = jwtUtil.generateToken(user.getEmail());
@@ -185,8 +194,9 @@ public class AuthService {
                     .build();
 
         } catch (GeneralSecurityException | IOException e) {
-            // Log the actual error for debugging but don't expose details to client
-            System.err.println("Google authentication error: " + e.getMessage());
+            // Log error for debugging - full stack trace only in debug mode
+            log.error("Google authentication error: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            log.debug("Full exception details:", e);
             throw new RuntimeException("Google authentication failed. Please try again.");
         }
     }

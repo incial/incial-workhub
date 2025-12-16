@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GoogleLoginRequest {
-    @NotBlank(message = "Google ID token is required")
-    private String idToken;
+    @NotBlank(message = "Google credential is required")
+    private String credential;
 }
