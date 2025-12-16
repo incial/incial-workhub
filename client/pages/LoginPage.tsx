@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { authApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, Command, ArrowRight, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, ArrowRight, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 declare global {
@@ -31,6 +31,7 @@ export const LoginPage: React.FC = () => {
     const googleBtnWrapperRef = useRef<HTMLDivElement>(null);
     const isGsiInitializedRef = useRef(false);
 
+    // Safe access to env variable or fallback
     const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -158,10 +159,8 @@ export const LoginPage: React.FC = () => {
                 {/* Logo Area */}
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 font-bold text-2xl tracking-tight text-white">
-                        <div className="relative z-10 flex items-center gap-3 text-2xl font-bold tracking-tight">
-                            <img src="/logo.png" alt="Incial" className="h-10 w-10 rounded-xl bg-white shadow-lg object-contain p-1" />
-                            Incial
-                        </div>
+                        <img src="/logo.png" alt="Incial" className="h-10 w-10 rounded-xl bg-white shadow-lg object-contain p-1" />
+                        Incial
                     </div>
                 </div>
 
@@ -209,14 +208,10 @@ export const LoginPage: React.FC = () => {
             <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-24 relative overflow-y-auto">
                 <div className="w-full max-w-[400px] flex flex-col">
 
-                    {/* Logo Area */}
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 font-bold text-2xl tracking-tight text-white">
-                            <div className="relative z-10 flex items-center gap-3 text-2xl font-bold tracking-tight">
-                                <img src="/logo.png" alt="Incial" className="h-10 w-10 rounded-xl bg-white shadow-lg object-contain p-1" />
-                                Incial
-                            </div>
-                        </div>
+                    {/* Logo Area (Mobile/Right Panel) */}
+                    <div className="lg:hidden flex items-center gap-3 mb-10 font-bold text-2xl tracking-tight text-gray-900">
+                        <img src="/logo.png" alt="Incial" className="h-10 w-10 rounded-xl bg-white shadow-lg object-contain p-1 border border-gray-100" />
+                        Incial
                     </div>
 
                     <div className="mb-10">
