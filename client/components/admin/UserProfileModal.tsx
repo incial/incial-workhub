@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, User, Mail, Calendar, Shield, Trash2, MapPin } from 'lucide-react';
+import { X, User, Mail, Calendar, Trash2 } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { CustomSelect } from '../ui/CustomSelect';
@@ -71,7 +71,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
             </div>
         </div>
 
-        {/* User Info - Added top padding to account for avatar overlap */}
+        {/* User Info */}
         <div className="pt-16 pb-8 px-8">
             <div className="mb-6">
                 <div className="flex flex-col gap-4">
@@ -109,7 +109,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                     </div>
 
                     <div className="flex items-center gap-3 text-sm text-gray-600 p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-                        <Shield className="h-5 w-5 text-gray-400" /> 
+                        <img src="/logo.png" alt="Organisation" className="h-5 w-5 grayscale opacity-60" />
                         <span>System ID: <span className="font-mono text-xs font-bold bg-gray-200 px-2 py-0.5 rounded text-gray-600">{user.id}</span></span>
                     </div>
                 </div>

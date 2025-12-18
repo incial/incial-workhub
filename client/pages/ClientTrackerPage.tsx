@@ -1,54 +1,41 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
-import { Link } from 'react-router-dom';
 import { crmApi, tasksApi } from '../services/api';
 import { CRMEntry } from '../types';
-import { ListTodo, Search, Building, Clock, PieChart, ArrowRight, CheckCircle2, AlertTriangle, Briefcase, User, ImageIcon } from 'lucide-react';
+import { ListTodo, Search, Building, ChevronRight, Activity, ArrowUpAz, ArrowDownAz, ChevronUp, ChevronDown } from 'lucide-react';
+import { getStatusStyles } from '../utils';
 
-interface ClientWithStats extends CRMEntry {
-    totalTasks: number;
-    completedTasks: number;
-    progress: number;
-    pendingHighPriority: number;
-}
+type SortKey = 'company' | 'progress' | 'status' | 'completed';
+type SortDirection = 'asc' | 'desc';
 
 export const ClientTrackerPage: React.FC = () => {
-  const [clients, setClients] = useState<ClientWithStats[]>([]);
+  const navigate = useNavigate();
+  const [clients, setClients] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({
+    key: 'company',
+    direction: 'asc'
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [crmData, tasksData] = await Promise.all([
-            crmApi.getAll(),
-            tasksApi.getAll()
-        ]);
-
-        // Filter active companies
-        const activeCompanies = crmData.crmList.filter(c => 
-            ['onboarded', 'on progress', 'Quote Sent'].includes(c.status)
-        );
-
-        // Map stats
-        const clientsWithStats = activeCompanies.map(client => {
+        const [crmData, tasksData] = await Promise.all([crmApi.getAll(), tasksApi.getAll()]);
+        const activeCompanies = crmData.crmList.filter(c => ['onboarded', 'on progress', 'Quote Sent'].includes(c.status));
+        setClients(activeCompanies.map(client => {
             const clientTasks = tasksData.filter(t => t.companyId === client.id);
-            const total = clientTasks.length;
-            const completed = clientTasks.filter(t => t.status === 'Completed' || t.status === 'Done' || t.status === 'Posted').length;
-            const highPriority = clientTasks.filter(t => t.priority === 'High' && t.status !== 'Completed' && t.status !== 'Done').length;
-            
-            return {
-                ...client,
-                totalTasks: total,
-                completedTasks: completed,
-                progress: total > 0 ? Math.round((completed / total) * 100) : 0,
-                pendingHighPriority: highPriority
+            const completed = clientTasks.filter(t => ['Completed', 'Done', 'Posted'].includes(t.status)).length;
+            return { 
+                ...client, 
+                total: clientTasks.length, 
+                completed, 
+                progress: clientTasks.length > 0 ? Math.round((completed / clientTasks.length) * 100) : 0 
             };
-        });
-
-        setClients(clientsWithStats.sort((a, b) => b.id - a.id));
+        }));
       } catch (e) {
         console.error(e);
       } finally {
@@ -58,185 +45,205 @@ export const ClientTrackerPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const filteredClients = clients.filter(c => 
-    c.company.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleSort = (key: SortKey) => {
+    setSortConfig(prev => ({
+        key,
+        direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
 
-  // Global Stats
-  const totalActive = clients.length;
-  const totalPendingTasks = clients.reduce((acc, c) => acc + (c.totalTasks - c.completedTasks), 0);
-  const criticalTasks = clients.reduce((acc, c) => acc + c.pendingHighPriority, 0);
+  const processedClients = useMemo(() => {
+    let result = clients.filter(c => 
+        c.company.toLowerCase().includes(search.toLowerCase()) || 
+        c.contactName.toLowerCase().includes(search.toLowerCase())
+    );
+
+    result.sort((a, b) => {
+        const direction = sortConfig.direction === 'asc' ? 1 : -1;
+        
+        switch (sortConfig.key) {
+            case 'company':
+                return direction * a.company.localeCompare(b.company);
+            case 'progress':
+                return direction * (a.progress - b.progress);
+            case 'status':
+                return direction * a.status.localeCompare(b.status);
+            case 'completed':
+                return direction * (a.completed - b.completed);
+            default:
+                return 0;
+        }
+    });
+
+    return result;
+  }, [clients, search, sortConfig]);
+
+  const SortIcon = ({ column }: { column: SortKey }) => {
+    if (sortConfig.key !== column) return <ChevronDown className="h-3 w-3 opacity-20 group-hover:opacity-50 transition-opacity" />;
+    return sortConfig.direction === 'asc' 
+        ? <ChevronUp className="h-3 w-3 text-brand-600 animate-in fade-in zoom-in duration-300" /> 
+        : <ChevronDown className="h-3 w-3 text-brand-600 animate-in fade-in zoom-in duration-300" />;
+  };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex min-h-screen bg-[#FDFDFD]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar />
-        
-        <main className="flex-1 p-8 overflow-y-auto custom-scrollbar h-[calc(100vh-80px)]">
-           <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-10">
+        <main className="flex-1 p-6 lg:p-10 overflow-y-auto custom-scrollbar h-[calc(100vh-80px)]">
+           
+           {/* Page Header */}
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
              <div>
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-brand-50 rounded-xl text-brand-600">
-                        <ListTodo className="h-6 w-6" />
-                    </div>
-                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Client Projects</h1>
-                </div>
-                <p className="text-gray-500 font-medium ml-1">Monitor progress and deliverables across all active accounts.</p>
+                <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight flex items-center gap-4">
+                    <ListTodo className="h-10 w-10 text-brand-600" /> 
+                    Client Tracker
+                </h1>
+                <p className="text-gray-500 mt-2 font-medium">Monitoring roadmap execution and delivery velocity.</p>
              </div>
-             
              <div className="relative w-full md:w-96 group">
                 <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
                 <input 
                     type="text" 
-                    placeholder="Search active clients..." 
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 shadow-sm transition-all"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Search active projects..." 
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-[1.5rem] focus:outline-none focus:ring-4 focus:ring-brand-500/10 shadow-sm group-hover:border-brand-200 transition-all font-medium" 
+                    value={search} 
+                    onChange={e => setSearch(e.target.value)} 
                 />
              </div>
            </div>
 
-           {/* Stats Overview Bar */}
-           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-2 mb-10 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-100">
-                <div className="flex-1 p-5 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                        <Building className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Active Projects</p>
-                        <p className="text-2xl font-black text-gray-900">{totalActive}</p>
-                    </div>
-                </div>
-                <div className="flex-1 p-5 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center">
-                        <Clock className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Pending Tasks</p>
-                        <p className="text-2xl font-black text-gray-900">{totalPendingTasks}</p>
-                    </div>
-                </div>
-                <div className="flex-1 p-5 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center">
-                        <AlertTriangle className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Critical Items</p>
-                        <p className="text-2xl font-black text-gray-900">{criticalTasks}</p>
-                    </div>
+           {/* Registry Table matching Super Admin Style */}
+           <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                <th className="p-0">
+                                    <button onClick={() => handleSort('company')} className="w-full h-full p-6 flex items-center gap-2 group hover:text-gray-900 transition-colors outline-none">
+                                        Project / Client <SortIcon column="company" />
+                                    </button>
+                                </th>
+                                <th className="p-0">
+                                    <button onClick={() => handleSort('progress')} className="w-full h-full p-6 flex items-center gap-2 group hover:text-gray-900 transition-colors outline-none">
+                                        Delivery Progress <SortIcon column="progress" />
+                                    </button>
+                                </th>
+                                <th className="p-0">
+                                    <button onClick={() => handleSort('status')} className="w-full h-full p-6 flex items-center gap-2 group hover:text-gray-900 transition-colors outline-none">
+                                        Account Status <SortIcon column="status" />
+                                    </button>
+                                </th>
+                                <th className="p-0">
+                                    <button onClick={() => handleSort('completed')} className="w-full h-full p-6 flex items-center gap-2 group hover:text-gray-900 transition-colors outline-none">
+                                        Activity <SortIcon column="completed" />
+                                    </button>
+                                </th>
+                                <th className="p-6"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td colSpan={5} className="p-6"><div className="h-12 bg-gray-50 rounded-2xl w-full"></div></td>
+                                    </tr>
+                                ))
+                            ) : processedClients.map(client => (
+                                <tr 
+                                    key={client.id} 
+                                    onClick={() => navigate(`/client-tracker/${client.id}`)}
+                                    className="group hover:bg-slate-50 transition-all duration-200 cursor-pointer"
+                                >
+                                    {/* Company Details */}
+                                    <td className="p-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 bg-white rounded-2xl border border-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-sm group-hover:shadow-md transition-all">
+                                                {client.companyImageUrl ? (
+                                                    <>
+                                                        <img 
+                                                            src={client.companyImageUrl} 
+                                                            alt={client.company} 
+                                                            className="h-full w-full object-cover" 
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                            }}
+                                                        />
+                                                        <div className="hidden h-full w-full flex items-center justify-center text-brand-600 font-black text-lg">
+                                                            {client.company.charAt(0)}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-brand-600 font-black text-lg">{client.company.charAt(0)}</span>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900 text-base group-hover:text-brand-700 transition-colors">
+                                                    {client.company}
+                                                </p>
+                                                <p className="text-xs font-medium text-gray-400 mt-0.5">
+                                                    POC: {client.contactName}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    {/* Progress Monitor */}
+                                    <td className="p-6">
+                                        <div className="w-48">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Velocity</span>
+                                                <span className={`text-xs font-black ${sortConfig.key === 'progress' ? 'text-brand-600' : 'text-gray-400'}`}>{client.progress}%</span>
+                                            </div>
+                                            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                                                <div 
+                                                    className="h-full bg-gradient-to-r from-brand-500 to-indigo-600 rounded-full transition-all duration-1000" 
+                                                    style={{ width: `${client.progress}%` }} 
+                                                />
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    {/* Account Status Badge */}
+                                    <td className="p-6">
+                                        <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border backdrop-blur-md shadow-sm whitespace-nowrap ${getStatusStyles(client.status)}`}>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-current mr-2 inline-block opacity-60"></span>
+                                            {client.status}
+                                        </span>
+                                    </td>
+
+                                    {/* Activity Metric */}
+                                    <td className="p-6">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <Activity className={`h-4 w-4 ${sortConfig.key === 'completed' ? 'text-brand-500' : 'text-gray-300'}`} />
+                                            <span className="font-bold text-gray-700">{client.completed}</span>
+                                            <span className="text-gray-400 font-medium">/ {client.total} Tasks</span>
+                                        </div>
+                                    </td>
+
+                                    {/* Link Icon */}
+                                    <td className="p-6 text-right">
+                                        <div className="inline-flex items-center justify-center h-10 w-10 rounded-full text-gray-300 group-hover:text-brand-600 group-hover:bg-white group-hover:shadow-sm transition-all">
+                                            <ChevronRight className="h-5 w-5" />
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+
+                            {!isLoading && processedClients.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="p-20 text-center">
+                                        <Building className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                                        <h3 className="text-lg font-bold text-gray-900">No projects match your search</h3>
+                                        <p className="text-gray-500 text-sm">Adjust your filters to see active project deliverables.</p>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
            </div>
-
-           {isLoading ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {[1,2,3,4,5,6].map(i => <div key={i} className="h-64 bg-gray-200 rounded-[2rem] animate-pulse" />)}
-             </div>
-           ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredClients.map(client => (
-                    <Link 
-                        key={client.id} 
-                        to={`/client-tracker/${client.id}`}
-                        className="group relative flex flex-col bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-1 overflow-hidden"
-                    >
-                        {/* Decorative BG Blob */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-bl-[4rem] -z-0 opacity-50 group-hover:scale-110 transition-transform origin-top-right duration-500" />
-
-                        <div className="p-7 flex-1 z-10">
-                            {/* Header: Logo & Identity - STRICT FLEX ALIGNMENT */}
-                            <div className="flex items-start justify-between gap-3 mb-6">
-                                <div className="flex items-center gap-4 flex-1 min-w-0">
-                                    {/* Logo Container */}
-                                    <div className="h-14 w-14 flex-shrink-0 rounded-2xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden group-hover:border-brand-200 transition-colors shadow-sm relative">
-                                        {client.companyImageUrl ? (
-                                            <img 
-                                                src={client.companyImageUrl} 
-                                                alt={client.company} 
-                                                className="h-full w-full object-cover"
-                                                onError={(e) => {
-                                                    e.currentTarget.style.display = 'none';
-                                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                                    e.currentTarget.nextElementSibling?.classList.add('flex');
-                                                }}
-                                            />
-                                        ) : null}
-                                        {/* Fallback Icon - Centered (Shows if no image or error) */}
-                                        <div className={`${client.companyImageUrl ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center text-gray-300 group-hover:text-brand-500 transition-colors`}>
-                                            <Building className="h-7 w-7" />
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Text Block */}
-                                    <div className="flex flex-col min-w-0">
-                                        <h3 className="text-lg font-bold text-gray-900 leading-tight group-hover:text-brand-600 transition-colors truncate">
-                                            {client.company}
-                                        </h3>
-                                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mt-1">
-                                            <User className="h-3 w-3 text-gray-400" />
-                                            <span className="truncate max-w-[120px]">{client.contactName || 'No Contact'}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Status Badge */}
-                                <span className={`flex-shrink-0 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full border bg-white ${
-                                    client.status === 'onboarded' ? 'text-emerald-700 border-emerald-100' : 
-                                    client.status === 'Quote Sent' ? 'text-sky-700 border-sky-100' :
-                                    'text-amber-700 border-amber-100'
-                                } shadow-sm`}>
-                                    {client.status}
-                                </span>
-                            </div>
-
-                            {/* Mini Stats Grid */}
-                            <div className="grid grid-cols-2 gap-3 mt-4">
-                                <div className="p-3 bg-gray-50/50 rounded-2xl border border-gray-100 group-hover:border-brand-100 group-hover:bg-brand-50/30 transition-colors">
-                                    <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Tasks</span>
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-lg font-bold text-gray-900 group-hover:text-brand-700 transition-colors">{client.completedTasks}</span>
-                                        <span className="text-xs font-semibold text-gray-400">/{client.totalTasks}</span>
-                                    </div>
-                                </div>
-                                <div className={`p-3 bg-gray-50/50 rounded-2xl border border-gray-100 transition-colors ${client.pendingHighPriority > 0 ? 'group-hover:bg-rose-50/30 group-hover:border-rose-100' : ''}`}>
-                                    <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Critical</span>
-                                    <div className={`flex items-center gap-1.5 ${client.pendingHighPriority > 0 ? 'text-rose-600' : 'text-gray-400'}`}>
-                                        <AlertTriangle className="h-4 w-4" />
-                                        <span className="text-lg font-bold">{client.pendingHighPriority}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Progress Footer */}
-                        <div className="px-7 pb-7 pt-2 z-10">
-                            <div className="flex justify-between items-end mb-2">
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Completion</span>
-                                <span className="text-sm font-bold text-gray-900">{client.progress}%</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                <div 
-                                    className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                                        client.progress === 100 ? 'bg-emerald-500' : 'bg-brand-600'
-                                    }`}
-                                    style={{ width: `${client.progress}%` }} 
-                                />
-                            </div>
-                        </div>
-                    </Link>
-                ))}
-                
-                {filteredClients.length === 0 && (
-                    <div className="col-span-full py-20 text-center">
-                        <div className="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search className="h-10 w-10 text-gray-300" />
-                        </div>
-                        <h3 className="text-gray-900 font-bold text-lg">No clients found</h3>
-                        <p className="text-gray-500 mt-1">Try searching for a different company name.</p>
-                    </div>
-                )}
-             </div>
-           )}
         </main>
       </div>
     </div>
