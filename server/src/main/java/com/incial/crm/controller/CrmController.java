@@ -36,6 +36,14 @@ public class CrmController {
         return ResponseEntity.ok(details);
     }
 
+    @GetMapping("/my-crm")
+    @PreAuthorize("hasAuthority('ROLE_CLIENT')")
+    public ResponseEntity<CrmEntryDto> getClientCrmDetails(org.springframework.security.core.Authentication authentication) {
+        String userEmail = authentication.getName();
+        CrmEntryDto details = crmService.getClientCrmDetails(userEmail);
+        return ResponseEntity.ok(details);
+    }
+
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_SUPER_ADMIN')")
     public ResponseEntity<CrmEntryDto> createEntry(@RequestBody CrmEntryDto dto) {

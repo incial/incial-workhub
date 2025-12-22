@@ -19,5 +19,6 @@ public class UserDto {
     private Integer tasksCompleted;
     private String googleId;
     private String avatarUrl;
+    private Long clientCrmId;
     private LocalDateTime createdAt;
 }

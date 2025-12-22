@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class CrmService {
 
     private final CrmEntryRepository crmEntryRepository;
+    private final UserService userService;
 
     public Map<String, List<CrmEntryDto>> getAllEntries() {
         List<CrmEntry> entries = crmEntryRepository.findAll();
@@ -54,6 +55,15 @@ public class CrmService {
         CrmEntry entry = crmEntryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("CRM Entry not found with id: " + id));
         return convertToDto(entry);
+    }
+
+    public CrmEntryDto getClientCrmDetails(String userEmail) {
+        // Get user to find their linked CRM ID
+        var userDto = userService.getUserByEmail(userEmail);
+        if (userDto.getClientCrmId() == null) {
+            throw new RuntimeException("Client user '" + userEmail + "' is not linked to any CRM entry. Please contact administrator.");
+        }
+        return getCrmDetails(userDto.getClientCrmId());
     }
 
     private CrmEntryDto convertToDto(CrmEntry entity) {

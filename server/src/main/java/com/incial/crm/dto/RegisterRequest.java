@@ -20,4 +20,5 @@ public class RegisterRequest {
     private String password;
 
     private String role; // Optional, defaults to ROLE_EMPLOYEE if not provided
+    private Long clientCrmId; // Optional, for CLIENT role - links client to a specific CRM entry
 }

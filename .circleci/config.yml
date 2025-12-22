@@ -1,63 +1,93 @@
 version: 2.1
 
 orbs:
-  aws-cli: circleci/aws-cli@5.1.0
+  aws-cli: circleci/aws-cli@4.1.2
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     docker:
       - image: cimg/openjdk:17.0
+    environment:
+      AWS_REGION: ap-south-1
     steps:
       - checkout
 
+      # -----------------------------
       # Build Spring Boot JAR
+      # -----------------------------
       - run:
-          name: Build JAR
+          name: Build Backend JAR
           command: |
+            cd server
             mvn clean package -DskipTests
 
-      # Enable Docker
+      # -----------------------------
+      # Enable Docker daemon
+      # -----------------------------
       - setup_remote_docker:
           docker_layer_caching: true
 
-      # Configure AWS CLI
-      - aws-cli/setup:
-          aws-access-key-id: AWS_ACCESS_KEY_ID
-          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          aws-region: AWS_REGION
+      # -----------------------------
+      # Setup AWS CLI
+      # -----------------------------
+      - aws-cli/setup
 
+      # -----------------------------
       # Login to Amazon ECR
+      # -----------------------------
       - run:
-          name: Login to ECR
+          name: Login to Amazon ECR
           command: |
-            aws ecr get-login-password --region $AWS_REGION |
+            aws ecr get-login-password --region $AWS_REGION | \
             docker login \
               --username AWS \
               --password-stdin \
-              $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+              ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
-      # Build Docker image
+      # -----------------------------
+      # Build & Push ARM64 Image (IMMUTABLE TAG)
+      # -----------------------------
       - run:
-          name: Build Docker image
+          name: Build and Push ARM64 Docker Image
           command: |
-            docker build -t $ECR_REPO_NAME:latest .
+            cd server
 
-      # Tag Docker image
-      - run:
-          name: Tag Docker image
-          command: |
-            docker tag \
-              $ECR_REPO_NAME:latest \
-              $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+            docker buildx create --use || true
 
-      # Push Docker image
+            docker buildx build \
+              --platform linux/arm64 \
+              -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${CIRCLE_SHA1:0:7} \
+              --push .
+
+      # -----------------------------
+      # Deploy to EC2 via SSM (SAFE ORDER)
+      # -----------------------------
       - run:
-          name: Push Docker image to ECR
+          name: Deploy to EC2 via SSM (NO DOWNTIME)
           command: |
-            docker push \
-              $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+            aws ssm send-command \
+              --region $AWS_REGION \
+              --instance-ids ${EC2_INSTANCE_ID} \
+              --document-name "AWS-RunShellScript" \
+              --comment "Deploy backend ${CIRCLE_SHA1:0:7}" \
+              --parameters commands="[
+                \"set -e\",
+                \"docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${CIRCLE_SHA1:0:7}\",
+                \"docker stop incial-backend || true\",
+                \"docker rm incial-backend || true\",
+                \"docker run -d \
+                   --name incial-backend \
+                   --env-file /home/ec2-user/incial.env \
+                   --restart unless-stopped \
+                   -p 8080:8080 \
+                   ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${CIRCLE_SHA1:0:7}\",
+                \"docker ps\"
+              ]"
 
 workflows:
-  build:
+  deploy:
     jobs:
-      - build-and-push
+      - build-and-deploy:
+          filters:
+            branches:
+              only: main

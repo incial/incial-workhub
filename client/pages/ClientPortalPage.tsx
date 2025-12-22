@@ -1,304 +1,271 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
 import { crmApi, tasksApi } from '../services/api';
-import { CRMEntry, Task, TaskFilterState, TaskStatus } from '../types';
+import { CRMEntry, Task, TaskPriority } from '../types';
 import { ClientTaskTable } from '../components/client-tracker/ClientTaskTable';
-import { TasksKanban } from '../components/tasks/TasksKanban';
-import { TasksCalendar } from '../components/tasks/TasksCalendar';
-import { TasksFilter } from '../components/tasks/TasksFilter';
-import { CheckCircle, HardDrive, LayoutList, Calendar as CalendarIcon, User, ExternalLink, Kanban, Archive, ChevronDown, ChevronRight, AlertCircle, Clock, LogOut } from 'lucide-react';
+import { ClientTaskForm } from '../components/client-tracker/ClientTaskForm';
+import { AlertCircle, LogOut, Phone, Mail, MapPin, Globe, Linkedin, Instagram, ExternalLink, Plus, Sparkles, Target, Layout } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
-
-type ViewMode = 'list' | 'kanban' | 'calendar';
+import { useToast } from '../context/ToastContext';
+import { formatMoney, getStatusStyles } from '../utils';
 
 export const ClientPortalPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const [client, setClient] = useState<CRMEntry | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // UI State
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
-  // Filters State (Client can filter their own tasks)
-  const [filters, setFilters] = useState<TaskFilterState>({
-    search: '',
-    status: '',
-    priority: '',
-    assignedTo: ''
-  });
+  const fetchData = async () => {
+    if (!user?.clientCrmId) { 
+      setIsLoading(false); 
+      return; 
+    }
+    try {
+      const [crmData, tasksData] = await Promise.all([
+        crmApi.getMyCrm(),
+        tasksApi.getClientTasks()
+      ]);
+      setClient(crmData);
+      setTasks(tasksData);
+    } catch (e: any) {
+      console.error("Failed to fetch client portal data", e);
+      setError(e.message || "Could not load project data.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      // Security Check: Ensure user has a companyId linked
-      if (!user?.companyId) {
-          setIsLoading(false);
-          return; 
-      }
-
-      try {
-        const crmData = await crmApi.getAll();
-        const foundClient = crmData.crmList.find(c => c.id === user.companyId);
-        setClient(foundClient || null);
-
-        const tasksData = await tasksApi.getAll();
-        // Strict filtering by companyId
-        const clientTasks = tasksData.filter(t => t.companyId === user.companyId);
-        setTasks(clientTasks);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchData();
   }, [user]);
 
-  // Base filtering based on search/dropdowns
-  const filteredBaseTasks = useMemo(() => {
-    let result = tasks.filter(t => {
-      const matchesSearch = t.title.toLowerCase().includes(filters.search.toLowerCase());
-      const matchesStatus = filters.status === '' || t.status === filters.status;
-      const matchesPriority = filters.priority === '' || t.priority === filters.priority;
-      return matchesSearch && matchesStatus && matchesPriority;
-    });
-    
-    return result.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
-  }, [tasks, filters]);
+  const handleTaskSubmit = async (data: Partial<Task>) => {
+    try {
+        if (data.id) {
+            await tasksApi.update(data.id, data);
+            showToast("Update successful", "success");
+        } else {
+            await tasksApi.create({ ...data, companyId: user?.clientCrmId } as any);
+            showToast("New request submitted", "success");
+        }
+        fetchData();
+    } catch (e) {
+        showToast("Action failed", "error");
+    }
+  };
 
-  // Split tasks for the "List" view
-  const { activeTasks, completedTasks } = useMemo(() => {
-      const active = filteredBaseTasks.filter(t => t.status !== 'Completed' && t.status !== 'Done');
-      const completed = filteredBaseTasks.filter(t => t.status === 'Completed' || t.status === 'Done');
-      completed.sort((a, b) => new Date(b.lastUpdatedAt || b.createdAt).getTime() - new Date(a.lastUpdatedAt || a.createdAt).getTime());
-      return { activeTasks: active, completedTasks: completed };
-  }, [filteredBaseTasks]);
+  const handlePriorityChange = async (task: Task, newPriority: TaskPriority) => {
+    try {
+        await tasksApi.update(task.id, { priority: newPriority });
+        showToast("Priority updated", "success");
+        fetchData();
+    } catch (e) {
+        showToast("Update failed", "error");
+    }
+  };
 
-  // Stats Calculation
-  const progressStats = useMemo(() => {
-      const total = tasks.length;
-      const completed = tasks.filter(t => t.status === 'Completed' || t.status === 'Done' || t.status === 'Posted').length;
-      const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-      const highPriority = tasks.filter(t => t.priority === 'High' && t.status !== 'Completed' && t.status !== 'Done').length;
-      return { total, completed, progress, highPriority };
-  }, [tasks]);
+  if (isLoading) return (
+    <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[#F8FAFC]">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-brand-100 border-t-brand-600"></div>
+        <p className="font-black text-gray-400 uppercase tracking-[0.2em] text-[10px]">Authorizing Access...</p>
+    </div>
+  );
 
-  // Read-only handlers
-  const handleEdit = (task: Task) => { /* No-op for clients for now */ };
-  const handleDelete = (id: number) => { /* No-op for clients */ };
-  const handleStatusChange = (task: Task, status: TaskStatus) => { /* No-op */ };
-  const handleToggleVisibility = (task: Task) => { /* No-op */ };
-
-  if (isLoading) return <div className="flex h-screen items-center justify-center bg-[#F8FAFC]">Loading Project Data...</div>;
-  
-  if (!user?.companyId || !client) {
-      return (
-        <div className="flex h-screen items-center justify-center bg-[#F8FAFC] flex-col gap-4 p-4 text-center">
-            <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-2">
-                <AlertCircle className="h-8 w-8 text-gray-400" />
-            </div>
-            <div>
-                <h2 className="text-xl font-bold text-gray-900">No Project Found</h2>
-                <p className="text-gray-500 mt-1">Your account is not linked to an active project.</p>
-            </div>
-            <button 
-                onClick={logout}
-                className="mt-4 flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-bold transition-all shadow-sm active:scale-95"
-            >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-            </button>
+  if (!user?.clientCrmId || !client || error) return (
+    <div className="flex h-screen flex-col items-center justify-center gap-6 bg-[#F8FAFC] p-8 text-center">
+        <div className="h-20 w-20 bg-rose-50 rounded-[2rem] flex items-center justify-center text-rose-500 border border-rose-100 shadow-xl">
+            <AlertCircle className="h-10 w-10" />
         </div>
-      );
-  }
+        <div className="max-w-md">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Portal Access Restricted</h1>
+            <p className="text-gray-500 font-medium">
+                {error || "Your account is not linked to an active project. Please contact the Incial support team."}
+            </p>
+        </div>
+        <button onClick={logout} className="px-10 py-4 bg-gray-900 text-white rounded-[1.5rem] font-bold shadow-2xl active:scale-95 transition-all">
+            Return to Login
+        </button>
+    </div>
+  );
+
+  const completedCount = tasks.filter(t => ['Done', 'Completed'].includes(t.status)).length;
+  const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex min-h-screen bg-[#FDFDFD]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar />
-        
-        <main className="flex-1 p-8 overflow-y-auto custom-scrollbar h-[calc(100vh-80px)]">
+        <main className="flex-1 p-6 lg:p-10 overflow-y-auto custom-scrollbar h-[calc(100vh-80px)]">
            
-           {/* Header */}
-           <div className="mb-6">
-               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Client Portal</h1>
-               <p className="text-gray-500">Track progress and updates for your project.</p>
-           </div>
-
-           {/* Premium Project Card */}
-           <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm mb-8 relative overflow-hidden">
-               <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8 relative z-10">
-                   <div className="flex-1">
-                       <div className="flex items-center gap-4 mb-3">
-                           <div className="h-16 w-16 bg-gradient-to-br from-brand-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-brand-500/20">
-                               {client.company.charAt(0)}
-                           </div>
-                           <div>
-                               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{client.company}</h1>
-                               <div className="flex items-center gap-3 mt-1">
-                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-green-50 text-green-700 border border-green-100">
-                                       {client.status}
-                                   </span>
-                                   <span className="text-sm text-gray-500 font-medium flex items-center gap-1">
-                                       <User className="h-3.5 w-3.5" /> Project Lead: {client.assignedTo}
-                                   </span>
-                               </div>
-                           </div>
-                       </div>
-                       
-                       <div className="flex flex-wrap gap-3 mt-6">
-                           {client.driveLink && (
-                               <a href={client.driveLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 hover:bg-white hover:border-blue-200 hover:text-blue-600 border border-gray-200 px-4 py-2 rounded-xl transition-all shadow-sm">
-                                    <HardDrive className="h-4 w-4" /> Assets Folder
-                               </a>
-                           )}
-                           {client.socials?.website && (
-                                <a href={client.socials.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 hover:bg-white hover:border-brand-200 hover:text-brand-600 border border-gray-200 px-4 py-2 rounded-xl transition-all shadow-sm">
-                                     <ExternalLink className="h-4 w-4" /> Live Website
-                                </a>
-                           )}
-                       </div>
+           {/* Executive Hero */}
+           <div className="bg-[#0B1121] rounded-[3rem] p-10 lg:p-12 border border-slate-800 shadow-2xl mb-10 relative overflow-hidden text-white">
+               <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/10 rounded-full -mr-64 -mt-64 blur-[100px] pointer-events-none"></div>
+               <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full -ml-32 -mb-32 blur-[80px] pointer-events-none"></div>
+               
+               <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
+                   <div className="flex items-center gap-8">
+                        <div className="h-24 w-24 bg-gradient-to-tr from-brand-600 to-indigo-600 rounded-[2.5rem] flex items-center justify-center text-white text-4xl font-black shadow-2xl ring-4 ring-white/5">
+                            {client.company.charAt(0)}
+                        </div>
+                        <div>
+                            <div className="flex flex-wrap items-center gap-4 mb-3">
+                                <h1 className="text-4xl font-black tracking-tight">{client.company}</h1>
+                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border backdrop-blur-md shadow-lg ${getStatusStyles(client.status)}`}>
+                                    {client.status}
+                                </span>
+                            </div>
+                            <p className="text-slate-400 font-medium text-sm flex items-center gap-2">
+                                <Target className="h-4 w-4 text-brand-400" />
+                                Portfolio Lead: <span className="text-white font-bold">{client.contactName}</span>
+                            </p>
+                        </div>
                    </div>
 
-                   {/* Right Side Stats */}
-                   <div className="flex items-center gap-8 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 backdrop-blur-sm">
-                       <div className="relative h-24 w-24 flex-shrink-0">
-                           <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
-                               <path className="text-gray-200" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" />
-                               <path className="text-brand-600 transition-all duration-1000 ease-out" strokeDasharray={`${progressStats.progress}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-                           </svg>
-                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                               <span className="text-xl font-bold text-gray-900">{progressStats.progress}%</span>
-                               <span className="text-[9px] font-bold text-gray-400 uppercase">Done</span>
-                           </div>
-                       </div>
-
-                       <div className="space-y-3 min-w-[140px]">
-                           <div className="flex justify-between items-center text-sm">
-                               <span className="text-gray-500 font-medium flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500" /> Completed</span>
-                               <span className="font-bold text-gray-900">{progressStats.completed}/{progressStats.total}</span>
-                           </div>
-                           <div className="flex justify-between items-center text-sm">
-                               <span className="text-gray-500 font-medium flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-500" /> Pending High</span>
-                               <span className="font-bold text-gray-900">{progressStats.highPriority}</span>
-                           </div>
-                       </div>
+                   <div className="flex gap-4">
+                        <div className="bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-white/10 text-right min-w-[180px]">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Contract Valuation</p>
+                            <p className="text-3xl font-black text-brand-400">{formatMoney(client.dealValue)}</p>
+                        </div>
+                        <button 
+                            onClick={() => { setEditingTask(undefined); setIsFormOpen(true); }}
+                            className="bg-brand-600 hover:bg-brand-500 text-white px-8 py-4 rounded-[2rem] font-bold flex flex-col items-center justify-center shadow-xl shadow-brand-600/20 active:scale-95 transition-all group"
+                        >
+                            <Plus className="h-6 w-6 mb-1 group-hover:rotate-90 transition-transform duration-300" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">New Request</span>
+                        </button>
                    </div>
                </div>
            </div>
 
-           {/* Toolbar & Table Container */}
-           <div className="bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100/50 flex flex-col flex-1 overflow-hidden min-h-[500px]">
-                
-                {/* Header Toolbar */}
-                <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4 border-b border-gray-100">
-                    <div className="bg-gray-100/80 p-1 rounded-xl flex items-center gap-1 w-full lg:w-auto overflow-x-auto">
-                        {[
-                            { id: 'list', label: 'List View', icon: LayoutList },
-                            { id: 'kanban', label: 'Kanban', icon: Kanban },
-                            { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
-                        ].map((view) => (
-                            <button
-                                key={view.id}
-                                onClick={() => setViewMode(view.id as ViewMode)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                                    viewMode === view.id 
-                                    ? 'bg-white text-brand-700 shadow-sm ring-1 ring-black/5' 
-                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-                                }`}
-                            >
-                                <view.icon className="h-3.5 w-3.5" />
-                                {view.label}
-                            </button>
-                        ))}
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
+                {/* Insights Column */}
+                <div className="lg:col-span-8 space-y-8">
+                    
+                    {/* Progress Monitor */}
+                    <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm relative overflow-hidden group">
+                        <div className="flex justify-between items-end mb-8">
+                            <div>
+                                <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                    <Sparkles className="h-4 w-4 text-brand-500" /> Roadmap Velocity
+                                </h3>
+                                <p className="text-3xl font-black text-gray-900">{progressPercent}% Completion</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Milestones</p>
+                                <p className="text-xl font-bold text-brand-600">{completedCount} <span className="text-xs text-gray-400">/ {tasks.length}</span></p>
+                            </div>
+                        </div>
+                        <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                            <div 
+                                className="h-full bg-gradient-to-r from-brand-600 to-indigo-600 rounded-full transition-all duration-1000 ease-out" 
+                                style={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
+                        <div className="mt-6 flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                            {tasks.slice(0, 4).map(t => (
+                                <div key={t.id} className="flex-shrink-0 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-bold text-gray-500">
+                                    {t.title.slice(0, 15)}...
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Deliverables Board */}
+                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                            <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <Layout className="h-4 w-4" /> Deliverables Queue
+                            </h3>
+                            <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest bg-white border border-gray-200 px-4 py-2 rounded-xl">
+                                Synchronized {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                        </div>
+                        <ClientTaskTable 
+                            tasks={tasks} 
+                            onEdit={(t) => { setEditingTask(t); setIsFormOpen(true); }}
+                            onPriorityChange={handlePriorityChange}
+                            isClientView={true}
+                        />
                     </div>
                 </div>
 
-                {/* Filters */}
-                {viewMode !== 'calendar' && (
-                    <TasksFilter filters={filters} setFilters={setFilters} />
-                )}
+                {/* Sidebar Info Column */}
+                <div className="lg:col-span-4 space-y-8">
+                    {/* Communication Hub */}
+                    <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                            <Phone className="h-3.5 w-3.5" /> Project Registry
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="p-4 bg-gray-50 hover:bg-white hover:shadow-md transition-all rounded-[1.5rem] border border-transparent hover:border-gray-100 group">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Corporate Email</p>
+                                <p className="text-sm font-bold text-gray-800 flex items-center justify-between">
+                                    {client.email || '-'} <Mail className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </p>
+                            </div>
+                            <div className="p-4 bg-gray-50 hover:bg-white hover:shadow-md transition-all rounded-[1.5rem] border border-transparent hover:border-gray-100 group">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Point of Contact</p>
+                                <p className="text-sm font-bold text-gray-800 flex items-center justify-between">
+                                    {client.phone || '-'} <Phone className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </p>
+                            </div>
+                            <div className="p-4 bg-gray-50 hover:bg-white hover:shadow-md transition-all rounded-[1.5rem] border border-transparent hover:border-gray-100 group">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Headquarters</p>
+                                <p className="text-sm font-bold text-gray-800 line-clamp-1 flex items-center justify-between">
+                                    {client.address || '-'} <MapPin className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-                {/* Content Area */}
-                <div className="flex-1 overflow-y-auto bg-white p-0">
-                    {/* LIST view */}
-                    {viewMode === 'list' && (
-                        <div>
-                             <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex items-center gap-2 sticky top-0 z-20">
-                                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Active Queue ({activeTasks.length})</h3>
-                             </div>
-                             
-                             <ClientTaskTable 
-                                tasks={activeTasks} 
-                                onEdit={handleEdit} 
-                                onDelete={handleDelete} 
-                                onStatusChange={handleStatusChange}
-                                onToggleVisibility={handleToggleVisibility}
-                                readOnly={true} // Clients cannot edit
-                            />
-
-                            {/* Completed Section */}
-                            {completedTasks.length > 0 && (
-                                <div className="border-t border-gray-100 mt-4">
-                                     <button 
-                                        onClick={() => setIsCompletedExpanded(!isCompletedExpanded)}
-                                        className="w-full flex items-center gap-2 p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left group"
-                                    >
-                                        <div className="p-1 rounded-md bg-gray-200 group-hover:bg-gray-300 transition-colors">
-                                            {isCompletedExpanded ? <ChevronDown className="h-3 w-3 text-gray-600" /> : <ChevronRight className="h-3 w-3 text-gray-600" />}
-                                        </div>
-                                        <Archive className="h-4 w-4 text-gray-400" />
-                                        <h3 className="text-xs font-bold text-gray-600 uppercase tracking-wide">
-                                            Completed Archives ({completedTasks.length})
-                                        </h3>
-                                    </button>
-
-                                    {isCompletedExpanded && (
-                                        <div className="bg-gray-50/30">
-                                            <ClientTaskTable 
-                                                tasks={completedTasks} 
-                                                onEdit={handleEdit} 
-                                                onDelete={handleDelete} 
-                                                onStatusChange={handleStatusChange}
-                                                onToggleVisibility={handleToggleVisibility}
-                                                readOnly={true} // Clients cannot edit
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                    {/* Social Footprint */}
+                    <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                            <Globe className="h-3.5 w-3.5" /> Digital Assets
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            {client.socials?.website && (
+                                <a href={client.socials.website} target="_blank" rel="noopener noreferrer" className="p-4 bg-gray-50 hover:bg-brand-50 text-gray-400 hover:text-brand-600 rounded-2xl border border-gray-100 transition-all flex items-center justify-center">
+                                    <Globe className="h-5 w-5" />
+                                </a>
+                            )}
+                            {client.socials?.linkedin && (
+                                <a href={client.socials.linkedin} target="_blank" rel="noopener noreferrer" className="p-4 bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-2xl border border-gray-100 transition-all flex items-center justify-center">
+                                    <Linkedin className="h-5 w-5" />
+                                </a>
+                            )}
+                            {client.socials?.instagram && (
+                                <a href={client.socials.instagram} target="_blank" rel="noopener noreferrer" className="p-4 bg-gray-50 hover:bg-pink-50 text-gray-400 hover:text-pink-600 rounded-2xl border border-gray-100 transition-all flex items-center justify-center">
+                                    <Instagram className="h-5 w-5" />
+                                </a>
                             )}
                         </div>
-                    )}
-
-                    {/* KANBAN view */}
-                    {viewMode === 'kanban' && (
-                        <div className="h-full p-6 bg-gray-50/30">
-                            <TasksKanban 
-                                tasks={filteredBaseTasks} 
-                                onEdit={handleEdit} 
-                                onStatusChange={handleStatusChange} 
-                                readOnly={true} // Disable dragging for clients
-                            />
-                        </div>
-                    )}
-
-                    {/* CALENDAR view */}
-                    {viewMode === 'calendar' && (
-                        <div className="h-full p-6">
-                            <TasksCalendar tasks={filteredBaseTasks} onEdit={handleEdit} />
-                        </div>
-                    )}
+                        {client.driveLink && (
+                            <a href={client.driveLink} target="_blank" rel="noopener noreferrer" className="mt-4 flex items-center justify-center gap-2 w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-bold text-xs shadow-lg shadow-blue-200 transition-all active:scale-95 group">
+                                <ExternalLink className="h-4 w-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /> Shared Project Cloud
+                            </a>
+                        )}
+                    </div>
                 </div>
            </div>
         </main>
       </div>
+
+      <ClientTaskForm 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        onSubmit={handleTaskSubmit}
+        initialData={editingTask}
+        companyId={client.id}
+        isClientView={true}
+      />
     </div>
   );
 };

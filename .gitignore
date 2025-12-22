@@ -34,3 +34,4 @@ build/
 
 .env
 /backend/src/main/resources/application-local.properties
+server/scripts/run.sh

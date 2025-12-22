@@ -1,8 +1,6 @@
 package com.incial.crm.service;
 
-import com.incial.crm.dto.CrmEntryDto;
 import com.incial.crm.dto.UserDto;
-import com.incial.crm.entity.CrmEntry;
 import com.incial.crm.entity.User;
 import com.incial.crm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

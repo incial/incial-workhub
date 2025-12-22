@@ -38,6 +38,21 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
+    public List<TaskDto> getTasksByCompanyId(Long companyId) {
+        return taskRepository.findByCompanyId(companyId).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<TaskDto> getClientTasks(String userEmail) {
+        // Get user to find their linked CRM ID
+        var userDto = userService.getUserByEmail(userEmail);
+        if (userDto.getClientCrmId() == null) {
+            throw new RuntimeException("Client user '" + userEmail + "' is not linked to any CRM entry. Please contact administrator.");
+        }
+        return getTasksByCompanyId(userDto.getClientCrmId());
+    }
+
     public TaskDto createTask(TaskDto dto) {
         Task task = convertToEntity(dto);
         Task saved = taskRepository.save(task);

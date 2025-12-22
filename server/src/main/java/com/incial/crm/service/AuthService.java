@@ -62,8 +62,8 @@ public class AuthService {
         }
 
         // Validate role
-        if (!role.equals("ROLE_ADMIN") && !role.equals("ROLE_EMPLOYEE") && !role.equals("ROLE_SUPER_ADMIN")) {
-            throw new RuntimeException("Invalid role. Must be ADMIN, EMPLOYEE, or SUPER_ADMIN");
+        if (!role.equals("ROLE_ADMIN") && !role.equals("ROLE_EMPLOYEE") && !role.equals("ROLE_SUPER_ADMIN") && !role.equals("ROLE_CLIENT")) {
+            throw new RuntimeException("Invalid role. Must be ADMIN, EMPLOYEE, SUPER_ADMIN, or CLIENT");
         }
 
         // Create new user (createdAt is set automatically by @PrePersist)
@@ -72,6 +72,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role(role)
+                .clientCrmId(request.getClientCrmId())
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -111,6 +112,7 @@ public class AuthService {
                     .role(user.getRole())
                     .googleId(user.getGoogleId())
                     .avatarUrl(user.getAvatarUrl())
+                    .clientCrmId(user.getClientCrmId())
                     .build();
 
             return LoginResponse.builder()
@@ -183,6 +185,7 @@ public class AuthService {
                     .role(user.getRole())
                     .googleId(user.getGoogleId())
                     .avatarUrl(user.getAvatarUrl())
+                    .clientCrmId(user.getClientCrmId())
                     .build();
 
             return LoginResponse.builder()

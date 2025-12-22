@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { CRMEntry, Task, Meeting, AuthResponse, User, ForgotPasswordRequest, VerifyOtpRequest, ChangePasswordRequest, UpdatePasswordRequest, ApiResponse, RegisterRequest } from '../types';
 
@@ -6,7 +5,10 @@ import { CRMEntry, Task, Meeting, AuthResponse, User, ForgotPasswordRequest, Ver
 // ⚙️ API CONFIGURATION
 // ============================================================================
 
-const API_URL = 'http://localhost:8080/api/v1'; 
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+
+//const API_URL = 'http://localhost:8080/api/v1';
+
 
 const api = axios.create({
   baseURL: API_URL,
@@ -50,9 +52,6 @@ const handleApiError = (error: any) => {
 };
 
 // Helper to clean payload
-// 1. Removes id, createdAt, lastUpdatedAt (backend handled)
-// 2. Removes keys with empty string values (prevents unique constraint/validation errors)
-// 3. Preserves empty objects/arrays (Backend converters often prefer {}/[] over null)
 const cleanPayload = (data: any): any => {
     if (Array.isArray(data)) {
         return data.map(cleanPayload);
@@ -60,29 +59,20 @@ const cleanPayload = (data: any): any => {
     
     if (data !== null && typeof data === 'object') {
         const cleaned: any = {};
-        
-        // Fields to explicitly exclude
         const excludeFields = ['id', 'createdAt', 'lastUpdatedAt'];
 
         Object.keys(data).forEach(key => {
             if (excludeFields.includes(key)) return;
-
             const value = data[key];
-
-            // Recursively clean objects
             if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                const cleanedObj = cleanPayload(value);
-                // Keep the object even if empty (e.g. socials: {}) to avoid NPE in backend converters
-                cleaned[key] = cleanedObj;
+                cleaned[key] = cleanPayload(value);
             } 
-            // Keep non-empty values (0 is valid for numbers, false is valid for booleans)
             else if (value !== "" && value !== null && value !== undefined) {
                 cleaned[key] = value;
             }
         });
         return cleaned;
     }
-    
     return data;
 };
 
@@ -134,6 +124,13 @@ export const crmApi = {
     } catch (error) { throw handleApiError(error); }
   },
 
+  getMyCrm: async (): Promise<CRMEntry> => {
+    try {
+        const res = await api.get("/crm/my-crm");
+        return res.data;
+    } catch (error) { throw handleApiError(error); }
+  },
+
   create: async (data: Omit<CRMEntry, 'id'>): Promise<CRMEntry> => {
     try {
         const payload = cleanPayload(data);
@@ -157,10 +154,9 @@ export const crmApi = {
   }
 };
 
-// --- COMPANIES API (Accessible by Employees) ---
+// --- COMPANIES API ---
 export const companiesApi = {
   getAll: async (): Promise<CRMEntry[]> => {
-    // 1. Prefer CRM endpoint for Admins to avoid potential 500s on /companies/all
     if (isAdminUser()) {
         try {
             const res = await api.get("/crm/all");
@@ -174,18 +170,14 @@ export const companiesApi = {
         }
     }
 
-    // 2. Default / Employee Path
     try {
         const res = await api.get("/companies/all");
-        // Map backend response if needed (e.g. name -> company) to match CRMEntry interface
         const data = Array.isArray(res.data) ? res.data : [];
         return data.map((item: any) => ({
             ...item,
-            company: item.name || item.company // Handle backend sending 'name' instead of 'company'
+            company: item.name || item.company
         }));
     } catch (error: any) { 
-        // 3. Fallback Strategy: If companies endpoint is broken (500) or missing (404),
-        // try to fetch via CRM endpoint if user has permissions.
         console.warn("Primary companies endpoint failed, attempting fallback to CRM...", error.message);
         try {
             const res = await api.get("/crm/all");
@@ -195,7 +187,6 @@ export const companiesApi = {
                 company: item.name || item.company
             }));
         } catch (fallbackError) {
-            // If fallback also fails, throw original error
             throw handleApiError(error); 
         }
     }
@@ -203,8 +194,6 @@ export const companiesApi = {
   
   update: async (id: number, data: Partial<CRMEntry>): Promise<CRMEntry> => {
      const payload = cleanPayload(data);
-
-     // 1. Prefer CRM endpoint for Admins
      if (isAdminUser()) {
         try {
             const res = await api.put(`/crm/update/${id}`, payload);
@@ -214,12 +203,10 @@ export const companiesApi = {
         }
      }
 
-     // 2. Default / Employee Path
      try {
         const res = await api.put(`/companies/update/${id}`, payload);
         return { ...res.data, company: res.data.name || res.data.company };
      } catch (error: any) { 
-         // 3. Fallback to CRM update if companies update fails
          console.warn("Primary companies update failed, attempting fallback to CRM...", error.message);
          try {
             const res = await api.put(`/crm/update/${id}`, payload);
@@ -236,6 +223,13 @@ export const tasksApi = {
   getAll: async (): Promise<Task[]> => {
     try {
         const res = await api.get("/tasks/all");
+        return res.data;
+    } catch (error) { throw handleApiError(error); }
+  },
+
+  getClientTasks: async (): Promise<Task[]> => {
+    try {
+        const res = await api.get("/tasks/client-tasks");
         return res.data;
     } catch (error) { throw handleApiError(error); }
   },
@@ -311,7 +305,6 @@ export const authApi = {
     } catch (error) { throw handleApiError(error); }
   },
 
-  // Admin Registration: Only callable by authenticated Super Admins
   registerUser: async (data: RegisterRequest): Promise<AuthResponse> => {
     try {
         const res = await api.post("/auth/register", data);

@@ -22,15 +22,14 @@ FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 
-# Copy jar without hardcoding version
+# Copy jar (no hardcoded version)
 COPY --from=build /app/target/*.jar app.jar
 
-# Create non-root user
+# Run as non-root
 RUN addgroup -S incial && adduser -S incial -G incial
 RUN chown -R incial:incial /app
 USER incial
 
 EXPOSE 8080
 
-# Let JVM handle container memory correctly
 ENTRYPOINT ["java", "-jar", "app.jar"]

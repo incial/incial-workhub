@@ -37,8 +37,16 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getCurrentUserTasks(userEmail));
     }
 
+    @GetMapping("/client-tasks")
+    @PreAuthorize("hasAuthority('ROLE_CLIENT')")
+    @Operation(summary = "Get client's CRM tasks", description = "Retrieve tasks for the client's linked CRM entry")
+    public ResponseEntity<List<TaskDto>> getClientTasks(Authentication authentication) {
+        String userEmail = authentication.getName();
+        return ResponseEntity.ok(taskService.getClientTasks(userEmail));
+    }
+
     @PostMapping("/create")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority( 'ROLE_CLIENT' ,'ROLE_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_SUPER_ADMIN')")
     @Operation(summary = "Create a new task", description = "Create a new task")
     public ResponseEntity<TaskDto> createTask(@RequestBody TaskDto dto) {
         TaskDto created = taskService.createTask(dto);
@@ -46,7 +54,7 @@ public class TaskController {
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_SUPER_ADMIN', 'ROLE_CLIENT')")
     @Operation(summary = "Update a task", description = "Update an existing task (increments user counter when status changes to completed)")
     public ResponseEntity<TaskDto> updateTask(@PathVariable Long id, @RequestBody TaskDto dto) {
         TaskDto updated = taskService.updateTask(id, dto);
