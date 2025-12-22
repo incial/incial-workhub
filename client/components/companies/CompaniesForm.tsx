@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User, Plus, Briefcase } from 'lucide-react';
+import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User, Plus, Briefcase, Image } from 'lucide-react';
 import { CRMEntry, CRMStatus, SocialLinks } from '../../types';
 import { getWorkTypeStyles, formatDateTime } from '../../utils';
 import { CustomSelect } from '../ui/CustomSelect';
@@ -137,18 +137,26 @@ export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, o
                     </div>
                 </div>
 
-                {/* Contact Person (Full Width) */}
-                <div className="w-full">
-                    <label className="block mb-1.5 text-sm font-medium text-gray-700 uppercase tracking-widest text-[10px] font-black">Contact Person</label>
-                    <div className="relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-xs font-black text-gray-400 uppercase tracking-widest">Logo URL</label>
+                        <div className="relative">
+                            <Image className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <input type="url" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" value={formData.companyImageUrl || ''} onChange={e => setFormData({...formData, companyImageUrl: e.target.value})} placeholder="https://..." />
+                        </div>
+                    </div>
+                    <div className="w-full">
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700 uppercase tracking-widest text-[10px] font-black">Contact Person</label>
+                        <div className="relative">
                             <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                        <input 
-                            type="text" 
-                            className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none" 
-                            value={formData.contactName || ''} 
-                            onChange={e => setFormData({...formData, contactName: e.target.value})}
-                            placeholder="Primary Contact Name"
-                        />
+                            <input 
+                                type="text" 
+                                className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none" 
+                                value={formData.contactName || ''} 
+                                onChange={e => setFormData({...formData, contactName: e.target.value})}
+                                placeholder="Primary Contact Name"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -172,6 +180,7 @@ export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, o
                     </label>
                     <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-200 mb-3">
                         {PREDEFINED_WORK.map(type => {
+                            /* Fix: added null check for w */
                             const cleanWork = (formData.work || []).filter(Boolean).map((w: any) => (w && typeof w === 'object') ? w.name : w);
                             const isSelected = cleanWork.includes(type);
                             return (
@@ -190,12 +199,12 @@ export const CompaniesForm: React.FC<CompaniesFormProps> = ({ isOpen, onClose, o
                             );
                         })}
                         {/* Render custom types that aren't in predefined list */}
-                        {/* Fix possibly null errors for 'w' and 'opt' by adding explicit checks and type casting */}
                         {(formData.work || []).filter(Boolean).filter(w => {
-                            const val = (w && typeof w === 'object') ? (w as any).name : w;
+                            const val = (w && typeof w === 'object') ? w.name : w;
                             return val && !PREDEFINED_WORK.includes(val);
                         }).map(opt => {
-                            const label = (opt && typeof opt === 'object') ? (opt as any).name : opt;
+                            /* Fix: added null check for opt */
+                            const label = (opt && typeof opt === 'object') ? opt.name : opt;
                             if (!label) return null;
                             return (
                                 <button

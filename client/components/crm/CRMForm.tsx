@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, DollarSign, CheckCircle, Clock, AlertCircle, History, ExternalLink, HardDrive, Linkedin, Instagram, Facebook, Twitter, Globe, Link as LinkIcon, Maximize2, Minimize2, MapPin, Hash, Building, Megaphone, Plus } from 'lucide-react';
+import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, DollarSign, CheckCircle, Clock, AlertCircle, History, ExternalLink, HardDrive, Linkedin, Instagram, Facebook, Twitter, Globe, Link as LinkIcon, Maximize2, Minimize2, MapPin, Hash, Building, Megaphone, Plus, Image } from 'lucide-react';
 import { CRMEntry, SocialLinks, CRMStatus, User as UserType } from '../../types';
 import { getStatusStyles, formatDate, getFollowUpColor, formatMoney, getWorkTypeStyles, formatDateTime } from '../../utils';
 import { CustomDatePicker } from '../ui/CustomDatePicker';
@@ -81,6 +80,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 driveLink: '',
                 address: '',
                 referenceId: '',
+                companyImageUrl: '',
                 socials: {},
                 lastContact: new Date().toISOString().split('T')[0],
                 nextFollowUp: new Date().toISOString().split('T')[0],
@@ -119,7 +119,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
 
   const toggleWork = (workLabel: string) => {
       const currentWork = formData.work || [];
-      const cleanWork = currentWork.map((w: any) => typeof w === 'object' ? w.name : w);
+      const cleanWork = currentWork.filter(Boolean).map((w: any) => (w && typeof w === 'object') ? w.name : w);
       
       const exists = cleanWork.includes(workLabel);
       
@@ -133,7 +133,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
   const addCustomWork = () => {
       if (!customWork.trim()) return;
       const currentWork = formData.work || [];
-      const cleanWork = currentWork.map((w: any) => typeof w === 'object' ? w.name : w);
+      const cleanWork = currentWork.filter(Boolean).map((w: any) => (w && typeof w === 'object') ? w.name : w);
       if (!cleanWork.includes(customWork.trim())) {
           setFormData(prev => ({ ...prev, work: [...currentWork, customWork.trim()] }));
       }
@@ -154,23 +154,31 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
       }));
   };
 
-  // --- Render View ---
   const renderView = () => (
     <div className="space-y-6">
         <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-2xl font-bold text-gray-900 break-words">{formData.company}</h2>
-                        {formData.referenceId && (
-                            <span className="px-2 py-0.5 rounded-md bg-gray-200 text-gray-600 text-xs font-mono font-bold border border-gray-300">
-                                {formData.referenceId}
-                            </span>
+                <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 rounded-xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                        {formData.companyImageUrl ? (
+                            <img src={formData.companyImageUrl} alt={formData.company} className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                        ) : (
+                            <Building className="h-8 w-8 text-gray-300" />
                         )}
                     </div>
-                    <div className="flex items-center gap-2 mt-1 text-gray-600">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium">{formData.contactName}</span>
+                    <div>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h2 className="text-2xl font-bold text-gray-900 break-words">{formData.company}</h2>
+                            {formData.referenceId && (
+                                <span className="px-2 py-0.5 rounded-md bg-gray-200 text-gray-600 text-xs font-mono font-bold border border-gray-300">
+                                    {formData.referenceId}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-gray-600">
+                            <User className="h-4 w-4 text-gray-400" />
+                            <span className="font-medium">{formData.contactName}</span>
+                        </div>
                     </div>
                 </div>
                 <div className={`px-4 py-1.5 rounded-full text-sm font-semibold border shadow-sm capitalize ${getStatusStyles(formData.status || '')}`}>
@@ -265,8 +273,8 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                         <div>
                             <p className="text-xs font-medium text-gray-500 mb-2">Work Type</p>
                             <div className="flex flex-wrap gap-1.5">
-                                {(formData.work || []).map((w: any) => {
-                                    const label = typeof w === 'object' ? w.name : w;
+                                {(formData.work || []).filter(Boolean).map((w: any) => {
+                                    const label = (w && typeof w === 'object') ? w.name : w;
                                     return <span key={label} className={`px-2 py-1 text-[10px] font-bold rounded border ${getWorkTypeStyles(label)}`}>{label}</span>;
                                 })}
                                 {(!formData.work?.length) && <span className="text-gray-400 text-xs">-</span>}
@@ -297,36 +305,33 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
     </div>
   );
 
-  // --- Render Edit ---
   const renderEdit = () => (
     <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Core Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Client / Company <span className="text-red-500">*</span></label>
                 <div className="relative">
                     <Building className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="text" required className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none" 
+                    <input type="text" required className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" 
                         value={formData.company || ''} onChange={e => setFormData({...formData, company: e.target.value})} placeholder="Company Name" />
                 </div>
             </div>
             <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Reference ID</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Company Logo URL</label>
                 <div className="relative">
-                    <Hash className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="text" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none bg-gray-50 font-mono text-sm" 
-                        value={formData.referenceId || ''} onChange={e => setFormData({...formData, referenceId: e.target.value})} placeholder="REF-202X-001" />
+                    <Image className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <input type="url" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                        value={formData.companyImageUrl || ''} onChange={e => setFormData({...formData, companyImageUrl: e.target.value})} placeholder="https://example.com/logo.png" />
                 </div>
             </div>
         </div>
 
-        {/* Contact Info */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-1">
+            <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Contact Name</label>
                 <div className="relative">
                     <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="text" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                    <input type="text" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                         value={formData.contactName || ''} onChange={e => setFormData({...formData, contactName: e.target.value})} placeholder="Full Name" />
                 </div>
             </div>
@@ -334,7 +339,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Email</label>
                 <div className="relative">
                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="email" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                    <input type="email" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                         value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="email@example.com" />
                 </div>
             </div>
@@ -342,44 +347,25 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Phone</label>
                 <div className="relative">
                     <Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="tel" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 98765 43210" />
+                    <input type="tel" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                        value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 00000 00000" />
                 </div>
             </div>
         </div>
 
-        {/* Pipeline Info & Dates */}
         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="col-span-1">
-                    <CustomSelect 
-                        label="Status" 
-                        value={formData.status || 'lead'} 
-                        onChange={(val) => setFormData({...formData, status: val as CRMStatus})} 
-                        options={STATUS_OPTIONS}
-                        allowCustom={true} 
-                        placeholder="Select or type..."
-                    />
-                </div>
-                <div className="col-span-1">
-                    <UserSelect 
-                        label="Assigned To" 
-                        value={formData.assignedTo || ''} 
-                        onChange={(val) => setFormData({...formData, assignedTo: val})} 
-                        users={users}
-                        placeholder="Unassigned"
-                    />
-                </div>
-                <div className="col-span-1">
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Deal Value (₹)</label>
+                <CustomSelect label="Status" value={formData.status || 'lead'} onChange={(val) => setFormData({...formData, status: val as CRMStatus})} options={STATUS_OPTIONS} />
+                <UserSelect label="Assigned To" value={formData.assignedTo || ''} onChange={(val) => setFormData({...formData, assignedTo: val})} users={users} />
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Value (₹)</label>
                     <div className="relative">
                         <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                        <input type="number" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        <input type="number" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                             value={formData.dealValue || ''} onChange={e => setFormData({...formData, dealValue: parseFloat(e.target.value) || 0})} />
                     </div>
                 </div>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
                 <div className="col-span-1">
                     <CustomDatePicker 
@@ -398,7 +384,6 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
             </div>
         </div>
 
-        {/* Classification Tags */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
                 <CustomSelect 
@@ -411,128 +396,75 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
                 />
             </div>
             <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Work Type</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                    <Briefcase className="h-3.5 w-3.5" /> Work Type
+                </label>
                 <div className="flex flex-wrap gap-2 mb-3">
                     {PREDEFINED_WORK.map(opt => {
-                        const isSelected = (formData.work || []).map((w: any) => typeof w === 'object' ? w.name : w).includes(opt);
+                        /* Fix: added null check for w */
+                        const cleanWork = (formData.work || []).filter(Boolean).map((w: any) => (w && typeof w === 'object') ? w.name : w);
+                        const isSelected = cleanWork.includes(opt);
                         return (
                             <button key={opt} type="button" onClick={() => toggleWork(opt)}
-                                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${isSelected ? 'bg-emerald-100 text-emerald-700 border-emerald-200 ring-2 ring-offset-1 ring-emerald-500' : 'bg-white text-gray-500 border-gray-200'}`}>
+                                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${isSelected ? 'bg-emerald-100 text-emerald-700 border-emerald-200 ring-2 ring-emerald-500' : 'bg-white text-gray-500 border-gray-200'}`}>
                                 {opt}
                             </button>
                         );
                     })}
-                    {(formData.work || []).filter(w => !PREDEFINED_WORK.includes(typeof w === 'object' ? w.name : w)).map(opt => {
-                        const label = typeof opt === 'object' ? opt.name : opt;
+                    {(formData.work || []).filter(Boolean).filter(w => {
+                        const val = (w && typeof w === 'object') ? w.name : w;
+                        return val && !PREDEFINED_WORK.includes(val);
+                    }).map(opt => {
+                        /* Fix: added null check for opt */
+                        const label = (opt && typeof opt === 'object') ? opt.name : opt;
+                        if (!label) return null;
                         return (
                             <button key={label} type="button" onClick={() => toggleWork(label)}
-                                className="px-3 py-1.5 text-[10px] font-bold rounded-lg border bg-brand-50 text-brand-700 border-brand-200 ring-2 ring-offset-1 ring-brand-500">
+                                className="px-3 py-1.5 text-[10px] font-bold rounded-lg border bg-brand-50 text-brand-700 border-brand-200 ring-2 ring-brand-500">
                                 {label}
                             </button>
                         );
                     })}
                 </div>
                 <div className="flex gap-2">
-                    <input 
-                        type="text" 
-                        placeholder="Add custom work..." 
-                        className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                        value={customWork}
-                        onChange={e => setCustomWork(e.target.value)}
-                        onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addCustomWork())}
-                    />
-                    <button type="button" onClick={addCustomWork} className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-gray-600"><Plus className="h-4 w-4" /></button>
+                    <input type="text" placeholder="Add custom work..." className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500"
+                        value={customWork} onChange={e => setCustomWork(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addCustomWork())} />
+                    <button type="button" onClick={addCustomWork} className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 text-gray-600"><Plus className="h-5 w-5" /></button>
                 </div>
             </div>
+
             <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tags</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                    <Tag className="h-3.5 w-3.5" /> Tags
+                </label>
                 <div className="flex flex-wrap gap-2 mb-3">
                     {PREDEFINED_TAGS.map(opt => {
                         const isSelected = formData.tags?.includes(opt);
                         return (
                             <button key={opt} type="button" onClick={() => toggleTag(opt)}
-                                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${isSelected ? 'bg-purple-100 text-purple-700 border-purple-200 ring-2 ring-offset-1 ring-purple-500' : 'bg-white text-gray-500 border-gray-200'}`}>
+                                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${isSelected ? 'bg-purple-100 text-purple-700 border-purple-200 ring-2 ring-purple-500' : 'bg-white text-gray-500 border-gray-200'}`}>
                                 {opt}
                             </button>
                         );
                     })}
                     {(formData.tags || []).filter(t => !PREDEFINED_TAGS.includes(t)).map(opt => (
                         <button key={opt} type="button" onClick={() => toggleTag(opt)}
-                            className="px-3 py-1.5 text-[10px] font-bold rounded-lg border bg-amber-50 text-amber-700 border-amber-200 ring-2 ring-offset-1 ring-amber-500">
+                            className="px-3 py-1.5 text-[10px] font-bold rounded-lg border bg-amber-50 text-amber-700 border-amber-200 ring-2 ring-amber-500">
                             {opt}
                         </button>
                     ))}
                 </div>
                 <div className="flex gap-2">
-                    <input 
-                        type="text" 
-                        placeholder="Add custom tag..." 
-                        className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                        value={customTag}
-                        onChange={e => setCustomTag(e.target.value)}
-                        onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
-                    />
-                    <button type="button" onClick={addCustomTag} className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-gray-600"><Plus className="h-4 w-4" /></button>
+                    <input type="text" placeholder="Add custom tag..." className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500"
+                        value={customTag} onChange={e => setCustomTag(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addCustomTag())} />
+                    <button type="button" onClick={addCustomTag} className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 text-gray-600"><Plus className="h-5 w-5" /></button>
                 </div>
             </div>
         </div>
 
-        {/* Drive Link */}
-        <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 flex items-center gap-1.5"><HardDrive className="h-3.5 w-3.5" /> Drive Link</label>
-            <input type="url" className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                value={formData.driveLink || ''} onChange={e => setFormData({...formData, driveLink: e.target.value})} placeholder="https://drive.google.com/..." />
-        </div>
-
-        {/* Notes */}
-        <div>
-            <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase">Notes</label>
-                <button type="button" onClick={() => setIsNotesExpanded(true)} className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1"><Maximize2 className="h-3 w-3" /> Expand</button>
-            </div>
-            <textarea className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm h-24 resize-none"
-                value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Add deal notes..." />
-        </div>
-
-        {/* Socials */}
-        <div className="pt-4 border-t border-gray-100">
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-3">Online Presence</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative">
-                    <Globe className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="url" placeholder="Website" className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500" value={formData.socials?.website || ''} onChange={e => updateSocials('website', e.target.value)} />
-                </div>
-                <div className="relative">
-                    <Linkedin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="url" placeholder="LinkedIn" className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500" value={formData.socials?.linkedin || ''} onChange={e => updateSocials('linkedin', e.target.value)} />
-                </div>
-                <div className="relative">
-                    <Instagram className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="url" placeholder="Instagram" className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500" value={formData.socials?.instagram || ''} onChange={e => updateSocials('instagram', e.target.value)} />
-                </div>
-                <div className="relative">
-                    <Facebook className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <input type="url" placeholder="Facebook" className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500" value={formData.socials?.facebook || ''} onChange={e => updateSocials('facebook', e.target.value)} />
-                </div>
-            </div>
-        </div>
-
-        {/* Update History Footer */}
-        {formData.lastUpdatedBy && (
-            <div className="flex items-center justify-end pt-4 mt-6 border-t border-gray-100">
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <History className="h-3.5 w-3.5" />
-                    <span>
-                        Last updated by <span className="font-semibold text-gray-600">{formData.lastUpdatedBy}</span> on {formatDateTime(formData.lastUpdatedAt || '')}
-                    </span>
-                </div>
-            </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap justify-end gap-3 pt-6 border-t border-gray-100">
-            <button type="button" onClick={() => initialData ? setMode('view') : onClose()} className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">Cancel</button>
-            <button type="submit" className="px-5 py-2.5 text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors font-medium flex items-center gap-2 shadow-lg shadow-brand-500/30"><Save className="h-4 w-4" /> Save Changes</button>
+        <div className="pt-6 border-t border-gray-100 flex justify-end gap-3">
+            <button type="button" onClick={() => initialData ? setMode('view') : onClose()} className="px-5 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-bold text-sm">Cancel</button>
+            <button type="submit" className="px-5 py-2.5 text-white bg-brand-600 rounded-lg shadow-lg font-bold text-sm">Save Changes</button>
         </div>
     </form>
   );
@@ -556,7 +488,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
         )}
 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col transform transition-all" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-5 border-b border-gray-100">
                     <h2 className="text-xl font-bold text-gray-800 truncate pr-4">{mode === 'view' ? 'Deal Details' : (initialData ? 'Edit Deal' : 'New Deal')}</h2>
                     <div className="flex items-center gap-2 flex-shrink-0">
