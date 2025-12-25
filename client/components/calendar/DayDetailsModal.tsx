@@ -70,13 +70,13 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 lg:p-10 bg-gradient-to-b from-white/20 to-white/60">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 lg:p-10 bg-gradient-to-b from-white/20 to-white/60 relative">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 h-full">
                 
                 {/* Left: Timeline (Meetings) */}
-                <div className="flex flex-col h-full">
-                    <div className="flex items-center justify-between mb-6 sticky top-0 bg-white/0 z-10">
-                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                <div className="flex flex-col h-full relative">
+                    <div className="flex items-center justify-between mb-6 sticky -top-2 z-10 bg-white/80 backdrop-blur-xl py-3 px-1 rounded-2xl border border-white/50 shadow-sm">
+                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3 px-2">
                             <Clock className="h-4 w-4 text-indigo-500" /> Timeline Syncs
                         </h3>
                         <button 
@@ -88,7 +88,7 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
                     </div>
                     
                     {meetings.length > 0 ? (
-                        <div className="relative border-l-2 border-indigo-100 ml-4 space-y-8 pb-4">
+                        <div className="relative border-l-2 border-indigo-100 ml-4 space-y-8 pb-4 pt-2">
                             {meetings.map((item) => {
                                 const meeting = item.data as Meeting;
                                 const timeStr = new Date(meeting.dateTime).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -137,9 +137,9 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
                 </div>
 
                 {/* Right: Tasks */}
-                <div className="flex flex-col h-full">
-                    <div className="flex items-center justify-between mb-6 sticky top-0 bg-white/0 z-10">
-                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                <div className="flex flex-col h-full relative">
+                    <div className="flex items-center justify-between mb-6 sticky -top-2 z-10 bg-white/80 backdrop-blur-xl py-3 px-1 rounded-2xl border border-white/50 shadow-sm">
+                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3 px-2">
                             <CheckSquare className="h-4 w-4 text-emerald-500" /> Deliverables
                         </h3>
                         <button 
@@ -151,7 +151,7 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
                     </div>
 
                     {tasks.length > 0 ? (
-                        <div className="space-y-4">
+                        <div className="space-y-4 pt-2">
                             {tasks.map((item) => {
                                 const task = item.data as Task;
                                 return (
