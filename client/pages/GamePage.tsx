@@ -334,7 +334,7 @@ export const GamePage: React.FC = () => {
                         {/* Game Board */}
                         <div
                             ref={gameBoardRef}
-                            className={`relative bg-slate-950 rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden shadow-2xl flex items-center justify-center border-8 border-slate-900 group ${isFullscreen ? 'w-full h-full rounded-none border-0' : ''}`}
+                            className={`relative bg-slate-950 rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center border-4 lg:border-8 border-slate-900 group ${isFullscreen ? 'w-full h-full rounded-none border-0' : ''}`}
                             style={{ width: isFullscreen ? '100%' : '100%', maxWidth: isFullscreen ? 'none' : '440px', aspectRatio: '1/1' }}
                         >
                             <div

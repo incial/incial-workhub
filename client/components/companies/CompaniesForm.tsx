@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Save, Building, Hash, Check, History, HardDrive, Globe, Linkedin, Instagram, Facebook, Twitter, Link as LinkIcon, User, Plus, Briefcase, Image, Trash2 } from 'lucide-react';
 import { CRMEntry, CRMStatus, SocialLinks } from '../../types';
@@ -20,9 +19,7 @@ const PREDEFINED_WORK = [
 
 // Restricted statuses allowed for "Companies" view
 const STATUS_OPTIONS: { label: string; value: CRMStatus }[] = [
-    { label: "On Progress", value: "on progress" },
     { label: "Onboarded", value: "onboarded" },
-    { label: "Quote Sent", value: "Quote Sent" },
     { label: "Completed", value: "completed" },
     { label: "Dropped", value: "drop" },
 ];

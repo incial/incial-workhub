@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { CRMEntry, CRMStatus } from '../../types';
 import { getStatusStyles, getWorkTypeStyles } from '../../utils';
@@ -17,7 +16,8 @@ const CompanyStatusDropdown = ({ company, onStatusChange }: { company: CRMEntry;
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const [coords, setCoords] = useState({ top: 0, left: 0 });
-    const options: CRMStatus[] = ['onboarded', 'on progress', 'Quote Sent', 'completed', 'drop'];
+    // Filtered out 'on progress' and 'Quote Sent' as they are CRM stages
+    const options: CRMStatus[] = ['onboarded', 'completed', 'drop'];
 
     const updateCoords = () => {
         if (triggerRef.current) {

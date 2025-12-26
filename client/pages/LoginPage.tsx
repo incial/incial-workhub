@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { authApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, ArrowRight, CheckCircle2, AlertCircle, Eye, EyeOff, Shield, Zap } from 'lucide-react';
+import { Loader2, ArrowRight, AlertCircle, Eye, EyeOff, Shield, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 declare global {
@@ -292,15 +292,12 @@ export const LoginPage: React.FC = () => {
                             className="relative w-full h-[52px] group"
                         >
                             {/* The Visual Button (Underneath) - Matches Sign In Button Roundness (rounded-xl) */}
-                            {/* Added pointer-events-none to prevent layer interference */}
                             <div className="absolute inset-0 flex items-center justify-center gap-3 bg-white border border-gray-200 rounded-xl shadow-sm transition-all group-hover:bg-gray-50 group-hover:border-gray-300 pointer-events-none">
                                 <GoogleIcon />
                                 <span className="text-sm font-bold text-gray-700">Continue with Google</span>
                             </div>
 
                             {/* The Actual Click Target (Invisible Google Button) */}
-                            {/* Changed opacity to 0.01 to ensure hit-testing works in strict environments */}
-                            {/* Increased z-index to 20 */}
                             <div
                                 id="googleSignInDiv"
                                 className="absolute inset-0 z-20 opacity-[0.01] cursor-pointer overflow-hidden rounded-xl"
@@ -308,7 +305,7 @@ export const LoginPage: React.FC = () => {
                         </div>
                     </form>
                     <p className="text-center text-xs text-gray-400 mt-8 font-medium">
-                        Don't have an account? <a href="mailto:incial@gmail.com" className="text-brand-600 font-bold hover:underline">Contact Sales</a>
+                        Don't have an account? <a href="https://wa.me/918590637335" className="text-brand-600 font-bold hover:underline">Contact Sales</a>
                     </p>
                 </div>
             </div>
