@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
@@ -49,8 +48,8 @@ export const CRMPage: React.FC = () => {
   const filteredData = useMemo(() => {
     return entries.filter(item => {
       const matchesSearch = filters.search === '' || 
-        item.company.toLowerCase().includes(filters.search.toLowerCase()) ||
-        item.contactName.toLowerCase().includes(filters.search.toLowerCase());
+        (item.company || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+        (item.contactName || '').toLowerCase().includes(filters.search.toLowerCase());
       const matchesStatus = filters.status === 'ALL' ? true : 
                          filters.status === '' ? !['drop', 'completed', 'onboarded'].includes(item.status) : 
                          item.status === filters.status;

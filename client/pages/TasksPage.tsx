@@ -52,7 +52,7 @@ export const TasksPage: React.FC = () => {
     return tasks.filter(t => {
       const isVisible = !t.companyId || t.isVisibleOnMainBoard;
       if (!isVisible && viewMode !== 'mine') return false; 
-      const matchesSearch = t.title.toLowerCase().includes(filters.search.toLowerCase());
+      const matchesSearch = (t.title || '').toLowerCase().includes(filters.search.toLowerCase());
       const matchesStatus = filters.status === '' || t.status === filters.status;
       const matchesPriority = filters.priority === '' || t.priority === filters.priority;
       const matchesAssignee = filters.assignedTo === '' || t.assignedTo === filters.assignedTo;

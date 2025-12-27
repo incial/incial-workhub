@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
@@ -56,8 +55,8 @@ export const ClientTrackerPage: React.FC = () => {
 
   const processedClients = useMemo(() => {
     let result = clients.filter(c => 
-        c.company.toLowerCase().includes(search.toLowerCase()) || 
-        c.contactName.toLowerCase().includes(search.toLowerCase())
+        (c.company || '').toLowerCase().includes(search.toLowerCase()) || 
+        (c.contactName || '').toLowerCase().includes(search.toLowerCase())
     );
 
     result.sort((a, b) => {

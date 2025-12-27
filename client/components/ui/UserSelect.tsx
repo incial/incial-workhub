@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Check, Search, User as UserIcon } from 'lucide-react';
 import { User } from '../../types';
@@ -81,8 +80,8 @@ export const UserSelect: React.FC<UserSelectProps> = ({
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
-        u.name.toLowerCase().includes(search.toLowerCase()) || 
-        u.email.toLowerCase().includes(search.toLowerCase())
+        (u.name || '').toLowerCase().includes(search.toLowerCase()) || 
+        (u.email || '').toLowerCase().includes(search.toLowerCase())
     );
   }, [users, search]);
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
@@ -69,7 +68,7 @@ export const CompaniesPage: React.FC = () => {
 
     let result = sourceList.filter(item => {
       const matchesSearch = filters.search === '' || 
-        item.company.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (item.company || '').toLowerCase().includes(filters.search.toLowerCase()) ||
         (item.contactName && item.contactName.toLowerCase().includes(filters.search.toLowerCase())) ||
         (item.referenceId && item.referenceId.toLowerCase().includes(filters.search.toLowerCase()));
       
