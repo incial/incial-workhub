@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Calendar, AlignLeft, Flag, Link as LinkIcon, Edit2, Maximize2, Minimize2, CheckCircle, FileText, ExternalLink, Globe, Layout } from 'lucide-react';
 import { Task, TaskPriority, TaskType } from '../../types';
@@ -200,7 +201,7 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
             <div className="flex justify-end gap-4 pt-8 border-t border-slate-100">
                 <button type="button" onClick={() => initialData ? setMode('view') : onClose()} className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Discard</button>
                 <button type="submit" className="px-10 py-4 bg-slate-950 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all flex items-center gap-3">
-                    <Save className="h-4 w-4 text-indigo-400" /> Committ Identity
+                    <Save className="h-4 w-4 text-indigo-400" /> Commit Identity
                 </button>
             </div>
       </form>
@@ -261,3 +262,4 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
     </>
   );
 };
+    

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Calendar, User as UserIcon, AlignLeft, Flag, CheckCircle, History, Link as LinkIcon, ExternalLink, Edit2, Clock, Building, Maximize2, Minimize2, Briefcase, FileText, Trash2 } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus, TaskType, User } from '../../types';
@@ -251,7 +252,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
                     <div className="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-gray-100">
                         <button type="button" onClick={() => initialData?.id ? setMode('view') : onClose()} className="px-8 py-4 text-[11px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 transition-colors">Discard</button>
                         <button type="submit" className="px-10 py-4 text-[11px] font-black text-white bg-slate-950 hover:bg-slate-900 rounded-[1.5rem] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3">
-                            <Save className="h-4 w-4 text-indigo-400" /> Committ Milestone
+                            <Save className="h-4 w-4 text-indigo-400" /> Commit Milestone
                         </button>
                     </div>
                 </form>
@@ -262,3 +263,4 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
     </>
   );
 };
+    

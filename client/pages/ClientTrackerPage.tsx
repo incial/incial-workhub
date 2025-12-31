@@ -91,12 +91,12 @@ export const ClientTrackerPage: React.FC = () => {
            
            {/* High-Impact Header */}
            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 lg:gap-10 mb-10 lg:mb-16 animate-premium">
-             <div>
+             <div className="w-full xl:w-auto">
                 <div className="flex items-center gap-3 mb-2 lg:mb-4">
                      <div className="h-2 w-2 rounded-full bg-brand-500 animate-pulse" />
                      <span className="text-[9px] lg:text-[10px] font-black text-brand-600 uppercase tracking-[0.4em]">Operations Center</span>
                 </div>
-                <h1 className="text-4xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-none display-text">Tracker.</h1>
+                <h1 className="text-3xl sm:text-4xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-none display-text">Tracker.</h1>
                 <p className="text-slate-500 text-sm lg:text-lg mt-4 lg:mt-6 font-medium max-w-xl leading-relaxed">
                     Visualizing execution velocity and roadmap synchronization across all project nodes.
                 </p>
@@ -138,7 +138,8 @@ export const ClientTrackerPage: React.FC = () => {
                     <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1000px]">
                         <thead className="z-30">
                             <tr>
-                                <th className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-8 lg:px-12 py-6 left-0 border-b border-white/50 text-left shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+                                {/* Note: Sticky on left only for Large screens (lg:) to avoid blocking mobile view */}
+                                <th className="relative lg:sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-6 lg:px-12 py-6 lg:left-0 border-b border-white/50 text-left shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
                                     <button onClick={() => handleSort('company')} className="flex items-center gap-2 text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group hover:text-indigo-600 outline-none transition-colors">
                                         Project Identity <SortIcon column="company" />
                                     </button>
@@ -174,20 +175,21 @@ export const ClientTrackerPage: React.FC = () => {
                                     onClick={() => navigate(`/client-tracker/${client.id}`)}
                                     className="group transition-all duration-500 cursor-pointer hover:bg-white/40"
                                 >
-                                    <td className="px-8 lg:px-12 py-6 sticky left-0 group-hover:bg-white/90 transition-colors z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-transparent group-hover:border-white/50 rounded-r-[2rem]">
-                                        <div className="flex items-center gap-6">
+                                    {/* Note: Sticky on left only for Large screens (lg:) */}
+                                    <td className="px-6 lg:px-12 py-6 relative lg:sticky lg:left-0 group-hover:bg-white/90 transition-colors z-20 lg:shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-transparent group-hover:border-white/50 rounded-r-[2rem]">
+                                        <div className="flex items-center gap-4 lg:gap-6">
                                             <div className="relative">
                                                 <PremiumLogo 
                                                     src={client.companyImageUrl} 
                                                     alt={client.company} 
                                                     fallback={<Building className="h-6 w-6 text-slate-300" />}
-                                                    containerClassName="h-16 w-16 bg-white rounded-[1.2rem] border border-white shadow-xl flex-shrink-0 flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl"
+                                                    containerClassName="h-12 w-12 lg:h-16 lg:w-16 bg-white rounded-[1.2rem] border border-white shadow-xl flex-shrink-0 flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl"
                                                 />
-                                                <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-emerald-500 border-2 border-white rounded-full shadow-lg" />
+                                                <div className="absolute -bottom-1 -right-1 h-3 w-3 lg:h-4 lg:w-4 bg-emerald-500 border-2 border-white rounded-full shadow-lg" />
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <p className="font-black text-slate-900 text-lg group-hover:text-indigo-600 transition-colors tracking-tight truncate max-w-[200px] leading-none">
+                                                    <p className="font-black text-slate-900 text-base lg:text-lg group-hover:text-indigo-600 transition-colors tracking-tight truncate max-w-[150px] lg:max-w-[200px] leading-none">
                                                         {client.company}
                                                     </p>
                                                     <ArrowUpRight className="h-3 w-3 text-slate-300 group-hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100" />

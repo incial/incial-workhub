@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Edit2, User, Phone, Mail, Calendar, Briefcase, FileText, Tag, DollarSign, CheckCircle, Clock, AlertCircle, History, ExternalLink, HardDrive, Linkedin, Instagram, Facebook, Twitter, Globe, Link as LinkIcon, Maximize2, Minimize2, MapPin, Hash, Building, Megaphone, Plus, Image } from 'lucide-react';
 import { CRMEntry, SocialLinks, CRMStatus, User as UserType } from '../../types';
@@ -437,7 +438,7 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
         <div className="flex flex-col sm:flex-row justify-end gap-3 md:gap-4 pt-8 border-t border-slate-100">
             <button type="button" onClick={onClose} className="w-full sm:w-auto px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-slate-900 transition-colors">Discard</button>
             <button type="submit" className="w-full sm:w-auto px-10 py-4 bg-slate-950 text-white rounded-[1.25rem] md:rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3">
-                <Save className="h-4 w-4 text-indigo-400" /> Committ Identity
+                <Save className="h-4 w-4 text-indigo-400" /> Commit Identity
             </button>
         </div>
     </form>
@@ -497,3 +498,4 @@ export const CRMForm: React.FC<CRMFormProps> = ({ isOpen, onClose, onSubmit, ini
     </>
   );
 };
+    

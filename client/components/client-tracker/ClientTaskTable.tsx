@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Task, TaskPriority, TaskStatus, TaskType } from '../../types';
 import { formatDate, isRecentlyUpdated } from '../../utils';
@@ -134,7 +135,7 @@ export const ClientTaskTable: React.FC<ClientTaskTableProps> = ({
     <div className="relative w-full">
         {/* Reinforced internal scroll with explicit viewport capture */}
         <div className="overflow-x-auto overflow-y-auto h-[450px] custom-scrollbar border-t border-gray-100">
-            <table className="min-w-full text-left border-collapse whitespace-nowrap">
+            <table className="min-w-[1000px] w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                     <tr className="z-30">
                         <th className="sticky top-0 z-40 bg-gray-50/95 backdrop-blur px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-sm">Task name</th>
@@ -162,7 +163,11 @@ export const ClientTaskTable: React.FC<ClientTaskTableProps> = ({
                                         onClick={() => onEdit?.(task)} 
                                         className="text-sm font-bold text-gray-900 text-left truncate max-w-[220px] hover:text-brand-600 transition-colors flex items-center gap-2"
                                     >
-                                        {task.isVisibleOnMainBoard && <Globe className="h-3 w-3 text-indigo-500" title="Pinned to Main Board" />}
+                                        {task.isVisibleOnMainBoard && (
+                                            <span title="Pinned to Main Board">
+                                                <Globe className="h-3 w-3 text-indigo-500" />
+                                            </span>
+                                        )}
                                         {task.title}
                                     </button>
                                     <p className="text-[10px] text-gray-400 font-medium italic truncate max-w-[200px]">
@@ -234,3 +239,4 @@ export const ClientTaskTable: React.FC<ClientTaskTableProps> = ({
     </div>
   );
 };
+    

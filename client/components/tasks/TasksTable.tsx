@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Task, TaskPriority, TaskStatus } from '../../types';
 import { formatDate, getTaskPriorityStyles, getTaskStatusStyles, isRecentlyUpdated } from '../../utils';
-import { Edit2, Trash2, ChevronDown, Calendar, Check, Building, Layout } from 'lucide-react';
+import { Edit2, Trash2, ChevronDown, Calendar, Check, Building } from 'lucide-react';
 
 interface TasksTableProps {
   data: Task[];
@@ -140,8 +140,8 @@ const PriorityDropdown = ({ task, onPriorityChange }: { task: Task; onPriorityCh
 
 export const TasksTable: React.FC<TasksTableProps> = ({ data, companyMap, userAvatarMap, onEdit, onDelete, onStatusChange, onPriorityChange }) => {
   return (
-    <div className="w-full min-h-[400px] pb-32">
-        <table className="w-full text-left border-separate border-spacing-y-3 table-fixed">
+    <div className="w-full min-h-[400px] pb-32 overflow-x-auto custom-scrollbar">
+        <table className="w-full text-left border-separate border-spacing-y-3 table-fixed min-w-[1000px]">
             <thead>
                 <tr className="text-gray-400">
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest w-[30%]">Task Name</th>
