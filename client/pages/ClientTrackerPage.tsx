@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
@@ -8,7 +9,7 @@ import { getStatusStyles } from '../utils';
 import { useLayout } from '../context/LayoutContext';
 import { PremiumLogo } from '../components/ui/PremiumLogo';
 
-type SortKey = 'company' | 'progress' | 'status' | 'completed';
+type SortKey = 'company' | 'progress' | 'status' | 'completed' | 'total';
 type SortDirection = 'asc' | 'desc';
 
 export const ClientTrackerPage: React.FC = () => {
@@ -18,8 +19,8 @@ export const ClientTrackerPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({
-    key: 'company',
-    direction: 'asc'
+    key: 'total',
+    direction: 'desc'
   });
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export const ClientTrackerPage: React.FC = () => {
             case 'progress': return direction * (a.progress - b.progress);
             case 'status': return direction * a.status.localeCompare(b.status);
             case 'completed': return direction * (a.completed - b.completed);
+            case 'total': return direction * (a.total - b.total);
             default: return 0;
         }
     });
@@ -152,8 +154,8 @@ export const ClientTrackerPage: React.FC = () => {
                                     </button>
                                 </th>
                                 <th className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl px-6 lg:px-8 py-6 border-b border-white/50 text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
-                                    <button onClick={() => handleSort('completed')} className="flex items-center gap-2 group outline-none hover:text-indigo-600 transition-colors">
-                                        Roadmap Progress <SortIcon column="completed" />
+                                    <button onClick={() => handleSort('total')} className="flex items-center gap-2 group outline-none hover:text-indigo-600 transition-colors">
+                                        Roadmap Progress <SortIcon column="total" />
                                     </button>
                                 </th>
                                 <th className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl px-6 lg:px-10 py-6 border-b border-white/50 text-right"></th>
@@ -223,7 +225,7 @@ export const ClientTrackerPage: React.FC = () => {
                                     <td className="px-6 lg:px-8 py-6 align-middle">
                                         <div className="flex items-center gap-5">
                                             <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 group-hover:border-indigo-100 group-hover:shadow-md transition-all">
-                                                <Activity className={`h-5 w-5 ${sortConfig.key === 'completed' ? 'text-indigo-500' : 'text-slate-300 group-hover:text-indigo-400'}`} />
+                                                <Activity className={`h-5 w-5 ${sortConfig.key === 'total' ? 'text-indigo-500' : 'text-slate-300 group-hover:text-indigo-400'}`} />
                                             </div>
                                             <div>
                                                 <span className="text-xl font-black text-slate-900 leading-none block mb-1">{client.completed} <span className="text-slate-300">/</span> {client.total}</span>
