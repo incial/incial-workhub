@@ -9,8 +9,8 @@ export const Screensaver: React.FC = () => {
   const [time, setTime] = useState(new Date());
   const timerRef = useRef<number | null>(null);
   
-  // 100 Seconds Inactivity Limit
-  const INACTIVITY_LIMIT = 100000; 
+  // 300 Seconds Inactivity Limit
+  const INACTIVITY_LIMIT = 300000; 
 
   const resetTimer = () => {
     setIsActive(false);
