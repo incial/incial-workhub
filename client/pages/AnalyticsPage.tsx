@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
-import { PieChart, BarChart, TrendingUp, Lock, Download, FileText, CheckSquare, Users, DollarSign, Layers, ArrowUpRight } from 'lucide-react';
+import { PieChart, BarChart, TrendingUp, Lock, Download, FileText, CheckSquare, Users, DollarSign, Layers, ArrowUpRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useLayout } from '../context/LayoutContext';
@@ -20,6 +20,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
     const { isSidebarCollapsed } = useLayout();
     const [entries, setEntries] = useState<CRMEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isRevenueVisible, setIsRevenueVisible] = useState(false);
     
     const hasPermission = user?.role === 'ROLE_SUPER_ADMIN';
 
@@ -171,14 +172,35 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
 
                      <div className="bg-white/40 backdrop-blur-3xl rounded-[2rem] lg:rounded-[3rem] border border-white shadow-premium mb-8 lg:mb-12 overflow-hidden">
                         <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200/50">
-                            <div className="p-6 lg:p-10 group hover:bg-white/40 transition-colors">
+                            
+                            {/* Total Pipeline Value Card */}
+                            <div className="p-6 lg:p-10 group hover:bg-white/40 transition-colors relative">
                                 <div className="flex items-center justify-between mb-6 lg:mb-8">
                                     <div className="p-3 lg:p-4 bg-emerald-50 text-emerald-600 rounded-2xl lg:rounded-3xl group-hover:scale-110 transition-transform duration-300 border border-emerald-100/50"><TrendingUp className="h-5 lg:h-6 w-5 lg:w-6" /></div>
                                     <span className="flex items-center gap-2 text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 lg:px-3 py-1 rounded-xl border border-emerald-100"><ArrowUpRight className="h-3 w-3" /> Live</span>
                                 </div>
-                                <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Total Pipeline Value</p>
-                                <h3 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tighter">{isLoading ? '...' : formatMoney(totalRevenue)}</h3>
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Total Pipeline Value</p>
+                                    <button 
+                                        onClick={() => setIsRevenueVisible(!isRevenueVisible)}
+                                        className="p-2 -mr-2 rounded-full text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-95"
+                                        title={isRevenueVisible ? "Hide Value" : "Reveal Value"}
+                                    >
+                                        {isRevenueVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                                <div className="relative overflow-hidden min-h-[40px] flex items-center">
+                                    {isLoading ? (
+                                        <span className="text-2xl font-black text-slate-300 animate-pulse">...</span>
+                                    ) : (
+                                        <h3 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tighter transition-all duration-300">
+                                            {isRevenueVisible ? formatMoney(totalRevenue) : '₹ XX,XX,XXX'}
+                                        </h3>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* Win Rate Card */}
                             <div className="p-6 lg:p-10 group hover:bg-white/40 transition-colors">
                                 <div className="flex items-center justify-between mb-6 lg:mb-8">
                                     <div className="p-3 lg:p-4 bg-blue-50 text-blue-600 rounded-2xl lg:rounded-3xl group-hover:scale-110 transition-transform duration-300 border border-blue-100/50"><PieChart className="h-5 lg:h-6 w-5 lg:w-6" /></div>
@@ -189,6 +211,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
                                     <span className="text-[10px] lg:text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">of {entries.length} leads</span>
                                 </div>
                             </div>
+
+                            {/* Avg Deal Size Card */}
                             <div className="p-6 lg:p-10 group hover:bg-white/40 transition-colors">
                                 <div className="flex items-center justify-between mb-6 lg:mb-8">
                                     <div className="p-3 lg:p-4 bg-purple-50 text-purple-600 rounded-2xl lg:rounded-3xl group-hover:scale-110 transition-transform duration-300 border border-purple-100/50"><BarChart className="h-5 lg:h-6 w-5 lg:w-6" /></div>
