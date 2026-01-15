@@ -93,15 +93,19 @@ export const AdminPerformancePage: React.FC = () => {
                 completionRate: s.total > 0 ? (s.completed / s.total) * 100 : 0
             }));
 
-        // 4. SORTING LOGIC: Efficiency Score (Descending) -> Completed Count (Descending) -> Name (Ascending)
+        // 4. SORTING LOGIC: Completed Volume (Desc) -> Efficiency Score (Desc) -> Total Assigned (Desc)
+        // This ensures users with high output rank higher than users with low volume but 100% rate.
         finalStats.sort((a, b) => {
-            if (Math.abs(b.completionRate - a.completionRate) > 0.01) {
-                return b.completionRate - a.completionRate;
-            }
+            // Primary: Output Volume
             if (b.completed !== a.completed) {
                 return b.completed - a.completed;
             }
-            return a.name.localeCompare(b.name);
+            // Secondary: Efficiency Rate
+            if (Math.abs(b.completionRate - a.completionRate) > 0.01) {
+                return b.completionRate - a.completionRate;
+            }
+            // Tertiary: Total Workload
+            return b.total - a.total;
         });
         
         setStats(finalStats);
@@ -174,7 +178,7 @@ export const AdminPerformancePage: React.FC = () => {
                     </div>
                     <h1 className="text-4xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-none display-text">Leaderboard.</h1>
                     <p className="text-sm lg:text-lg text-slate-500 mt-2 lg:mt-4 font-medium max-w-xl">
-                        Ranked by efficiency score and task completion velocity.
+                        Ranked by absolute volume of completed deliverables and assignment load.
                     </p>
                 </div>
                 
@@ -241,7 +245,7 @@ export const AdminPerformancePage: React.FC = () => {
                                                 </div>
                                                 <div className="absolute -bottom-3 inset-x-0 flex justify-center">
                                                     <span className="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-xl shadow-lg border-2 border-white uppercase tracking-widest">
-                                                        {user.completionRate.toFixed(0)}% Score
+                                                        {user.completed} Completed
                                                     </span>
                                                 </div>
                                             </div>
@@ -253,12 +257,12 @@ export const AdminPerformancePage: React.FC = () => {
 
                                             <div className="grid grid-cols-2 gap-3 w-full mt-auto">
                                                 <div className="bg-white/60 p-3 rounded-2xl border border-white shadow-inner">
-                                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Completed</p>
-                                                    <p className="text-xl font-black text-slate-900">{user.completed}</p>
-                                                </div>
-                                                <div className="bg-white/60 p-3 rounded-2xl border border-white shadow-inner">
                                                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned</p>
                                                     <p className="text-xl font-black text-slate-900">{user.total}</p>
+                                                </div>
+                                                <div className="bg-white/60 p-3 rounded-2xl border border-white shadow-inner">
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Efficiency</p>
+                                                    <p className="text-xl font-black text-slate-900">{user.completionRate.toFixed(0)}%</p>
                                                 </div>
                                             </div>
                                         </div>
