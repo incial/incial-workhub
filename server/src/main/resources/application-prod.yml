@@ -9,13 +9,14 @@ spring:
     driver-class-name: org.postgresql.Driver
 
     hikari:
-      maximum-pool-size: 12
-      minimum-idle: 3
-      connection-timeout: 20000
-      idle-timeout: 60000              # 1 minute
-      max-lifetime: 300000             # 5 minutes
-      keepalive-time: 30000
+      pool-name: IncialHikariPool
+      maximum-pool-size: 5        # SAFE for db.t4g.micro
+      minimum-idle: 2
+      connection-timeout: 20000   # 20s
+      idle-timeout: 180000        # 3 minutes
+      max-lifetime: 900000        # 15 minutes
       validation-timeout: 5000
+      auto-commit: false
 
   jpa:
     open-in-view: false
@@ -26,6 +27,8 @@ spring:
         show_sql: false
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
 
   mail:
     host: smtp.gmail.com
@@ -53,18 +56,17 @@ jwt:
   secret: ${JWT_SECRET}
 
 # ===========================
-# LOGGING (PRODUCTION)
+# LOGGING (PRODUCTION SAFE)
 # ===========================
 logging:
   level:
     root: INFO
-    com.incial.crm: INFO
+    com.incial: INFO
     org.springframework.security: WARN
     org.springframework.web: WARN
-    org.hibernate: WARN
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
+
   file:
     name: /app/logs/application.log
     max-size: 10MB
@@ -77,7 +79,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info
   endpoint:
     health:
       show-details: when-authorized
@@ -86,10 +88,11 @@ management:
       enabled: true
 
 # ===========================
-# SERVER
+# SERVER (TOMCAT)
 # ===========================
 server:
   port: ${SERVER_PORT:8080}
+
   compression:
     enabled: true
     mime-types: >
@@ -100,14 +103,8 @@ server:
       text/javascript,
       application/javascript,
       application/json
-  tomcat:
-    max-threads: 50
-    min-spare-threads: 5
 
-# ===========================
-# ENV PRINTER
-# ===========================
-env:
-  printer:
-    enabled: true
-    endpoint-enabled: false
+  tomcat:
+    threads:
+      max: 50
+      min-spare: 5
