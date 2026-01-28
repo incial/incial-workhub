@@ -5,7 +5,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -19,6 +21,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
@@ -50,23 +53,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        // Validate token WITHOUT DB
         if (!jwtUtil.isTokenValid(token)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extract claims
         String email = jwtUtil.extractUserName(token);
-        String role = jwtUtil.extractRole(token); // MUST come from JWT
+        String role = jwtUtil.extractRole(token);
 
         if (email != null &&
+                role != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            role = role.trim().toUpperCase();
+            if (!role.startsWith("ROLE_")) {
+                role = "ROLE_" + role;
+            }
+
+            GrantedAuthority authority = new SimpleGrantedAuthority(role);
 
             UserDetails userDetails = new User(
                     email,
                     "",
-                    List.of(new SimpleGrantedAuthority(role))
+                    List.of(authority)
             );
 
             UsernamePasswordAuthenticationToken authentication =
@@ -80,8 +89,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new WebAuthenticationDetailsSource().buildDetails(request)
             );
 
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            log.error("JWT AUTH SET → user={}, authorities={}",
+                    email,
+                    authentication.getAuthorities());
         }
 
         filterChain.doFilter(request, response);
