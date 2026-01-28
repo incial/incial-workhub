@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,7 +35,10 @@ public class Task {
     private String priority;
 
     @Column(name = "assigned_to", length = 255)
-    private String assignedTo;
+    private String assignedTo; // Deprecated: kept for backward compatibility during migration
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TaskAssignee> assignees = new ArrayList<>();
 
     @Column(name = "due_date")
     private LocalDate dueDate;

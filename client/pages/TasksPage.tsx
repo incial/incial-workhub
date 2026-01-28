@@ -41,7 +41,7 @@ export const TasksPage: React.FC = () => {
       crmData.crmList.forEach(c => cMap[c.id] = c.company);
       setCompanyMap(cMap);
       const uMap: Record<string, string> = {};
-      usersData.forEach(u => { if (u.avatarUrl) uMap[u.name] = u.avatarUrl; });
+      usersData.forEach(u => { if (u.avatarUrl) { uMap[u.name] = u.avatarUrl; uMap[u.email] = u.avatarUrl; } });
       setUserAvatarMap(uMap);
     } catch (err) { console.error(err); } finally { setIsLoading(false); }
   };
@@ -55,8 +55,17 @@ export const TasksPage: React.FC = () => {
       const matchesSearch = (t.title || '').toLowerCase().includes(filters.search.toLowerCase());
       const matchesStatus = filters.status === '' || t.status === filters.status;
       const matchesPriority = filters.priority === '' || t.priority === filters.priority;
-      const matchesAssignee = filters.assignedTo === '' || t.assignedTo === filters.assignedTo;
-      const matchesView = viewMode === 'mine' ? (user && t.assignedTo === user.name) : true;
+      
+      // Updated: Check if any assignee matches the filter
+      const matchesAssignee = filters.assignedTo === '' || 
+        (t.assignedToList && t.assignedToList.some(email => email === filters.assignedTo)) ||
+        (!t.assignedToList && t.assignedTo === filters.assignedTo); // Backward compatibility
+      
+      // Updated: Check if user is one of the assignees for "mine" view
+      const matchesView = viewMode === 'mine' 
+        ? (user && ((t.assignedToList && t.assignedToList.includes(user.email)) || t.assignedTo === user.name))
+        : true;
+      
       return matchesSearch && matchesStatus && matchesPriority && matchesAssignee && matchesView;
     });
   }, [tasks, filters, viewMode, user]);
@@ -80,6 +89,7 @@ export const TasksPage: React.FC = () => {
           priority: 'Medium',
           dueDate: dateStr,
           assignedTo: user?.name || 'Unassigned',
+          assignedToList: user?.email ? [user.email] : [], // Initialize with current user
           createdAt: new Date().toISOString(),
           companyId: undefined // Default to internal
       } as Task);

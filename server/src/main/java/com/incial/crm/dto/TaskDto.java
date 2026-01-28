@@ -20,7 +20,8 @@ public class TaskDto {
     private String description;
     private String status;
     private String priority;
-    private String assignedTo;
+    private String assignedTo; // Deprecated: for backward compatibility
+    private List<String> assignedToList; // New: list of assignee emails
     
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dueDate;

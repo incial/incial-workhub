@@ -193,11 +193,35 @@ export const TasksTable: React.FC<TasksTableProps> = ({ data, companyMap, userAv
                             <StatusDropdown task={task} onStatusChange={onStatusChange} />
                         </td>
 
-                        {/* Assignee */}
+                        {/* Assignees */}
                         <td className="px-4 py-5 align-middle bg-white border-y border-gray-100 shadow-sm group-hover:shadow-md transition-all">
-                             <div className="flex items-center gap-2 overflow-hidden">
-                                <Avatar name={task.assignedTo} url={userAvatarUrl} />
-                                <span className="text-xs font-semibold text-gray-600 truncate">{task.assignedTo || 'Unassigned'}</span>
+                             <div className="flex items-center gap-1 overflow-hidden">
+                                {task.assignedToList && task.assignedToList.length > 0 ? (
+                                    <>
+                                        <div className="flex -space-x-2">
+                                            {task.assignedToList.slice(0, 3).map((email, idx) => {
+                                                const userAvatarUrl = userAvatarMap?.[email];
+                                                return <Avatar key={idx} name={email.split('@')[0]} url={userAvatarUrl} />;
+                                            })}
+                                        </div>
+                                        {task.assignedToList.length > 3 && (
+                                            <span className="text-[10px] font-bold text-gray-500 ml-2">+{task.assignedToList.length - 3}</span>
+                                        )}
+                                        {task.assignedToList.length === 1 && (
+                                            <span className="text-xs font-semibold text-gray-600 truncate ml-2">{task.assignedToList[0].split('@')[0]}</span>
+                                        )}
+                                    </>
+                                ) : task.assignedTo ? (
+                                    <>
+                                        <Avatar name={task.assignedTo} url={userAvatarMap?.[task.assignedTo]} />
+                                        <span className="text-xs font-semibold text-gray-600 truncate">{task.assignedTo}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Avatar name="Unassigned" />
+                                        <span className="text-xs font-semibold text-gray-600 truncate">Unassigned</span>
+                                    </>
+                                )}
                              </div>
                         </td>
 
