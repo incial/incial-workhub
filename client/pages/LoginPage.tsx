@@ -28,12 +28,10 @@ export const LoginPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
 
-    // Refs for stable initialization
     const googleBtnWrapperRef = useRef<HTMLDivElement>(null);
     const isGsiInitializedRef = useRef(false);
 
-    // Safe access to env variable or fallback
-    const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+    const GOOGLE_CLIENT_ID = "612147431690-rujtu9sdmtp35oerpfj0t1lv8u2pc27o.apps.googleusercontent.com";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,7 +40,6 @@ export const LoginPage: React.FC = () => {
 
         try {
             const response = await authApi.login(email, password);
-            // Validate response structure before login
             if (!response.user || !response.token) {
                 throw new Error("Invalid response from server");
             }
