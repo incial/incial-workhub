@@ -117,8 +117,9 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   taskType?: TaskType; 
-  assignedTo: string; 
-  assigneeId?: number; // Linked User ID
+  assignedTo?: string; // Deprecated: for backward compatibility
+  assignedToList?: string[]; // New: list of assignee emails
+  assigneeId?: number; // Deprecated: for backward compatibility
   dueDate: string; 
   attachments?: string[]; 
   taskLink?: string; 

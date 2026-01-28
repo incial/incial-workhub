@@ -5,6 +5,7 @@ import { Task, TaskPriority, TaskStatus, TaskType, User } from '../../types';
 import { CustomDatePicker } from '../ui/CustomDatePicker';
 import { CustomSelect } from '../ui/CustomSelect';
 import { UserSelect } from '../ui/UserSelect';
+import { UserMultiSelect } from '../ui/UserMultiSelect';
 import { formatDate, formatDateTime } from '../../utils';
 import { usersApi } from '../../services/api';
 
@@ -42,6 +43,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
                 priority: 'Medium', 
                 taskType: 'General',
                 assignedTo: 'Unassigned',
+                assignedToList: [], // Initialize as empty array for new tasks
                 assigneeId: undefined,
                 dueDate: new Date().toISOString().split('T')[0],
                 taskLink: '',
@@ -54,8 +56,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
 
   if (!isOpen) return null;
 
-  const handleUserChange = (userId: number, userName: string) => {
-      setFormData(prev => ({ ...prev, assigneeId: userId, assignedTo: userName }));
+  const handleAssigneesChange = (emails: string[]) => {
+      setFormData(prev => ({ ...prev, assignedToList: emails }));
   };
 
   return (
@@ -147,8 +149,21 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
 
                     <div className="grid grid-cols-2 gap-6 p-6 lg:p-8 bg-white/60 rounded-[2rem] border border-white/80 shadow-inner">
                         <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Assignee</p>
-                            <p className="text-base lg:text-lg font-black text-slate-900 truncate">{formData.assignedTo || 'Unassigned'}</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Assignees</p>
+                            <div className="flex flex-wrap gap-1">
+                                {formData.assignedToList && formData.assignedToList.length > 0 ? (
+                                    formData.assignedToList.map((email, idx) => {
+                                        const user = users.find(u => u.email === email);
+                                        return (
+                                            <span key={idx} className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold">
+                                                {user?.name || email}
+                                            </span>
+                                        );
+                                    })
+                                ) : (
+                                    <p className="text-base lg:text-lg font-black text-slate-900">Unassigned</p>
+                                )}
+                            </div>
                         </div>
                         <div>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Target Date</p>
@@ -213,11 +228,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSubmit, i
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <CustomSelect label="Execution Status" value={formData.status || ''} onChange={(val) => setFormData({...formData, status: val as TaskStatus})} options={STATUSES.map(s => ({ label: s, value: s }))} />
-                        <UserSelect 
-                            label="Node Assignee" 
-                            value={formData.assigneeId || formData.assignedTo || 'Unassigned'} 
-                            onChange={handleUserChange} 
-                            users={users} 
+                        <UserMultiSelect 
+                            label="Assignees" 
+                            value={formData.assignedToList || []} 
+                            onChange={handleAssigneesChange} 
+                            users={users}
+                            placeholder="Select team members..."
                         />
                     </div>
 
