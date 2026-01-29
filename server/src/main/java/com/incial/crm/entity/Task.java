@@ -38,6 +38,7 @@ public class Task {
     private String assignedTo; // Deprecated: kept for backward compatibility during migration
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<TaskAssignee> assignees = new ArrayList<>();
 
     @Column(name = "due_date")
@@ -77,5 +78,12 @@ public class Task {
     @PreUpdate
     protected void onUpdate() {
         lastUpdatedAt = LocalDateTime.now();
+    }
+
+    @PostLoad
+    protected void onLoad() {
+        if (assignees == null) {
+            assignees = new ArrayList<>();
+        }
     }
 }
