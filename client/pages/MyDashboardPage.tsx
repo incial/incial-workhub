@@ -49,8 +49,13 @@ export const MyDashboardPage: React.FC = () => {
                     meetingsApi.getAll()
                 ]);
 
-                // Filter tasks assigned to user using ID first, name fallback
+                // Filter tasks assigned to user - check new multi-assignee list first
                 const myTasks = tasksData.filter(t => {
+                    // Check new multi-assignee list (contains email addresses)
+                    if (t.assignedToList && t.assignedToList.length > 0) {
+                        return t.assignedToList.includes(user?.email || '');
+                    }
+                    // Fallback to old single-assignee fields for backward compatibility
                     if (user?.id && t.assigneeId) return t.assigneeId === user.id;
                     return t.assignedTo === user?.name;
                 });

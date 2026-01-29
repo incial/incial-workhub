@@ -73,7 +73,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
                     Title: t.title,
                     Status: t.status,
                     Priority: t.priority,
-                    AssignedTo: t.assignedTo,
+                    AssignedTo: t.assignedToList && t.assignedToList.length > 0 
+                        ? t.assignedToList.join(', ') 
+                        : (t.assignedTo || 'Unassigned'),
                     DueDate: t.dueDate,
                     Client: (t.companyId && companyMap[t.companyId]) ? companyMap[t.companyId] : (t.companyId ? `ID: ${t.companyId}` : 'Internal'),
                     Created: t.createdAt
@@ -83,16 +85,33 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
                 const statsMap: Record<string, any> = {};
                 
                 users.forEach(u => {
-                    statsMap[u.name] = { Name: u.name, Role: u.role, Total: 0, Completed: 0, Pending: 0 };
+                    statsMap[u.email] = { Name: u.name, Email: u.email, Role: u.role, Total: 0, Completed: 0, Pending: 0 };
                 });
 
                 tasks.forEach(t => {
-                    const assignee = t.assignedTo || 'Unassigned';
-                    if (!statsMap[assignee]) statsMap[assignee] = { Name: assignee, Role: 'External', Total: 0, Completed: 0, Pending: 0 };
-                    
-                    statsMap[assignee].Total++;
-                    if (['Completed', 'Done', 'Posted'].includes(t.status)) statsMap[assignee].Completed++;
-                    else statsMap[assignee].Pending++;
+                    // Check if task has multiple assignees (new format)
+                    if (t.assignedToList && t.assignedToList.length > 0) {
+                        // For multi-assignee tasks, count for ALL assignees
+                        t.assignedToList.forEach(assigneeEmail => {
+                            if (!statsMap[assigneeEmail]) {
+                                statsMap[assigneeEmail] = { Name: assigneeEmail, Email: assigneeEmail, Role: 'External', Total: 0, Completed: 0, Pending: 0 };
+                            }
+                            
+                            statsMap[assigneeEmail].Total++;
+                            if (['Completed', 'Done', 'Posted'].includes(t.status)) statsMap[assigneeEmail].Completed++;
+                            else statsMap[assigneeEmail].Pending++;
+                        });
+                    } else {
+                        // Fallback to old single-assignee logic for backward compatibility
+                        const assignee = t.assignedTo || 'Unassigned';
+                        if (!statsMap[assignee]) {
+                            statsMap[assignee] = { Name: assignee, Email: assignee, Role: 'External', Total: 0, Completed: 0, Pending: 0 };
+                        }
+                        
+                        statsMap[assignee].Total++;
+                        if (['Completed', 'Done', 'Posted'].includes(t.status)) statsMap[assignee].Completed++;
+                        else statsMap[assignee].Pending++;
+                    }
                 });
 
                 dataToExport = Object.values(statsMap).map((s: any) => ({

@@ -62,26 +62,46 @@ export const AdminPerformancePage: React.FC = () => {
             };
         });
 
-        // 2. Aggregate Task Data
+        // 2. Aggregate Task Data - Now handles multi-assignee tasks
         tasks.forEach(task => {
-            // Priority: Check assigneeId (Int) first, then try to match by name as fallback
-            let matchedStats: UserStats | undefined;
+            // Check if task has multiple assignees (new format)
+            if (task.assignedToList && task.assignedToList.length > 0) {
+                // For multi-assignee tasks, count for ALL assignees
+                task.assignedToList.forEach(assigneeEmail => {
+                    // Find user by email
+                    const matchedStats = Object.values(statsMap).find(s => s.email === assigneeEmail);
+                    
+                    if (matchedStats) {
+                        matchedStats.total++;
+                        if (['Completed', 'Done', 'Posted'].includes(task.status)) {
+                            matchedStats.completed++;
+                        } else if (['In Progress', 'In Review'].includes(task.status)) {
+                            matchedStats.inProgress++;
+                        } else if (['Not Started'].includes(task.status)) {
+                            matchedStats.pending++;
+                        }
+                    }
+                });
+            } else {
+                // Fallback to old single-assignee logic for backward compatibility
+                let matchedStats: UserStats | undefined;
 
-            if (task.assigneeId && statsMap[task.assigneeId]) {
-                matchedStats = statsMap[task.assigneeId];
-            } else if (task.assignedTo && task.assignedTo !== 'Unassigned') {
-                // Fallback for legacy tasks without ID
-                matchedStats = Object.values(statsMap).find(s => s.name === task.assignedTo);
-            }
+                if (task.assigneeId && statsMap[task.assigneeId]) {
+                    matchedStats = statsMap[task.assigneeId];
+                } else if (task.assignedTo && task.assignedTo !== 'Unassigned') {
+                    // Fallback for legacy tasks without ID
+                    matchedStats = Object.values(statsMap).find(s => s.name === task.assignedTo);
+                }
 
-            if (matchedStats) {
-                matchedStats.total++;
-                if (['Completed', 'Done', 'Posted'].includes(task.status)) {
-                    matchedStats.completed++;
-                } else if (['In Progress', 'In Review'].includes(task.status)) {
-                    matchedStats.inProgress++;
-                } else if (['Not Started'].includes(task.status)) {
-                    matchedStats.pending++;
+                if (matchedStats) {
+                    matchedStats.total++;
+                    if (['Completed', 'Done', 'Posted'].includes(task.status)) {
+                        matchedStats.completed++;
+                    } else if (['In Progress', 'In Review'].includes(task.status)) {
+                        matchedStats.inProgress++;
+                    } else if (['Not Started'].includes(task.status)) {
+                        matchedStats.pending++;
+                    }
                 }
             }
         });
