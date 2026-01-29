@@ -10,7 +10,7 @@ spring:
 
     hikari:
       pool-name: IncialHikariPool
-      maximum-pool-size: 5        # SAFE for db.t4g.micro
+      maximum-pool-size: 5
       minimum-idle: 2
       connection-timeout: 20000   # 20s
       idle-timeout: 180000        # 3 minutes
@@ -56,13 +56,16 @@ jwt:
   secret: ${JWT_SECRET}
 
 # ===========================
-# LOGGING (PRODUCTION SAFE)
+# LOGGING
 # ===========================
 logging:
   level:
-    com.incial.crm: DEBUG
-    org.springframework.security: DEBUG
-
+    root: INFO
+    com.incial: INFO
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
   file:
     name: /app/logs/application.log
     max-size: 10MB
