@@ -91,9 +91,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.error("JWT AUTH SET → user={}, authorities={}",
-                    email,
-                    authentication.getAuthorities());
         }
 
         filterChain.doFilter(request, response);

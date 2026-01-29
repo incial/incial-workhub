@@ -60,12 +60,8 @@ jwt:
 # ===========================
 logging:
   level:
-    root: INFO
-    com.incial: INFO
-    org.springframework.security: WARN
-    org.springframework.web: WARN
-    org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql: WARN
+    com.incial.crm: DEBUG
+    org.springframework.security: DEBUG
 
   file:
     name: /app/logs/application.log
