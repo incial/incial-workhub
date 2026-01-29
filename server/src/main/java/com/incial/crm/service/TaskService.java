@@ -25,18 +25,21 @@ public class TaskService {
     private final TaskAssigneeRepository taskAssigneeRepository;
     private final UserService userService;
 
+    @Transactional(readOnly = true)
     public List<TaskDto> getAllTasks() {
         return taskRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<TaskDto> getTasksByAssignedTo(String assignedTo) {
         return taskRepository.findByAssignedTo(assignedTo).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<TaskDto> getCurrentUserTasks(String userEmail) {
         // Get tasks where the user is one of the assignees
         return taskRepository.findAll().stream()
@@ -49,7 +52,7 @@ public class TaskService {
                     // Fallback to old assignedTo field for backward compatibility
                     if (task.getAssignedTo() != null) {
                         return task.getAssignedTo().contains(userEmail.split("@")[0]) ||
-                               task.getAssignedTo().equalsIgnoreCase(userEmail);
+                                task.getAssignedTo().equalsIgnoreCase(userEmail);
                     }
                     return false;
                 })
@@ -57,12 +60,14 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<TaskDto> getTasksByCompanyId(Long companyId) {
         return taskRepository.findByCompanyId(companyId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<TaskDto> getClientTasks(String userEmail) {
         // Get user to find their linked CRM ID
         var userDto = userService.getUserByEmail(userEmail);
@@ -76,12 +81,12 @@ public class TaskService {
     public TaskDto createTask(TaskDto dto) {
         Task task = convertToEntity(dto);
         Task saved = taskRepository.save(task);
-        
+
         // Handle assignees
         if (dto.getAssignedToList() != null && !dto.getAssignedToList().isEmpty()) {
             syncTaskAssignees(saved, dto.getAssignedToList());
         }
-        
+
         return convertToDto(saved);
     }
 
@@ -89,22 +94,22 @@ public class TaskService {
     public TaskDto updateTask(Long id, TaskDto dto) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + id));
-        
+
         // Check if task is being marked as completed
         String oldStatus = task.getStatus();
         boolean wasCompleted = "completed".equalsIgnoreCase(oldStatus);
-        
+
         updateEntityFromDto(task, dto);
-        
+
         // Handle assignees update
         if (dto.getAssignedToList() != null) {
             syncTaskAssignees(task, dto.getAssignedToList());
         }
-        
+
         // If status changed to completed, increment counter for all assignees
         String newStatus = task.getStatus();
         boolean isNowCompleted = "completed".equalsIgnoreCase(newStatus);
-        
+
         if (!wasCompleted && isNowCompleted) {
             // Increment for all assignees in the new system
             if (task.getAssignees() != null && !task.getAssignees().isEmpty()) {
@@ -115,7 +120,7 @@ public class TaskService {
                         log.warn("Could not increment tasks for user: {}", assignee.getAssigneeEmail(), e);
                     }
                 }
-            } 
+            }
             // Fallback for old single assignedTo field (backward compatibility)
             else if (task.getAssignedTo() != null && !task.getAssignedTo().isEmpty()) {
                 String assignedTo = task.getAssignedTo();
@@ -128,7 +133,7 @@ public class TaskService {
                 }
             }
         }
-        
+
         Task updated = taskRepository.save(task);
         return convertToDto(updated);
     }
@@ -158,14 +163,14 @@ public class TaskService {
                 .lastUpdatedBy(entity.getLastUpdatedBy())
                 .lastUpdatedAt(entity.getLastUpdatedAt())
                 .build();
-        
+
         // Populate new assignedToList from assignees
         if (entity.getAssignees() != null && !entity.getAssignees().isEmpty()) {
             dto.setAssignedToList(entity.getAssignees().stream()
                     .map(TaskAssignee::getAssigneeEmail)
                     .collect(Collectors.toList()));
         }
-        
+
         return dto;
     }
 
@@ -202,16 +207,16 @@ public class TaskService {
         if (dto.getIsVisibleOnMainBoard() != null) entity.setIsVisibleOnMainBoard(dto.getIsVisibleOnMainBoard());
         entity.setLastUpdatedBy(user);
     }
-    
+
     private void syncTaskAssignees(Task task, List<String> assigneeEmails) {
         // Initialize assignees list if null
         if (task.getAssignees() == null) {
             task.setAssignees(new ArrayList<>());
         }
-        
+
         // Remove existing assignees
         task.getAssignees().clear();
-        
+
         // Remove duplicates and filter invalid emails
         Set<String> uniqueEmails = new HashSet<>();
         for (String email : assigneeEmails) {
@@ -219,7 +224,7 @@ public class TaskService {
                 uniqueEmails.add(email.trim().toLowerCase());
             }
         }
-        
+
         // Add new assignees
         for (String email : uniqueEmails) {
             try {
