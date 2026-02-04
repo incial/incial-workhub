@@ -2,8 +2,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Task, TaskPriority, TaskStatus, TaskType } from '../../types';
 import { formatDate, isRecentlyUpdated } from '../../utils';
-import { Edit2, Trash2, Paperclip, Check, ChevronDown, ExternalLink, Layout, Flag, Globe } from 'lucide-react';
+import { Edit2, Trash2, Paperclip, Check, ChevronDown, ExternalLink, Layout, Flag, Globe, User } from 'lucide-react';
 import { createPortal } from 'react-dom';
+
+// Simple Avatar component for assignees
+const Avatar: React.FC<{ name: string; url?: string }> = ({ name, url }) => {
+    const initials = name.split('@')[0].substring(0, 2).toUpperCase();
+    const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-yellow-500'];
+    const colorIndex = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+    
+    return url ? (
+        <img src={url} alt={name} className="h-7 w-7 rounded-full border-2 border-white shadow-sm object-cover" />
+    ) : (
+        <div className={`h-7 w-7 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-[9px] font-black text-white ${colors[colorIndex]}`}>
+            {initials}
+        </div>
+    );
+};
 
 interface ClientTaskTableProps {
   tasks: Task[];
@@ -139,6 +154,7 @@ export const ClientTaskTable: React.FC<ClientTaskTableProps> = ({
                 <thead>
                     <tr className="z-30">
                         <th className="sticky top-0 z-40 bg-gray-50/95 backdrop-blur px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-sm">Task name</th>
+                        <th className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-sm">Assignees</th>
                         <th className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-sm">Status</th>
                         <th className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-sm">Content Type</th>
                         <th className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-sm">Due date</th>
@@ -173,6 +189,37 @@ export const ClientTaskTable: React.FC<ClientTaskTableProps> = ({
                                     <p className="text-[10px] text-gray-400 font-medium italic truncate max-w-[200px]">
                                         {task.description || 'No additional details'}
                                     </p>
+                                </div>
+                            </td>
+
+                            <td className="px-6 py-5">
+                                <div className="flex items-center gap-2">
+                                    {task.assignedToList && task.assignedToList.length > 0 ? (
+                                        <>
+                                            <div className="flex -space-x-2">
+                                                {task.assignedToList.slice(0, 3).map((email, idx) => {
+                                                    const userAvatarUrl = userAvatarMap?.[email];
+                                                    return <Avatar key={idx} name={email} url={userAvatarUrl} />;
+                                                })}
+                                            </div>
+                                            {task.assignedToList.length > 3 && (
+                                                <span className="text-[10px] font-bold text-gray-500 ml-2">+{task.assignedToList.length - 3}</span>
+                                            )}
+                                            {task.assignedToList.length === 1 && (
+                                                <span className="text-xs font-semibold text-gray-600 truncate ml-2">{task.assignedToList[0].split('@')[0]}</span>
+                                            )}
+                                        </>
+                                    ) : task.assignedTo ? (
+                                        <>
+                                            <Avatar name={task.assignedTo} url={userAvatarMap?.[task.assignedTo]} />
+                                            <span className="text-xs font-semibold text-gray-600 truncate">{task.assignedTo}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Avatar name="Unassigned" />
+                                            <span className="text-xs font-semibold text-gray-600 truncate">Unassigned</span>
+                                        </>
+                                    )}
                                 </div>
                             </td>
 

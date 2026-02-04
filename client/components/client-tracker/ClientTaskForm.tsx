@@ -5,7 +5,7 @@ import { Task, TaskPriority, TaskType, User } from '../../types';
 import { formatDate, formatDateTime } from '../../utils';
 import { CustomSelect } from '../ui/CustomSelect';
 import { CustomDatePicker } from '../ui/CustomDatePicker';
-import { UserSelect } from '../ui/UserSelect';
+import { UserMultiSelect } from '../ui/UserMultiSelect';
 import { usersApi } from '../../services/api';
 
 interface ClientTaskFormProps {
@@ -47,7 +47,8 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
           status: 'Not Started',
           priority: 'Medium',
           taskType: 'General',
-          assignedTo: 'Unassigned',
+          assignedTo: 'Unassigned', // Kept for backward compatibility
+          assignedToList: [], // Initialize as empty array for multi-assignee
           assigneeId: undefined,
           dueDate: localIsoDate,
           taskLink: '',
@@ -67,8 +68,8 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
     onClose();
   };
 
-  const handleUserChange = (userId: number, userName: string) => {
-      setFormData(prev => ({ ...prev, assigneeId: userId, assignedTo: userName }));
+  const handleAssigneesChange = (emails: string[]) => {
+      setFormData(prev => ({ ...prev, assignedToList: emails }));
   };
 
   const renderView = () => (
@@ -102,8 +103,20 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
                     <p className="text-xl font-black text-slate-900">{formatDate(formData.dueDate || '')}</p>
                 </div>
                 <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Assignee</p>
-                    <p className="text-xl font-black text-indigo-600 uppercase tracking-tighter truncate">{formData.assignedTo || 'Unassigned'}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignees</p>
+                    {formData.assignedToList && formData.assignedToList.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                            {formData.assignedToList.map((email, idx) => (
+                                <span key={idx} className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-200">
+                                    {email}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-xl font-black text-slate-400 uppercase tracking-tighter truncate">
+                            {formData.assignedTo || 'Unassigned'}
+                        </p>
+                    )}
                 </div>
               </div>
           </div>
@@ -160,11 +173,12 @@ export const ClientTaskForm: React.FC<ClientTaskFormProps> = ({ isOpen, onClose,
                 <CustomSelect label="Mission Priority" value={formData.priority || 'Medium'} onChange={(val) => setFormData({...formData, priority: val as TaskPriority})} options={PRIORITIES.map(p => ({ label: p, value: p }))} />
                 
                 {!isClientView && (
-                    <UserSelect 
-                        label="Designated Agent" 
-                        value={formData.assigneeId || formData.assignedTo || 'Unassigned'} 
-                        onChange={handleUserChange} 
-                        users={users} 
+                    <UserMultiSelect 
+                        label="Assignees" 
+                        value={formData.assignedToList || []} 
+                        onChange={handleAssigneesChange} 
+                        users={users}
+                        placeholder="Select team members..."
                     />
                 )}
 
