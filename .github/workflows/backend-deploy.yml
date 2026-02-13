@@ -1,4 +1,4 @@
-name: Build & Push Image
+name: Build & Push Image (ARM64)
 
 on:
   push:
@@ -18,16 +18,15 @@ jobs:
       contents: read
 
     steps:
-      # Checkout
+      # Checkout code
       - name: Checkout
         uses: actions/checkout@v4
 
-      # SHA (7 chars)
+      # Get short commit hash (7 chars)
       - name: Extract short SHA
-        id: vars
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      # AWS Login
+      # AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -35,20 +34,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Login ECR
-      - name: Login to ECR
+      # Login to ECR
+      - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Buildx
+      # Required for ARM builds
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # Docker builder
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build & Push
-      - name: Build and Push
+      # Build and push image
+      - name: Build and Push Docker Image (ARM64)
         uses: docker/build-push-action@v5
         with:
           context: ./server
           file: ./server/Dockerfile
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ env.IMAGE_URI }}:${{ env.SHORT_SHA }}
