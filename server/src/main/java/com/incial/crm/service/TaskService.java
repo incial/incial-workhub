@@ -24,6 +24,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskAssigneeRepository taskAssigneeRepository;
     private final UserService userService;
+    private final EmailService emailService;
 
     @Transactional(readOnly = true)
     public List<TaskDto> getAllTasks() {
@@ -52,7 +53,7 @@ public class TaskService {
                     // Fallback to old assignedTo field for backward compatibility
                     if (task.getAssignedTo() != null) {
                         return task.getAssignedTo().contains(userEmail.split("@")[0]) ||
-                               task.getAssignedTo().equalsIgnoreCase(userEmail);
+                                task.getAssignedTo().equalsIgnoreCase(userEmail);
                     }
                     return false;
                 })
@@ -81,12 +82,24 @@ public class TaskService {
     public TaskDto createTask(TaskDto dto) {
         Task task = convertToEntity(dto);
         Task saved = taskRepository.save(task);
-        
+
         // Handle assignees
         if (dto.getAssignedToList() != null && !dto.getAssignedToList().isEmpty()) {
             syncTaskAssignees(saved, dto.getAssignedToList());
+
+            // Send email notifications to all assignees
+            String assignedByName = UserService.getCurrentUsername();
+            for (String assigneeEmail : dto.getAssignedToList()) {
+                try {
+                    log.info("Sending task assignment email to: {} for task: {}", assigneeEmail, saved.getTitle());
+                    emailService.sendTaskAssignmentEmail(assigneeEmail, saved, assignedByName);
+                } catch (Exception e) {
+                    log.warn("Failed to send assignment email to {} for task {}: {}",
+                            assigneeEmail, saved.getTitle(), e.getMessage());
+                }
+            }
         }
-        
+
         return convertToDto(saved);
     }
 
@@ -94,26 +107,51 @@ public class TaskService {
     public TaskDto updateTask(Long id, TaskDto dto) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + id));
-        
+
         // Check if task is being marked as completed
         String oldStatus = task.getStatus();
-        boolean wasCompleted = "completed".equalsIgnoreCase(oldStatus) || 
-                               "done".equalsIgnoreCase(oldStatus) ||
-                               "posted".equalsIgnoreCase(oldStatus);
-        
+        boolean wasCompleted = "completed".equalsIgnoreCase(oldStatus) ||
+                "done".equalsIgnoreCase(oldStatus) ||
+                "posted".equalsIgnoreCase(oldStatus);
+
+        // Get old assignees before update
+        Set<String> oldAssignees = task.getAssignees() != null ?
+                task.getAssignees().stream()
+                        .map(assignee -> assignee.getAssigneeEmail())
+                        .collect(Collectors.toSet()) :
+                new HashSet<>();
+
         updateEntityFromDto(task, dto);
-        
+
         // Handle assignees update
         if (dto.getAssignedToList() != null) {
             syncTaskAssignees(task, dto.getAssignedToList());
+
+            // Send email notifications to newly added assignees only
+            Set<String> newAssignees = new HashSet<>(dto.getAssignedToList());
+            newAssignees.removeAll(oldAssignees); // Keep only the new ones
+
+            if (!newAssignees.isEmpty()) {
+                String assignedByName = UserService.getCurrentUsername();
+                for (String newAssigneeEmail : newAssignees) {
+                    try {
+                        log.info("Sending task assignment email to newly added assignee: {} for task: {}",
+                                newAssigneeEmail, task.getTitle());
+                        emailService.sendTaskAssignmentEmail(newAssigneeEmail, task, assignedByName);
+                    } catch (Exception e) {
+                        log.warn("Failed to send assignment email to {} for task {}: {}",
+                                newAssigneeEmail, task.getTitle(), e.getMessage());
+                    }
+                }
+            }
         }
-        
+
         // If status changed to completed, increment counter for all assignees
         String newStatus = task.getStatus();
         boolean isNowCompleted = "completed".equalsIgnoreCase(newStatus) ||
-                                 "done".equalsIgnoreCase(newStatus) ||
-                                 "posted".equalsIgnoreCase(newStatus);
-        
+                "done".equalsIgnoreCase(newStatus) ||
+                "posted".equalsIgnoreCase(newStatus);
+
         if (!wasCompleted && isNowCompleted) {
             // Increment for all assignees in the new system
             if (task.getAssignees() != null && !task.getAssignees().isEmpty()) {
@@ -124,7 +162,7 @@ public class TaskService {
                         log.warn("Could not increment tasks for user: {}", assignee.getAssigneeEmail(), e);
                     }
                 }
-            } 
+            }
             // Fallback for old single assignedTo field (backward compatibility)
             else if (task.getAssignedTo() != null && !task.getAssignedTo().isEmpty()) {
                 String assignedTo = task.getAssignedTo();
@@ -137,7 +175,7 @@ public class TaskService {
                 }
             }
         }
-        
+
         Task updated = taskRepository.save(task);
         return convertToDto(updated);
     }
@@ -156,7 +194,7 @@ public class TaskService {
                 .description(entity.getDescription())
                 .status(entity.getStatus())
                 .priority(entity.getPriority())
-                .assignedTo(entity.getAssignedTo()) // Keep for backward compatibility
+                .assignedTo(entity.getAssignedTo())
                 .dueDate(entity.getDueDate())
                 .companyId(entity.getCompanyId())
                 .taskType(entity.getTaskType())
@@ -167,14 +205,14 @@ public class TaskService {
                 .lastUpdatedBy(entity.getLastUpdatedBy())
                 .lastUpdatedAt(entity.getLastUpdatedAt())
                 .build();
-        
+
         // Populate new assignedToList from assignees
         if (entity.getAssignees() != null && !entity.getAssignees().isEmpty()) {
             dto.setAssignedToList(entity.getAssignees().stream()
                     .map(TaskAssignee::getAssigneeEmail)
                     .collect(Collectors.toList()));
         }
-        
+
         return dto;
     }
 
@@ -202,7 +240,7 @@ public class TaskService {
         if (dto.getDescription() != null) entity.setDescription(dto.getDescription());
         if (dto.getStatus() != null) entity.setStatus(dto.getStatus());
         if (dto.getPriority() != null) entity.setPriority(dto.getPriority());
-        if (dto.getAssignedTo() != null) entity.setAssignedTo(dto.getAssignedTo()); // Keep for backward compatibility
+        if (dto.getAssignedTo() != null) entity.setAssignedTo(dto.getAssignedTo());
         if (dto.getDueDate() != null) entity.setDueDate(dto.getDueDate());
         if (dto.getCompanyId() != null) entity.setCompanyId(dto.getCompanyId());
         if (dto.getTaskType() != null) entity.setTaskType(dto.getTaskType());
@@ -211,16 +249,16 @@ public class TaskService {
         if (dto.getIsVisibleOnMainBoard() != null) entity.setIsVisibleOnMainBoard(dto.getIsVisibleOnMainBoard());
         entity.setLastUpdatedBy(user);
     }
-    
+
     private void syncTaskAssignees(Task task, List<String> assigneeEmails) {
         // Initialize assignees list if null
         if (task.getAssignees() == null) {
             task.setAssignees(new ArrayList<>());
         }
-        
+
         // Remove existing assignees
         task.getAssignees().clear();
-        
+
         // Remove duplicates and filter invalid emails
         Set<String> uniqueEmails = new HashSet<>();
         for (String email : assigneeEmails) {
@@ -228,7 +266,7 @@ public class TaskService {
                 uniqueEmails.add(email.trim().toLowerCase());
             }
         }
-        
+
         // Add new assignees
         for (String email : uniqueEmails) {
             try {
