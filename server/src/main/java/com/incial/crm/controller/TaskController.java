@@ -39,6 +39,36 @@ public class TaskController {
         }
     }
 
+    @GetMapping("/active")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_SUPER_ADMIN')")
+    @Operation(summary = "Get active tasks", description = "Retrieve all non-completed tasks (excluding Completed, Done, and Posted status)")
+    public ResponseEntity<List<TaskDto>> getActiveTasks() {
+        log.info("GET /api/v1/tasks/active - Retrieving active tasks");
+        try {
+            List<TaskDto> tasks = taskService.getActiveTasks();
+            log.info("GET /api/v1/tasks/active - Successfully retrieved {} active tasks", tasks.size());
+            return ResponseEntity.ok(tasks);
+        } catch (Exception e) {
+            log.error("GET /api/v1/tasks/active - Error retrieving active tasks", e);
+            throw e;
+        }
+    }
+
+    @GetMapping("/completed")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_SUPER_ADMIN')")
+    @Operation(summary = "Get completed tasks", description = "Retrieve all completed tasks (Completed, Done, or Posted status)")
+    public ResponseEntity<List<TaskDto>> getCompletedTasks() {
+        log.info("GET /api/v1/tasks/completed - Retrieving completed tasks");
+        try {
+            List<TaskDto> tasks = taskService.getCompletedTasks();
+            log.info("GET /api/v1/tasks/completed - Successfully retrieved {} completed tasks", tasks.size());
+            return ResponseEntity.ok(tasks);
+        } catch (Exception e) {
+            log.error("GET /api/v1/tasks/completed - Error retrieving completed tasks", e);
+            throw e;
+        }
+    }
+
     @GetMapping("/my-tasks")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_SUPER_ADMIN')")
     @Operation(summary = "Get current user's tasks", description = "Retrieve tasks assigned to the current logged-in user")
