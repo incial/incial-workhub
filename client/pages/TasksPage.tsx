@@ -20,7 +20,8 @@ export const TasksPage: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { isSidebarCollapsed } = useLayout();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeTasks, setActiveTasks] = useState<Task[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [companyMap, setCompanyMap] = useState<Record<number, string>>({});
   const [userAvatarMap, setUserAvatarMap] = useState<Record<string, string>>({});
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -28,15 +29,17 @@ export const TasksPage: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
+  const [isCompletedLoading, setIsCompletedLoading] = useState(false);
+  const [completedLoaded, setCompletedLoaded] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const [filters, setFilters] = useState<TaskFilterState>({ search: '', status: '', priority: '', assignedTo: '' });
 
-  const fetchData = async () => {
+  const fetchActiveData = async () => {
     setIsLoading(true);
     try {
-      const [tasksData, crmData, usersData] = await Promise.all([tasksApi.getAll(), crmApi.getAll(), usersApi.getAll()]);
-      setTasks(tasksData);
+      const [tasksData, crmData, usersData] = await Promise.all([tasksApi.getActive(), crmApi.getAll(), usersApi.getAll()]);
+      setActiveTasks(tasksData);
       const cMap: Record<number, string> = {};
       crmData.crmList.forEach(c => cMap[c.id] = c.company);
       setCompanyMap(cMap);
@@ -46,10 +49,50 @@ export const TasksPage: React.FC = () => {
     } catch (err) { console.error(err); } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchCompletedData = async (force = false) => {
+    if (!force && completedLoaded) return; // Don't fetch if already loaded (unless forced)
+    setIsCompletedLoading(true);
+    try {
+      const tasksData = await tasksApi.getCompleted();
+      setCompletedTasks(tasksData);
+      setCompletedLoaded(true);
+    } catch (err) { console.error(err); } finally { setIsCompletedLoading(false); }
+  };
 
-  const filteredTasks = useMemo(() => {
-    return tasks.filter(t => {
+  const fetchAllData = async () => {
+    setIsLoading(true);
+    try {
+      const [activeData, completedData, crmData, usersData] = await Promise.all([
+        tasksApi.getActive(), 
+        tasksApi.getCompleted(), 
+        crmApi.getAll(), 
+        usersApi.getAll()
+      ]);
+      setActiveTasks(activeData);
+      setCompletedTasks(completedData);
+      setCompletedLoaded(true);
+      const cMap: Record<number, string> = {};
+      crmData.crmList.forEach(c => cMap[c.id] = c.company);
+      setCompanyMap(cMap);
+      const uMap: Record<string, string> = {};
+      usersData.forEach(u => { if (u.avatarUrl) { uMap[u.name] = u.avatarUrl; uMap[u.email] = u.avatarUrl; } });
+      setUserAvatarMap(uMap);
+    } catch (err) { console.error(err); } finally { setIsLoading(false); }
+  };
+
+  useEffect(() => { fetchActiveData(); }, []);
+
+  // Load completed tasks when Kanban view is selected
+  useEffect(() => {
+    if (viewMode === 'kanban' && !completedLoaded) {
+      fetchCompletedData();
+    }
+  }, [viewMode, completedLoaded]);
+
+  const allTasks = useMemo(() => [...activeTasks, ...completedTasks], [activeTasks, completedTasks]);
+
+  const filteredActiveTasks = useMemo(() => {
+    return activeTasks.filter(t => {
       const isVisible = !t.companyId || t.isVisibleOnMainBoard;
       if (!isVisible && viewMode !== 'mine') return false; 
       const matchesSearch = (t.title || '').toLowerCase().includes(filters.search.toLowerCase());
@@ -68,13 +111,38 @@ export const TasksPage: React.FC = () => {
       
       return matchesSearch && matchesStatus && matchesPriority && matchesAssignee && matchesView;
     });
-  }, [tasks, filters, viewMode, user]);
+  }, [activeTasks, filters, viewMode, user]);
 
-  const { activeTasks, completedTasks } = useMemo(() => {
-    const active = filteredTasks.filter(t => t.status !== 'Completed' && t.status !== 'Done');
-    const completed = filteredTasks.filter(t => t.status === 'Completed' || t.status === 'Done');
-    return { activeTasks: active, completedTasks: completed };
-  }, [filteredTasks]);
+  const filteredCompletedTasks = useMemo(() => {
+    return completedTasks.filter(t => {
+      const isVisible = !t.companyId || t.isVisibleOnMainBoard;
+      if (!isVisible && viewMode !== 'mine') return false; 
+      const matchesSearch = (t.title || '').toLowerCase().includes(filters.search.toLowerCase());
+      const matchesStatus = filters.status === '' || t.status === filters.status;
+      const matchesPriority = filters.priority === '' || t.priority === filters.priority;
+      
+      const matchesAssignee = filters.assignedTo === '' || 
+        (t.assignedToList && t.assignedToList.some(email => email === filters.assignedTo)) ||
+        (!t.assignedToList && t.assignedTo === filters.assignedTo);
+      
+      const matchesView = viewMode === 'mine' 
+        ? (user && ((t.assignedToList && t.assignedToList.includes(user.email)) || t.assignedTo === user.name))
+        : true;
+      
+      return matchesSearch && matchesStatus && matchesPriority && matchesAssignee && matchesView;
+    });
+  }, [completedTasks, filters, viewMode, user]);
+
+  const filteredAllTasks = useMemo(() => {
+    return [...filteredActiveTasks, ...filteredCompletedTasks];
+  }, [filteredActiveTasks, filteredCompletedTasks]);
+
+  const handleCompletedExpandToggle = () => {
+    if (!isCompletedExpanded && !completedLoaded) {
+      fetchCompletedData();
+    }
+    setIsCompletedExpanded(!isCompletedExpanded);
+  };
 
   const handleEdit = (task: Task) => {
     setEditingTask(task);
@@ -99,8 +167,17 @@ export const TasksPage: React.FC = () => {
   const handleSaveTask = async (data: Partial<Task>) => {
     try {
         if (data.id && data.id !== 0) {
+            // Determine if task is completed
+            const isCompleted = ['Completed', 'Done', 'Posted'].includes(data.status || '');
+            
             // Optimistic update for edits
-            setTasks(prev => prev.map(t => t.id === data.id ? { ...t, ...data } as Task : t));
+            if (isCompleted) {
+                setCompletedTasks(prev => prev.map(t => t.id === data.id ? { ...t, ...data } as Task : t));
+                setActiveTasks(prev => prev.filter(t => t.id !== data.id));
+            } else {
+                setActiveTasks(prev => prev.map(t => t.id === data.id ? { ...t, ...data } as Task : t));
+                setCompletedTasks(prev => prev.filter(t => t.id !== data.id));
+            }
             
             await tasksApi.update(data.id, {
                 ...data,
@@ -114,19 +191,39 @@ export const TasksPage: React.FC = () => {
                 companyId: data.companyId || undefined, // Explicitly internal if not set
                 isVisibleOnMainBoard: true // Main board tasks are always visible
             } as any);
-            setTasks(prev => [...prev, newTask]);
+            setActiveTasks(prev => [...prev, newTask]);
             showToast("Internal milestone created", "success");
         }
     } catch (e) {
         showToast("Operation failed", "error");
-        fetchData(); // Revert/Reload on error
+        fetchActiveData(); // Revert/Reload on error
     }
   };
 
   const handleStatusChange = async (task: Task, newStatus: TaskStatus) => {
-    const previousTasks = [...tasks];
-    // Optimistic Update
-    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus, lastUpdatedAt: new Date().toISOString() } : t));
+    const previousActiveTasks = [...activeTasks];
+    const previousCompletedTasks = [...completedTasks];
+    
+    const isNewStatusCompleted = ['Completed', 'Done', 'Posted'].includes(newStatus);
+    const isCurrentlyCompleted = ['Completed', 'Done', 'Posted'].includes(task.status);
+    
+    // Optimistic Update - move between active and completed
+    if (isNewStatusCompleted && !isCurrentlyCompleted) {
+      // Move from active to completed
+      setActiveTasks(prev => prev.filter(t => t.id !== task.id));
+      setCompletedTasks(prev => [...prev, { ...task, status: newStatus, lastUpdatedAt: new Date().toISOString() }]);
+      if (!completedLoaded) setCompletedLoaded(true);
+    } else if (!isNewStatusCompleted && isCurrentlyCompleted) {
+      // Move from completed to active
+      setCompletedTasks(prev => prev.filter(t => t.id !== task.id));
+      setActiveTasks(prev => [...prev, { ...task, status: newStatus, lastUpdatedAt: new Date().toISOString() }]);
+    } else if (isNewStatusCompleted) {
+      // Update within completed
+      setCompletedTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus, lastUpdatedAt: new Date().toISOString() } : t));
+    } else {
+      // Update within active
+      setActiveTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus, lastUpdatedAt: new Date().toISOString() } : t));
+    }
     
     try {
       await tasksApi.update(task.id, { 
@@ -138,14 +235,23 @@ export const TasksPage: React.FC = () => {
     } catch (e) { 
         console.error(e);
         showToast("Status update failed", "error");
-        setTasks(previousTasks); // Revert
+        setActiveTasks(previousActiveTasks); // Revert
+        setCompletedTasks(previousCompletedTasks);
     }
   };
 
   const handlePriorityChange = async (task: Task, newPriority: TaskPriority) => {
-      const previousTasks = [...tasks];
+      const previousActiveTasks = [...activeTasks];
+      const previousCompletedTasks = [...completedTasks];
+      
+      const isCompleted = ['Completed', 'Done', 'Posted'].includes(task.status);
+      
       // Optimistic Update
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, priority: newPriority, lastUpdatedAt: new Date().toISOString() } : t));
+      if (isCompleted) {
+        setCompletedTasks(prev => prev.map(t => t.id === task.id ? { ...t, priority: newPriority, lastUpdatedAt: new Date().toISOString() } : t));
+      } else {
+        setActiveTasks(prev => prev.map(t => t.id === task.id ? { ...t, priority: newPriority, lastUpdatedAt: new Date().toISOString() } : t));
+      }
 
       try {
           await tasksApi.update(task.id, { 
@@ -157,7 +263,8 @@ export const TasksPage: React.FC = () => {
       } catch (e) { 
           console.error(e);
           showToast("Priority update failed", "error");
-          setTasks(previousTasks); // Revert
+          setActiveTasks(previousActiveTasks); // Revert
+          setCompletedTasks(previousCompletedTasks);
       }
   };
 
@@ -222,7 +329,7 @@ export const TasksPage: React.FC = () => {
                         {(viewMode === 'list' || viewMode === 'mine') && (
                             <div className="px-4 py-6">
                                 <TasksTable 
-                                    data={activeTasks} 
+                                    data={filteredActiveTasks} 
                                     companyMap={companyMap} 
                                     userAvatarMap={userAvatarMap} 
                                     onEdit={handleEdit} 
@@ -231,41 +338,50 @@ export const TasksPage: React.FC = () => {
                                     onPriorityChange={handlePriorityChange} 
                                 />
                                 
-                                {completedTasks.length > 0 && (
+                                {!completedLoaded || filteredCompletedTasks.length > 0 ? (
                                     <div className="mt-12 border-t border-slate-950/5 px-2 lg:px-6">
                                         <button 
-                                            onClick={() => setIsCompletedExpanded(!isCompletedExpanded)} 
+                                            onClick={handleCompletedExpandToggle} 
                                             className="w-full flex items-center gap-4 py-6 lg:py-8 hover:bg-white/40 transition-colors text-left rounded-[2rem] px-4 lg:px-8 group"
                                         >
                                             <div className="p-2.5 rounded-xl bg-slate-50 group-hover:bg-slate-100 transition-colors">
                                                 {isCompletedExpanded ? <ChevronDown className="h-5 w-5 text-slate-500" /> : <ChevronRight className="h-5 w-5 text-slate-500" />}
                                             </div>
                                             <Archive className="h-6 w-6 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-                                            <span className="text-[9px] lg:text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">Operational Archives ({completedTasks.length})</span>
+                                            <span className="text-[9px] lg:text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">
+                                                Operational Archives {completedLoaded ? `(${filteredCompletedTasks.length})` : ''}
+                                            </span>
                                         </button>
                                         
                                         {isCompletedExpanded && (
                                             <div className="animate-premium">
-                                                <TasksTable 
-                                                    data={completedTasks} 
-                                                    companyMap={companyMap} 
-                                                    userAvatarMap={userAvatarMap} 
-                                                    onEdit={handleEdit} 
-                                                    onDelete={(id) => setDeleteId(id)}
-                                                    onStatusChange={handleStatusChange} 
-                                                    onPriorityChange={handlePriorityChange} 
-                                                />
+                                                {isCompletedLoading ? (
+                                                    <div className="p-20 text-center flex flex-col items-center justify-center gap-4">
+                                                        <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-slate-100 border-t-brand-600" />
+                                                        <p className="text-slate-400 uppercase font-black tracking-[0.3em] text-xs animate-pulse">Loading Archives...</p>
+                                                    </div>
+                                                ) : (
+                                                    <TasksTable 
+                                                        data={filteredCompletedTasks} 
+                                                        companyMap={companyMap} 
+                                                        userAvatarMap={userAvatarMap} 
+                                                        onEdit={handleEdit} 
+                                                        onDelete={(id) => setDeleteId(id)}
+                                                        onStatusChange={handleStatusChange} 
+                                                        onPriorityChange={handlePriorityChange} 
+                                                    />
+                                                )}
                                             </div>
                                         )}
                                     </div>
-                                )}
+                                ) : null}
                             </div>
                         )}
                         
                         {viewMode === 'kanban' && (
                             <div className="p-4 lg:p-8 h-[600px] lg:h-[700px] animate-premium overflow-x-auto">
                                 <TasksKanban 
-                                    tasks={filteredTasks} 
+                                    tasks={filteredAllTasks} 
                                     userAvatarMap={userAvatarMap} 
                                     onEdit={handleEdit} 
                                     onStatusChange={handleStatusChange} 
@@ -305,12 +421,17 @@ export const TasksPage: React.FC = () => {
         onConfirm={async () => {
             if (!deleteId) return;
             try { 
-                setTasks(prev => prev.filter(t => t.id !== deleteId)); // Optimistic delete
+                // Optimistic delete from both lists
+                setActiveTasks(prev => prev.filter(t => t.id !== deleteId));
+                setCompletedTasks(prev => prev.filter(t => t.id !== deleteId));
                 await tasksApi.delete(deleteId); 
                 showToast("Milestone purged from registry", "success");
             } catch (e) { 
                 showToast("Purge action failed", "error");
-                fetchData();
+                fetchActiveData();
+                if (completedLoaded) {
+                    fetchCompletedData(true); // Force reload
+                }
             }
             setDeleteId(null);
         }} 

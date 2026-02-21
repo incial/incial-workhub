@@ -12,7 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "tasks")
+@Table(name = "tasks", indexes = {
+    @Index(name = "idx_task_status", columnList = "status"),
+    @Index(name = "idx_task_company_id", columnList = "company_id"),
+    @Index(name = "idx_task_due_date", columnList = "due_date")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -79,7 +83,7 @@ public class Task {
     protected void onUpdate() {
         lastUpdatedAt = LocalDateTime.now();
     }
-
+    
     @PostLoad
     protected void onLoad() {
         if (assignees == null) {
