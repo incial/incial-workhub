@@ -227,6 +227,20 @@ export const tasksApi = {
     } catch (error) { throw handleApiError(error); }
   },
 
+  getActive: async (): Promise<Task[]> => {
+    try {
+        const res = await api.get("/tasks/active");
+        return res.data;
+    } catch (error) { throw handleApiError(error); }
+  },
+
+  getCompleted: async (): Promise<Task[]> => {
+    try {
+        const res = await api.get("/tasks/completed");
+        return res.data;
+    } catch (error) { throw handleApiError(error); }
+  },
+
   getClientTasks: async (): Promise<Task[]> => {
     try {
         const res = await api.get("/tasks/client-tasks");
