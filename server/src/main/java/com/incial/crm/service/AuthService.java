@@ -78,7 +78,6 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         UserDto userDto = UserDto.builder()
-                .id(savedUser.getId())
                 .name(savedUser.getName())
                 .email(savedUser.getEmail())
                 .role(savedUser.getRole())
@@ -106,11 +105,9 @@ public class AuthService {
             String token = jwtUtil.generateToken(user.getEmail(),user.getRole());
 
             UserDto userDto = UserDto.builder()
-                    .id(user.getId())
                     .name(user.getName())
                     .email(user.getEmail())
                     .role(user.getRole())
-                    .googleId(user.getGoogleId())
                     .avatarUrl(user.getAvatarUrl())
                     .clientCrmId(user.getClientCrmId())
                     .build();
@@ -130,11 +127,9 @@ public class AuthService {
 
     public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
         try {
-            log.debug("Processing Google login request");
 
             // Check if Google Client ID is configured
             if (googleClientId == null || googleClientId.trim().isEmpty()) {
-                log.error("Google Client ID is not configured. Please set the GOOGLE_CLIENT_ID environment variable.");
                 throw new IllegalStateException("Google authentication is not properly configured. Please contact the administrator.");
             }
 
@@ -147,7 +142,6 @@ public class AuthService {
 
             GoogleIdToken idToken = verifier.verify(request.getCredential());
             if (idToken == null) {
-                log.error("Google token verification failed - invalid token");
                 throw new RuntimeException("Invalid Google ID token");
             }
 
@@ -179,11 +173,9 @@ public class AuthService {
             String token = jwtUtil.generateToken(user.getEmail(),user.getRole());
 
             UserDto userDto = UserDto.builder()
-                    .id(user.getId())
                     .name(user.getName())
                     .email(user.getEmail())
                     .role(user.getRole())
-                    .googleId(user.getGoogleId())
                     .avatarUrl(user.getAvatarUrl())
                     .clientCrmId(user.getClientCrmId())
                     .build();

@@ -12,13 +12,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDto {
-    private Long id;
     private String name;
     private String email;
     private String role;
     private Integer tasksCompleted;
-    private String googleId;
     private String avatarUrl;
     private Long clientCrmId;
-    private LocalDateTime createdAt;
 }
