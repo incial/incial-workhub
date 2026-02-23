@@ -44,8 +44,15 @@ export const ClientPortalPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [user]);
+    let mounted = true;
+    const loadData = async () => {
+      if (mounted) {
+        await fetchData();
+      }
+    };
+    loadData();
+    return () => { mounted = false; };
+  }, [user?.clientCrmId]);
 
   const handleTaskSubmit = async (data: Partial<Task>) => {
     try {

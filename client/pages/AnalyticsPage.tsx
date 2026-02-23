@@ -25,22 +25,25 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ title }) => {
     const hasPermission = user?.role === 'ROLE_SUPER_ADMIN';
 
     useEffect(() => {
+        let mounted = true;
         const loadData = async () => {
+            if (!mounted) return;
             if (hasPermission) {
                 try {
                     const data = await crmApi.getAll();
-                    setEntries(data.crmList);
+                    if (mounted) setEntries(data.crmList);
                 } catch (error) {
                     console.error("Failed to fetch analytics data", error);
                 } finally {
-                    setIsLoading(false);
+                    if (mounted) setIsLoading(false);
                 }
             } else {
-                setIsLoading(false);
+                if (mounted) setIsLoading(false);
             }
         };
         loadData();
-    }, [user, hasPermission]);
+        return () => { mounted = false; };
+    }, [hasPermission]);
 
     const handleExport = async (type: 'crm' | 'tasks' | 'performance') => {
         showToast(`Generating ${type.toUpperCase()} CSV...`, 'info');

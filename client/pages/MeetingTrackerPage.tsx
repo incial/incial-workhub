@@ -40,7 +40,14 @@ export const MeetingTrackerPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    let mounted = true;
+    const loadData = async () => {
+      if (mounted) {
+        await fetchData();
+      }
+    };
+    loadData();
+    return () => { mounted = false; };
   }, []);
 
   const { activeMeetings, historyMeetings } = useMemo(() => {

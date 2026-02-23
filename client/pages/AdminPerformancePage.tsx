@@ -137,7 +137,14 @@ export const AdminPerformancePage: React.FC = () => {
       }
     };
 
-    fetchAndCalculate();
+    let mounted = true;
+    const loadData = async () => {
+      if (mounted) {
+        await fetchAndCalculate();
+      }
+    };
+    loadData();
+    return () => { mounted = false; };
   }, []);
 
   const totalTasks = stats.reduce((acc, s) => acc + s.total, 0);

@@ -19,12 +19,16 @@ export const ProfilePage: React.FC = () => {
     const [stats, setStats] = useState({ tasks: 0, completed: 0, meetings: 0 });
 
     useEffect(() => {
+        let mounted = true;
         const fetchStats = async () => {
+            if (!mounted) return;
             try {
                 const [tasks, meetings] = await Promise.all([
                     tasksApi.getAll(),
                     meetingsApi.getAll()
                 ]);
+                
+                if (!mounted) return;
                 
                 const userTasks = Array.isArray(tasks) ? tasks.filter(t => {
                     if (user?.id && t.assigneeId) return t.assigneeId === user.id;
@@ -46,7 +50,8 @@ export const ProfilePage: React.FC = () => {
             }
         };
         fetchStats();
-    }, [user]);
+        return () => { mounted = false; };
+    }, [user?.id, user?.name]);
 
     const completionRate = stats.tasks > 0 ? Math.round((stats.completed / stats.tasks) * 100) : 0;
 

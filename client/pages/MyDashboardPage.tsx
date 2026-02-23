@@ -60,7 +60,7 @@ export const MyDashboardPage: React.FC = () => {
             }
         };
         loadData();
-    }, [user]);
+    }, []); // Empty dependency array - only run once on mount
 
     // --- Derived Metrics & Data (Memoized for Performance) ---
 

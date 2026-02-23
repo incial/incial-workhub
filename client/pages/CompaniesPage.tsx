@@ -45,7 +45,14 @@ export const CompaniesPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    let mounted = true;
+    const loadData = async () => {
+      if (mounted) {
+        await fetchData();
+      }
+    };
+    loadData();
+    return () => { mounted = false; };
   }, []);
 
   const allCompanies = useMemo(() => {
