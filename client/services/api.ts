@@ -10,6 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 //const API_URL = 'http://localhost:8080/api/v1';
 
 
+
 const api = axios.create({
   baseURL: API_URL,
 });
@@ -241,6 +242,13 @@ export const tasksApi = {
     } catch (error) { throw handleApiError(error); }
   },
 
+  getMyTasks: async (): Promise<Task[]> => {
+    try {
+        const res = await api.get("/tasks/my-tasks");
+        return res.data;
+    } catch (error) { throw handleApiError(error); }
+  },
+
   getClientTasks: async (): Promise<Task[]> => {
     try {
         const res = await api.get("/tasks/client-tasks");
@@ -276,6 +284,13 @@ export const meetingsApi = {
   getAll: async (): Promise<Meeting[]> => {
     try {
         const res = await api.get("/meetings/all");
+        return res.data;
+    } catch (error) { throw handleApiError(error); }
+  },
+
+  getMyMeetings: async (): Promise<Meeting[]> => {
+    try {
+        const res = await api.get("/meetings/my-meetings");
         return res.data;
     } catch (error) { throw handleApiError(error); }
   },

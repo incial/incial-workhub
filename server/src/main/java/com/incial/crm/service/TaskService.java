@@ -54,21 +54,11 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskDto> getCurrentUserTasks(String userEmail) {
-        // Get tasks where the user is one of the assignees
-        return taskRepository.findAll().stream()
-                .filter(task -> {
-                    // Check new assignees list
-                    if (task.getAssignees() != null && !task.getAssignees().isEmpty()) {
-                        return task.getAssignees().stream()
-                                .anyMatch(assignee -> assignee.getAssigneeEmail().equalsIgnoreCase(userEmail));
-                    }
-                    // Fallback to old assignedTo field for backward compatibility
-                    if (task.getAssignedTo() != null) {
-                        return task.getAssignedTo().contains(userEmail.split("@")[0]) ||
-                               task.getAssignedTo().equalsIgnoreCase(userEmail);
-                    }
-                    return false;
-                })
+        // Extract username from email for backward compatibility with old assignedTo field
+        String userName = userEmail.contains("@") ? userEmail.substring(0, userEmail.indexOf("@")) : userEmail;
+        
+        // Use database-level filtering for better performance
+        return taskRepository.findTasksByUserEmail(userEmail, userName).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
