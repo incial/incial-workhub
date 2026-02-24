@@ -143,7 +143,7 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
           </thead>
           <tbody className="divide-y divide-gray-50">
             {data.map((row, index) => {
-               const refId = row.referenceId || `REF-${new Date().getFullYear()}-${row.id.toString().padStart(3, '0')}`;
+               const refId = row.referenceId || `REF-${new Date().getFullYear()}-${(row.id || 0).toString().padStart(3, '0')}`;
                return (
                   <tr 
                     key={row.id} 
@@ -184,7 +184,7 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
                     </td>
                     <td className="px-6 py-4">
                        <div className="flex flex-wrap gap-1.5 max-w-[280px]">
-                          {row.work.map((w: any) => {
+                          {(row.work || []).map((w: any) => {
                                const label = typeof w === 'object' ? w.name : w;
                                return <span key={label} className={`px-2 py-1 text-[10px] font-bold rounded-md border uppercase tracking-tight ${getWorkTypeStyles(label)}`}>{label}</span>;
                           })}
@@ -202,3 +202,4 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data, isLoading,
     </div>
   );
 };
+  

@@ -208,7 +208,7 @@ export const AdminUserManagementPage: React.FC = () => {
                                        </td>
                                        <td className="px-6 lg:px-8 py-4 lg:py-5">
                                            <span className="font-mono text-[10px] lg:text-xs font-bold text-slate-400 bg-slate-50/50 px-2 py-1 rounded border border-slate-100/50">
-                                               INC-{user.id.toString().padStart(6, '0')}
+                                               INC-{(user.id || 0).toString().padStart(6, '0')}
                                            </span>
                                        </td>
                                        <td className="px-6 lg:px-8 py-4 lg:py-5 text-right">
