@@ -55,7 +55,14 @@ export const AdminUserManagementPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    let mounted = true;
+    const loadData = async () => {
+      if (mounted) {
+        await fetchUsers();
+      }
+    };
+    loadData();
+    return () => { mounted = false; };
   }, []);
 
   const filteredUsers = users.filter(u => {

@@ -43,7 +43,16 @@ export const CRMPage: React.FC = () => {
     finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    let mounted = true;
+    const loadData = async () => {
+      if (mounted) {
+        await fetchData();
+      }
+    };
+    loadData();
+    return () => { mounted = false; };
+  }, []);
 
   const filteredData = useMemo(() => {
     return entries.filter(item => {

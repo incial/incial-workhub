@@ -24,9 +24,12 @@ export const ClientTrackerPage: React.FC = () => {
   });
 
   useEffect(() => {
+    let mounted = true;
     const fetchData = async () => {
+      if (!mounted) return;
       try {
         const [crmData, tasksData] = await Promise.all([crmApi.getAll(), tasksApi.getAll()]);
+        if (!mounted) return;
         const activeCompanies = crmData.crmList.filter(c => ['onboarded', 'on progress', 'Quote Sent'].includes(c.status));
         setClients(activeCompanies.map(client => {
             const clientTasks = tasksData.filter(t => t.companyId === client.id);
@@ -41,10 +44,11 @@ export const ClientTrackerPage: React.FC = () => {
       } catch (e) {
         console.error(e);
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     };
     fetchData();
+    return () => { mounted = false; };
   }, []);
 
   const handleSort = (key: SortKey) => {

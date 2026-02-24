@@ -43,34 +43,15 @@ export const MyDashboardPage: React.FC = () => {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                // Parallel fetch for speed
+                // Use optimized endpoints that filter at database level
                 const [tasksData, meetingsData] = await Promise.all([
-                    tasksApi.getAll(),
-                    meetingsApi.getAll()
+                    tasksApi.getMyTasks(),
+                    meetingsApi.getMyMeetings()
                 ]);
 
-                // Filter tasks assigned to user - check new multi-assignee list first
-                const myTasks = tasksData.filter(t => {
-                    // Check new multi-assignee list (contains email addresses)
-                    if (t.assignedToList && t.assignedToList.length > 0) {
-                        return t.assignedToList.includes(user?.email || '');
-                    }
-                    // Fallback to old single-assignee fields for backward compatibility
-                    if (user?.id && t.assigneeId) return t.assigneeId === user.id;
-                    return t.assignedTo === user?.name;
-                });
-                
-                // Filter meetings similarly if needed
-                const myMeetings = meetingsData.filter(m => {
-                     // For calendar visibility, we might want to see all or just mine.
-                     // Assuming dashboard shows user specific meetings primarily but could show all.
-                     // Let's filter to user's meetings for the agenda logic.
-                     if (user?.id && m.assigneeId) return m.assigneeId === user.id;
-                     return m.assignedTo === user?.name;
-                });
-
-                setAllTasks(myTasks);
-                setMeetings(myMeetings); // Or keep all meetingsData if you want to see team calendar
+                // No need to filter - already filtered by backend
+                setAllTasks(tasksData);
+                setMeetings(meetingsData);
 
             } catch (e) {
                 console.error("Failed to load dashboard data", e);
@@ -79,7 +60,7 @@ export const MyDashboardPage: React.FC = () => {
             }
         };
         loadData();
-    }, [user]);
+    }, []); // Empty dependency array - only run once on mount
 
     // --- Derived Metrics & Data (Memoized for Performance) ---
 

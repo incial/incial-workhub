@@ -177,18 +177,47 @@ export const companiesApi = {
             ...item,
             company: item.name || item.company
         }));
-    } catch (error: any) { 
-        console.warn("Primary companies endpoint failed, attempting fallback to CRM...", error.message);
-        try {
-            const res = await api.get("/crm/all");
-            const data = res.data.crmList || [];
-            return data.map((item: any) => ({
-                ...item,
-                company: item.name || item.company
-            }));
-        } catch (fallbackError) {
-            throw handleApiError(error); 
-        }
+    } catch (error: any) {
+        throw handleApiError(error);
+    }
+  },
+
+  getOnboarded: async (): Promise<CRMEntry[]> => {
+    try {
+        const res = await api.get("/crm/onboarded");
+        const data = Array.isArray(res.data) ? res.data : [];
+        return data.map((item: any) => ({
+            ...item,
+            company: item.name || item.company
+        }));
+    } catch (error: any) {
+        throw handleApiError(error);
+    }
+  },
+
+  getDone: async (): Promise<CRMEntry[]> => {
+    try {
+        const res = await api.get("/crm/done");
+        const data = Array.isArray(res.data) ? res.data : [];
+        return data.map((item: any) => ({
+            ...item,
+            company: item.name || item.company
+        }));
+    } catch (error: any) {
+        throw handleApiError(error);
+    }
+  },
+
+  getClosed: async (): Promise<CRMEntry[]> => {
+    try {
+        const res = await api.get("/crm/closed");
+        const data = Array.isArray(res.data) ? res.data : [];
+        return data.map((item: any) => ({
+            ...item,
+            company: item.name || item.company
+        }));
+    } catch (error: any) {
+        throw handleApiError(error);
     }
   },
   
@@ -241,6 +270,13 @@ export const tasksApi = {
     } catch (error) { throw handleApiError(error); }
   },
 
+  getMyTasks: async (): Promise<Task[]> => {
+    try {
+        const res = await api.get("/tasks/my-tasks");
+        return res.data;
+    } catch (error) { throw handleApiError(error); }
+  },
+
   getClientTasks: async (): Promise<Task[]> => {
     try {
         const res = await api.get("/tasks/client-tasks");
@@ -276,6 +312,13 @@ export const meetingsApi = {
   getAll: async (): Promise<Meeting[]> => {
     try {
         const res = await api.get("/meetings/all");
+        return res.data;
+    } catch (error) { throw handleApiError(error); }
+  },
+
+  getMyMeetings: async (): Promise<Meeting[]> => {
+    try {
+        const res = await api.get("/meetings/my-meetings");
         return res.data;
     } catch (error) { throw handleApiError(error); }
   },

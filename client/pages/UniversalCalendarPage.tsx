@@ -85,7 +85,16 @@ export const UniversalCalendarPage: React.FC = () => {
         }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { 
+        let mounted = true;
+        const loadData = async () => {
+            if (mounted) {
+                await fetchData();
+            }
+        };
+        loadData();
+        return () => { mounted = false; };
+    }, []);
 
     const handlePrevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     const handleNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));

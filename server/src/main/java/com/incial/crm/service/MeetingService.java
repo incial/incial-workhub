@@ -5,6 +5,7 @@ import com.incial.crm.entity.Meeting;
 import com.incial.crm.repository.MeetingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,8 +16,20 @@ public class MeetingService {
 
     private final MeetingRepository meetingRepository;
 
+    @Transactional(readOnly = true)
     public List<MeetingDto> getAllMeetings() {
         return meetingRepository.findAll().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<MeetingDto> getCurrentUserMeetings(String userEmail) {
+        // Extract username from email for backward compatibility
+        String userName = userEmail.contains("@") ? userEmail.substring(0, userEmail.indexOf("@")) : userEmail;
+        
+        // Use database-level filtering for better performance
+        return meetingRepository.findMeetingsByUser(userEmail, userName).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }

@@ -39,36 +39,68 @@ export const ClientDetailsPage: React.FC = () => {
   });
 
   useEffect(() => {
+    let mounted = true;
     const fetchData = async () => {
+      if (!mounted) return;
       setIsLoading(true);
-      if (!id) return;
+      // Validate id parameter before parsing
+      if (!id || isNaN(parseInt(id))) {
+        if (mounted) setIsLoading(false);
+        showToast("Invalid client ID", "error");
+        return;
+      }
+      
       try {
         const [crmData, tasksData, usersData] = await Promise.all([
             crmApi.getAll(),
             tasksApi.getAll(),
             usersApi.getAll()
         ]);
-        const foundClient = crmData.crmList.find(c => c.id === parseInt(id));
+        
+        if (!mounted) return;
+        
+        // Safely parse and find client
+        const clientId = parseInt(id);
+        const foundClient = crmData?.crmList?.find(c => c?.id === clientId);
         setClient(foundClient || null);
-        const clientTasks = tasksData.filter(t => t.companyId === parseInt(id));
+        
+        // Filter tasks safely
+        const clientTasks = (tasksData || []).filter(t => t?.companyId === clientId);
         setTasks(clientTasks);
+        
+        // Build user avatar map safely
         const uMap: Record<string, string> = {};
-        usersData.forEach(u => { if (u.avatarUrl) uMap[u.name] = u.avatarUrl; });
+        (usersData || []).forEach(u => { 
+          if (u?.avatarUrl && u?.name) {
+            uMap[u.name] = u.avatarUrl; 
+          }
+        });
         setUserAvatarMap(uMap);
-      } catch (e) { console.error(e); } finally { setIsLoading(false); }
+      } catch (e) { 
+        console.error("Failed to fetch client data:", e); 
+        if (mounted) showToast("Failed to load client data. Please try again.", "error");
+      } finally { 
+        if (mounted) setIsLoading(false); 
+      }
     };
     fetchData();
-  }, [id]);
+    return () => { mounted = false; };
+  }, [id, showToast]);
 
   const filteredBaseTasks = useMemo(() => {
     let result = tasks.filter(t => {
-      const matchesSearch = (t.title || '').toLowerCase().includes(filters.search.toLowerCase());
+      if (!t) return false;
+      const matchesSearch = (t.title || '').toLowerCase().includes((filters.search || '').toLowerCase());
       const matchesStatus = filters.status === '' || t.status === filters.status;
       const matchesPriority = filters.priority === '' || t.priority === filters.priority;
       const matchesAssignee = filters.assignedTo === '' || t.assignedTo === filters.assignedTo;
       return matchesSearch && matchesStatus && matchesPriority && matchesAssignee;
     });
-    return result.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+    return result.sort((a, b) => {
+      const dateA = a?.dueDate ? new Date(a.dueDate).getTime() : 0;
+      const dateB = b?.dueDate ? new Date(b.dueDate).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [tasks, filters]);
 
   const { activeTasks, completedTasks } = useMemo(() => {
