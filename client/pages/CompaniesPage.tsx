@@ -91,7 +91,7 @@ export const CompaniesPage: React.FC = () => {
         (item.referenceId && item.referenceId.toLowerCase().includes(filters.search.toLowerCase()));
       
       const matchesStatus = filters.status === '' || item.status === filters.status;
-      const matchesWork = filters.workType === '' || item.work.includes(filters.workType);
+      const matchesWork = filters.workType === '' || (item.work && item.work.includes(filters.workType));
 
       return matchesSearch && matchesStatus && matchesWork;
     });
