@@ -28,6 +28,30 @@ public class CrmController {
         return ResponseEntity.ok(crmService.getAllEntries());
     }
 
+    @GetMapping("/onboarded")
+    @PreAuthorize(
+            "hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_SUPER_ADMIN') or hasAuthority('ROLE_EMPLOYEE')"
+    )
+    public ResponseEntity<List<CrmEntryDto>> getOnboardedEntries() {
+        return ResponseEntity.ok(crmService.getOnboardedEntries());
+    }
+
+    @GetMapping("/done")
+    @PreAuthorize(
+            "hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_SUPER_ADMIN') or hasAuthority('ROLE_EMPLOYEE')"
+    )
+    public ResponseEntity<List<CrmEntryDto>> getCompletedEntries() {
+        return ResponseEntity.ok(crmService.getCompletedEntries());
+    }
+
+    @GetMapping("/closed")
+    @PreAuthorize(
+            "hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_SUPER_ADMIN') or hasAuthority('ROLE_EMPLOYEE')"
+    )
+    public ResponseEntity<List<CrmEntryDto>> getDroppedEntries() {
+        return ResponseEntity.ok(crmService.getDroppedEntries());
+    }
+
     @GetMapping("/details/{id}")
     @PreAuthorize(
             "hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_SUPER_ADMIN') or hasAuthority('ROLE_EMPLOYEE')"

@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 @Entity
-@Table(name = "crm_entries")
+@Table(name = "crm_entries", indexes = {
+    @Index(name = "idx_crm_status", columnList = "status")
+})
 @Data
 @Builder
 @NoArgsConstructor

@@ -29,6 +29,27 @@ public class CrmService {
         return response;
     }
 
+    public List<CrmEntryDto> getOnboardedEntries() {
+        List<CrmEntry> entries = crmEntryRepository.findOnboardedEntries();
+        return entries.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<CrmEntryDto> getCompletedEntries() {
+        List<CrmEntry> entries = crmEntryRepository.findCompletedEntries();
+        return entries.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<CrmEntryDto> getDroppedEntries() {
+        List<CrmEntry> entries = crmEntryRepository.findDroppedEntries();
+        return entries.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public CrmEntryDto createEntry(CrmEntryDto dto) {
         CrmEntry entry = convertToEntity(dto);
         CrmEntry saved = crmEntryRepository.save(entry);

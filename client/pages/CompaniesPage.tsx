@@ -24,6 +24,9 @@ export const CompaniesPage: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  
+  // Track which tabs have been loaded to avoid duplicate calls
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(['active']));
 
   const [filters, setFilters] = useState<CompanyFilterState>({
     search: '',
@@ -31,11 +34,27 @@ export const CompaniesPage: React.FC = () => {
     workType: ''
   });
 
-  const fetchData = async () => {
+  const fetchDataForTab = async (tab: 'active' | 'dropped' | 'past') => {
     setIsLoading(true);
     try {
-      const data = await companiesApi.getAll();
+      let data: CRMEntry[];
+      
+      switch (tab) {
+        case 'active':
+          data = await companiesApi.getOnboarded();
+          break;
+        case 'dropped':
+          data = await companiesApi.getClosed();
+          break;
+        case 'past':
+          data = await companiesApi.getDone();
+          break;
+        default:
+          data = [];
+      }
+      
       setCrmEntries(data);
+      setLoadedTabs(prev => new Set(prev).add(tab));
     } catch (error) {
       console.error("Failed to fetch data", error);
       showToast("Failed to load companies", "error");
@@ -44,36 +63,28 @@ export const CompaniesPage: React.FC = () => {
     }
   };
 
+  // Initial load - fetch only onboarded (active) companies
   useEffect(() => {
     let mounted = true;
     const loadData = async () => {
       if (mounted) {
-        await fetchData();
+        await fetchDataForTab('active');
       }
     };
     loadData();
     return () => { mounted = false; };
   }, []);
 
-  const allCompanies = useMemo(() => {
-    // Registry now strictly includes those that have passed initial lead stages
-    return crmEntries.filter(entry => ['onboarded', 'on progress', 'Quote Sent', 'completed', 'drop'].includes(entry.status));
-  }, [crmEntries]);
+  // Handle tab changes - fetch data only if not already loaded
+  useEffect(() => {
+    if (!loadedTabs.has(activeTab)) {
+      fetchDataForTab(activeTab);
+    }
+  }, [activeTab]);
 
-  const categorizedData = useMemo(() => {
-      // Onboarded, On Progress, and Quote Sent are considered active Focus nodes in the registry
-      const active = allCompanies.filter(c => ['onboarded', 'on progress', 'Quote Sent'].includes(c.status));
-      const dropped = allCompanies.filter(c => c.status === 'drop');
-      const past = allCompanies.filter(c => c.status === 'completed');
-      return { active, dropped, past };
-  }, [allCompanies]);
-
+  // No need for categorization - data comes pre-filtered from backend
   const displayData = useMemo(() => {
-    let sourceList = categorizedData.active;
-    if (activeTab === 'dropped') sourceList = categorizedData.dropped;
-    if (activeTab === 'past') sourceList = categorizedData.past;
-
-    let result = sourceList.filter(item => {
+    let result = crmEntries.filter(item => {
       const matchesSearch = filters.search === '' || 
         (item.company || '').toLowerCase().includes(filters.search.toLowerCase()) ||
         (item.contactName && item.contactName.toLowerCase().includes(filters.search.toLowerCase())) ||
@@ -86,7 +97,7 @@ export const CompaniesPage: React.FC = () => {
     });
 
     return result.sort((a, b) => b.id - a.id);
-  }, [categorizedData, activeTab, filters]);
+  }, [crmEntries, filters]);
 
   const handleEdit = (company: CRMEntry) => {
       setEditingCompany(company);
@@ -107,8 +118,10 @@ export const CompaniesPage: React.FC = () => {
           try {
             await companiesApi.update(updatedEntry.id, updatedEntry);
             showToast("Company details updated", "success");
+            // Refresh current tab data
+            await fetchDataForTab(activeTab);
           } catch(e) {
-            fetchData();
+            await fetchDataForTab(activeTab);
             showToast("Failed to update company", "error");
           }
       }
@@ -125,12 +138,15 @@ export const CompaniesPage: React.FC = () => {
       try {
           await companiesApi.update(company.id, updatedEntry);
           showToast(`Status updated to ${newStatus}`, "success");
-          // If status changes out of registry criteria, re-fetch to update view
-          if (!['onboarded', 'on progress', 'Quote Sent', 'completed', 'drop'].includes(newStatus)) {
-              fetchData();
-          }
+          
+          // Status change may move company to different tab
+          // Clear loaded tabs cache to force refresh when switching tabs
+          setLoadedTabs(new Set([activeTab]));
+          
+          // Refresh current tab to reflect changes
+          await fetchDataForTab(activeTab);
       } catch (e) {
-          fetchData();
+          await fetchDataForTab(activeTab);
           showToast("Failed to update status", "error");
       }
   };
@@ -177,7 +193,7 @@ export const CompaniesPage: React.FC = () => {
                         }`}
                     >
                         Active Focus
-                        <span className="ml-2 px-1.5 lg:px-2 py-0.5 rounded bg-brand-50 text-brand-600 text-[9px] lg:text-[10px]">{categorizedData.active.length}</span>
+                        {activeTab === 'active' && <span className="ml-2 px-1.5 lg:px-2 py-0.5 rounded bg-brand-50 text-brand-600 text-[9px] lg:text-[10px]">{crmEntries.length}</span>}
                     </button>
                     <button 
                         onClick={() => setActiveTab('past')}
@@ -188,7 +204,7 @@ export const CompaniesPage: React.FC = () => {
                         }`}
                     >
                         Historical
-                        <span className="ml-2 px-1.5 lg:px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[9px] lg:text-[10px]">{categorizedData.past.length}</span>
+                        {activeTab === 'past' && <span className="ml-2 px-1.5 lg:px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[9px] lg:text-[10px]">{crmEntries.length}</span>}
                     </button>
                     <button 
                         onClick={() => setActiveTab('dropped')}
@@ -199,12 +215,12 @@ export const CompaniesPage: React.FC = () => {
                         }`}
                     >
                         Archived
-                        <span className="ml-2 px-1.5 lg:px-2 py-0.5 rounded bg-rose-50 text-rose-600 text-[9px] lg:text-[10px]">{categorizedData.dropped.length}</span>
+                        {activeTab === 'dropped' && <span className="ml-2 px-1.5 lg:px-2 py-0.5 rounded bg-rose-50 text-rose-600 text-[9px] lg:text-[10px]">{crmEntries.length}</span>}
                     </button>
                 </div>
             </div>
 
-            <CompaniesFilters filters={filters} setFilters={setFilters} onRefresh={fetchData} />
+            <CompaniesFilters filters={filters} setFilters={setFilters} onRefresh={() => fetchDataForTab(activeTab)} />
             
             <div className="pt-4 pb-10 overflow-x-auto">
                 <CompaniesTable 

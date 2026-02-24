@@ -5,10 +5,9 @@ import { CRMEntry, Task, Meeting, AuthResponse, User, ForgotPasswordRequest, Ver
 // ⚙️ API CONFIGURATION
 // ============================================================================
 
-//const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
-const API_URL = 'http://localhost:8080/api/v1';
-
+//const API_URL = 'http://localhost:8080/api/v1';
 
 
 const api = axios.create({
@@ -178,18 +177,47 @@ export const companiesApi = {
             ...item,
             company: item.name || item.company
         }));
-    } catch (error: any) { 
-        console.warn("Primary companies endpoint failed, attempting fallback to CRM...", error.message);
-        try {
-            const res = await api.get("/crm/all");
-            const data = res.data.crmList || [];
-            return data.map((item: any) => ({
-                ...item,
-                company: item.name || item.company
-            }));
-        } catch (fallbackError) {
-            throw handleApiError(error); 
-        }
+    } catch (error: any) {
+        throw handleApiError(error);
+    }
+  },
+
+  getOnboarded: async (): Promise<CRMEntry[]> => {
+    try {
+        const res = await api.get("/crm/onboarded");
+        const data = Array.isArray(res.data) ? res.data : [];
+        return data.map((item: any) => ({
+            ...item,
+            company: item.name || item.company
+        }));
+    } catch (error: any) {
+        throw handleApiError(error);
+    }
+  },
+
+  getDone: async (): Promise<CRMEntry[]> => {
+    try {
+        const res = await api.get("/crm/done");
+        const data = Array.isArray(res.data) ? res.data : [];
+        return data.map((item: any) => ({
+            ...item,
+            company: item.name || item.company
+        }));
+    } catch (error: any) {
+        throw handleApiError(error);
+    }
+  },
+
+  getClosed: async (): Promise<CRMEntry[]> => {
+    try {
+        const res = await api.get("/crm/closed");
+        const data = Array.isArray(res.data) ? res.data : [];
+        return data.map((item: any) => ({
+            ...item,
+            company: item.name || item.company
+        }));
+    } catch (error: any) {
+        throw handleApiError(error);
     }
   },
   
