@@ -48,12 +48,11 @@ public class AuthService {
 
 
     public RegisterResponse register(RegisterRequest request) {
-        // Check if user already exists
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("User with email " + request.getEmail() + " already exists");
         }
 
-        // Set default role if not provided
         String role = request.getRole();
         if (role == null || role.isEmpty()) {
             role = "ROLE_EMPLOYEE";
@@ -61,12 +60,10 @@ public class AuthService {
             role = "ROLE_" + role.toUpperCase();
         }
 
-        // Validate role
         if (!role.equals("ROLE_ADMIN") && !role.equals("ROLE_EMPLOYEE") && !role.equals("ROLE_SUPER_ADMIN") && !role.equals("ROLE_CLIENT")) {
             throw new RuntimeException("Invalid role. Must be ADMIN, EMPLOYEE, SUPER_ADMIN, or CLIENT");
         }
 
-        // Create new user (createdAt is set automatically by @PrePersist)
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -78,6 +75,7 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         UserDto userDto = UserDto.builder()
+                .id(savedUser.getId())
                 .name(savedUser.getName())
                 .email(savedUser.getEmail())
                 .role(savedUser.getRole())
@@ -105,6 +103,7 @@ public class AuthService {
             String token = jwtUtil.generateToken(user.getEmail(),user.getRole());
 
             UserDto userDto = UserDto.builder()
+                    .id(user.getId())
                     .name(user.getName())
                     .email(user.getEmail())
                     .role(user.getRole())
@@ -127,13 +126,10 @@ public class AuthService {
 
     public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
         try {
-
-            // Check if Google Client ID is configured
             if (googleClientId == null || googleClientId.trim().isEmpty()) {
                 throw new IllegalStateException("Google authentication is not properly configured. Please contact the administrator.");
             }
 
-            // Verify Google ID token
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     new NetHttpTransport(),
                     GsonFactory.getDefaultInstance())
@@ -189,15 +185,11 @@ public class AuthService {
                     .build();
 
         } catch (GeneralSecurityException | IOException e) {
-            // Log error for debugging - full stack trace only in debug mode
-            log.error("Google authentication error: {} - {}", e.getClass().getSimpleName(), e.getMessage());
-            log.debug("Full exception details:", e);
             throw new RuntimeException("Google authentication failed. Please try again.");
         }
     }
 
     public ApiResponse forgotPassword(ForgotPasswordRequest request) {
-        // Check if user exists
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User with email " + request.getEmail() + " not found"));
 
@@ -227,7 +219,6 @@ public class AuthService {
     @Transactional
     public ApiResponse changePassword(ChangePasswordRequest request) {
 
-        // 1. Verify OTP (must be transactional)
         boolean isValid = otpService.verifyOtp(
                 request.getEmail(),
                 request.getOtp()
@@ -236,25 +227,17 @@ public class AuthService {
         if (!isValid) {
             throw new RuntimeException("Invalid or expired OTP");
         }
-
-        // 2. Fetch user
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // 3. Update password
         user.setPasswordHash(
                 passwordEncoder.encode(request.getNewPassword())
         );
-        // no save needed if User is managed, but save is fine
         userRepository.save(user);
-
-
 
         return ApiResponse.builder()
                 .statusCode(200)
                 .message("Password changed successfully")
                 .build();
     }
-
-
 }

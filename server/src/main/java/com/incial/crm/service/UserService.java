@@ -45,6 +45,7 @@ public class UserService {
 
     private UserDto convertToDto(User entity) {
         return UserDto.builder()
+                .id(entity.getId())
                 .name(entity.getName())
                 .email(entity.getEmail())
                 .role(entity.getRole())
