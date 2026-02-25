@@ -38,15 +38,22 @@ export const AdminPerformancePage: React.FC = () => {
             usersApi.getAll()
         ]);
         
-        // 1. Initialize stats map with ALL users using ID as key
-        const statsMap: Record<number, UserStats> = {};
+        console.log('Leaderboard Data - Users:', users.length, 'Tasks:', tasks.length);
+        
+        // 1. Initialize stats map with ALL users using email as key (for backward compatibility)
+        const statsMap: Record<string, UserStats> = {};
         
         users.forEach(u => {
-            const formattedRole = u.role.replace('ROLE_', '').split('_')
+            const formattedRole = u.role ? u.role.replace('ROLE_', '').split('_')
                 .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-                .join(' ');
+                .join(' ') : 'Unknown';
 
-            statsMap[u.id] = {
+            if (!u.email) {
+                console.warn('Skipping user without email:', u.name || u.id);
+                return; // Skip users without email
+            }
+
+            statsMap[u.email] = {
                 id: u.id,
                 name: u.name,
                 email: u.email,
@@ -68,8 +75,8 @@ export const AdminPerformancePage: React.FC = () => {
             if (task.assignedToList && task.assignedToList.length > 0) {
                 // For multi-assignee tasks, count for ALL assignees
                 task.assignedToList.forEach(assigneeEmail => {
-                    // Find user by email
-                    const matchedStats = Object.values(statsMap).find(s => s.email === assigneeEmail);
+                    // Use email as key to find user stats directly
+                    const matchedStats = statsMap[assigneeEmail];
                     
                     if (matchedStats) {
                         matchedStats.total++;
@@ -86,11 +93,20 @@ export const AdminPerformancePage: React.FC = () => {
                 // Fallback to old single-assignee logic for backward compatibility
                 let matchedStats: UserStats | undefined;
 
-                if (task.assigneeId && statsMap[task.assigneeId]) {
-                    matchedStats = statsMap[task.assigneeId];
-                } else if (task.assignedTo && task.assignedTo !== 'Unassigned') {
-                    // Fallback for legacy tasks without ID
-                    matchedStats = Object.values(statsMap).find(s => s.name === task.assignedTo);
+                // Try to find by assigneeId first (look up email by id)
+                if (task.assigneeId) {
+                    matchedStats = Object.values(statsMap).find(s => s.id === task.assigneeId);
+                }
+                
+                // If not found, try matching by name
+                if (!matchedStats && task.assignedTo && task.assignedTo !== 'Unassigned') {
+                    // Try exact email match first (in case assignedTo is an email)
+                    matchedStats = statsMap[task.assignedTo];
+                    
+                    // If not found, try name match as final fallback
+                    if (!matchedStats) {
+                        matchedStats = Object.values(statsMap).find(s => s.name === task.assignedTo);
+                    }
                 }
 
                 if (matchedStats) {
@@ -113,6 +129,9 @@ export const AdminPerformancePage: React.FC = () => {
                 completionRate: s.total > 0 ? (s.completed / s.total) * 100 : 0
             }));
 
+        console.log('Leaderboard - Total users in statsMap:', Object.keys(statsMap).length);
+        console.log('Leaderboard - Final stats array:', finalStats.length);
+
         // 4. SORTING LOGIC: Completed Volume (Desc) -> Efficiency Score (Desc) -> Total Assigned (Desc)
         // This ensures users with high output rank higher than users with low volume but 100% rate.
         finalStats.sort((a, b) => {
@@ -128,6 +147,7 @@ export const AdminPerformancePage: React.FC = () => {
             return b.total - a.total;
         });
         
+        console.log('Leaderboard - Setting stats with', finalStats.length, 'users');
         setStats(finalStats);
       } catch (e) {
         console.error(e);
@@ -239,11 +259,23 @@ export const AdminPerformancePage: React.FC = () => {
              </div>
            ) : (
              <>
-                {/* Podium - Only show if we have data */}
-                {topPerformers.length > 0 && stats.length >= 3 && (
-                    <div className="mb-16 lg:mb-24 px-4">
-                        <div className="flex flex-col md:flex-row justify-center items-end gap-6 md:gap-10 max-w-5xl mx-auto">
-                            {[topPerformers[1], topPerformers[0], topPerformers[2]].map((user, i) => {
+                {stats.length === 0 ? (
+                    <div className="text-center py-20">
+                        <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-6">
+                            <Trophy className="h-10 w-10 text-slate-300" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 mb-2">No Performance Data</h3>
+                        <p className="text-slate-500 text-sm">No users or tasks found. Check your data or try refreshing.</p>
+                    </div>
+                ) : (
+                  <>
+                    {/* Podium - Show if we have at least 1 user */}
+                    {topPerformers.length > 0 && (
+                        <div className="mb-16 lg:mb-24 px-4">
+                            <div className="flex flex-col md:flex-row justify-center items-end gap-6 md:gap-10 max-w-5xl mx-auto">
+                                {/* Show top 3 if available, otherwise show what we have */}
+                                {stats.length >= 3 ? (
+                                    [topPerformers[1], topPerformers[0], topPerformers[2]].map((user, i) => {
                                 if (!user) return null;
                                 const rank = i === 1 ? 0 : i === 0 ? 1 : 2; 
                                 const config = getRankConfig(rank);
@@ -295,7 +327,62 @@ export const AdminPerformancePage: React.FC = () => {
                                         </div>
                                     </div>
                                 );
-                            })}
+                            })
+                                ) : (
+                                    // Show available users in order for less than 3 users
+                                    topPerformers.map((user, idx) => {
+                                        if (!user) return null;
+                                        const config = getRankConfig(idx);
+                                        
+                                        return (
+                                            <div key={user.name} className={`w-full md:w-80 flex flex-col ${config.containerClass}`}>
+                                                <div 
+                                                    onClick={() => setSelectedUser(user)}
+                                                    className={`relative p-8 rounded-[2.5rem] border backdrop-blur-xl flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-2 cursor-pointer group ${config.cardClass}`}
+                                                >
+                                                    <div className="absolute -top-6">
+                                                        <div className="bg-white p-3 rounded-2xl shadow-lg border border-slate-100">
+                                                            {config.icon}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-8 mb-5 relative">
+                                                        <div className={`p-1.5 rounded-[1.5rem] bg-white shadow-xl ring-4 ${config.ringColor}`}>
+                                                            {user.avatarUrl ? (
+                                                                <img src={user.avatarUrl} alt={user.name} referrerPolicy="no-referrer" className="h-20 w-20 rounded-[1.2rem] object-cover" />
+                                                            ) : (
+                                                                <div className="h-20 w-20 rounded-[1.2rem] bg-gradient-to-tr from-slate-100 to-slate-200 flex items-center justify-center text-2xl font-black text-slate-400 uppercase tracking-tighter">
+                                                                    {user.name.slice(0, 2)}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="absolute -bottom-3 inset-x-0 flex justify-center">
+                                                            <span className="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-xl shadow-lg border-2 border-white uppercase tracking-widest">
+                                                                {user.completed} Completed
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <h3 className={`text-xl font-black mb-2 truncate w-full tracking-tight ${config.titleColor}`}>{user.name}</h3>
+                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg mb-6 ${config.badgeClass}`}>
+                                                        {user.role}
+                                                    </span>
+
+                                                    <div className="grid grid-cols-2 gap-3 w-full mt-auto">
+                                                        <div className="bg-white/60 p-3 rounded-2xl border border-white shadow-inner">
+                                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned</p>
+                                                            <p className="text-xl font-black text-slate-900">{user.total}</p>
+                                                        </div>
+                                                        <div className="bg-white/60 p-3 rounded-2xl border border-white shadow-inner">
+                                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Efficiency</p>
+                                                            <p className="text-xl font-black text-slate-900">{user.completionRate.toFixed(0)}%</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
                         </div>
                     </div>
                 )}
@@ -389,14 +476,16 @@ export const AdminPerformancePage: React.FC = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                    </tr>
+                                                    </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
                 </div>
-             </>
-           )}
+                  </>
+                )}
+              </>
+            )}
         </main>
       </div>
 

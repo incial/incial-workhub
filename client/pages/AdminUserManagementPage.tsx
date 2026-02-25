@@ -66,8 +66,8 @@ export const AdminUserManagementPage: React.FC = () => {
   }, []);
 
   const filteredUsers = users.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase()) || 
-                          u.email.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (u.name && u.name.toLowerCase().includes(search.toLowerCase())) || 
+                          (u.email && u.email.toLowerCase().includes(search.toLowerCase()));
     const matchesRole = filterRole === '' || u.role === filterRole;
     return matchesSearch && matchesRole;
   }).sort((a, b) => {
@@ -203,7 +203,7 @@ export const AdminUserManagementPage: React.FC = () => {
                                                user.role === 'ROLE_CLIENT' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                                'bg-slate-50 text-slate-600 border-slate-100'
                                            }`}>
-                                               {user.role.replace('ROLE_', '').replace('_', ' ')}
+                                               {user.role ? user.role.replace('ROLE_', '').replace('_', ' ') : 'Unknown'}
                                            </span>
                                        </td>
                                        <td className="px-6 lg:px-8 py-4 lg:py-5">
