@@ -159,8 +159,8 @@ export const LoginPage: React.FC = () => {
 
                 {/* Logo Area */}
                 <div className="relative z-10 flex items-center gap-3 text-2xl font-bold tracking-tight text-white">
-                    <img src="/logo.png" alt="Incial" className="h-10 w-10 rounded-xl bg-white shadow-lg object-contain p-1" />
-                    Incial
+                    <img src="/workhub.png" alt="WorkHub By Incial" className="h-10 w-10 rounded-xl bg-white shadow-lg object-contain p-1" />
+                    WorkHub By Incial
                 </div>
 
                 {/* Hero Content */}

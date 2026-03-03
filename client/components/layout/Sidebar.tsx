@@ -95,7 +95,7 @@ export const Sidebar: React.FC = () => {
             <div className={`pt-8 lg:pt-12 pb-6 lg:pb-10 flex items-center relative z-10 transition-all duration-500 ${isSidebarCollapsed ? 'justify-center px-0' : 'px-6 lg:px-10 justify-between'}`}>
                 <div className="flex items-center gap-4 lg:gap-5 group cursor-pointer text-white">
                     <div className="relative flex items-center justify-center rounded-2xl lg:rounded-[1.75rem] bg-white h-10 w-10 lg:h-14 lg:w-14 shadow-[0_0_50px_rgba(79,70,229,0.5)] overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-500">
-                        <img src="/logo.png" alt="Incial" className="h-7 w-7 lg:h-10 lg:w-10 object-contain" />
+                        <img src="/workhub.png" alt="WorkHub By Incial" className="h-7 w-7 lg:h-10 lg:w-10 object-contain" />
                     </div>
                     {!isSidebarCollapsed && (
                         <div className="flex flex-col min-w-0">
