@@ -5,7 +5,7 @@ import { CRMEntry, Task, Meeting, AuthResponse, User, ForgotPasswordRequest, Ver
 // ⚙️ API CONFIGURATION
 // ============================================================================
 
-const API_URL = 'http://13.233.167.107/incial/api/v1';
+const API_URL = '/api/v1';
 
 //const API_URL = 'http://localhost:8080/api/v1';
 
